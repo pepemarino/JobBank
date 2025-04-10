@@ -1,0 +1,80 @@
+﻿@page "/jobposts/details"
+@using Microsoft.EntityFrameworkCore
+@using JobBank.Models
+@inject IDbContextFactory<JobBank.Data.EmploymentBankContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>JobPost</h2>
+    <hr />
+    @if (jobpost is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@jobpost.Title</dd>
+            <dt class="col-sm-2">Applied</dt>
+            <dd class="col-sm-10">@jobpost.IsApplied</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@jobpost.Description</dd>
+            <dt class="col-sm-2">Company</dt>
+            <dd class="col-sm-10">@jobpost.Company</dd>
+            <dt class="col-sm-2">Impression</dt>
+            <dd class="col-sm-10">@jobpost.Impression</dd>
+            <dt class="col-sm-2">To Do</dt>
+            <dd class="col-sm-10">@jobpost.ActionToTake</dd>
+            <dt class="col-sm-2">Work</dt>
+            <dd class="col-sm-10">@jobpost.JobType</dd>
+            <dt class="col-sm-2">HQ</dt>
+            <dd class="col-sm-10">@jobpost.JobBase</dd>
+            <dt class="col-sm-2">Applied</dt>
+            <dd class="col-sm-10">@jobpost.ApplicationType</dd>
+            <dt class="col-sm-2">Application Date</dt>
+            <dd class="col-sm-10">@jobpost.ApplicationDate</dd>
+            <dt class="col-sm-2">Response Date</dt>
+            <dd class="col-sm-10">@jobpost.ResponseDate</dd>
+            <dt class="col-sm-2">Interview Date</dt>
+            <dd class="col-sm-10">@jobpost.InterviewDate</dd>
+            <dt class="col-sm-2">Interview Type</dt>
+            <dd class="col-sm-10">@jobpost.InterviewType</dd>
+            <dt class="col-sm-2">Interview Outcome</dt>
+            <dd class="col-sm-10">@jobpost.InterviewOutcome</dd>
+            <dt class="col-sm-2">Challenge</dt>
+            <dd class="col-sm-10">@jobpost.ItHasChallenge</dd>
+            <dt class="col-sm-2">Contact Phone</dt>
+            <dd class="col-sm-10">@jobpost.ContactPhone</dd>
+            <dt class="col-sm-2">Contact Email</dt>
+            <dd class="col-sm-10">@jobpost.ContactEmail</dd>
+            <dt class="col-sm-2">Comments</dt>
+            <dd class="col-sm-10">@jobpost.Comments</dd>
+        </dl>
+        <div>
+            <a href="@($"/jobposts/edit?id={jobpost.Id}")">Edit</a> |
+            <a href="@($"/jobposts")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private JobPost? jobpost;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        jobpost = await context.JobPost.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (jobpost is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

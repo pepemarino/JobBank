@@ -1,0 +1,57 @@
+﻿@page "/jobposts"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using JobBank.Models
+@using JobBank.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<JobBank.Data.EmploymentBankContext> DbFactory
+@rendermode InteractiveServer
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="jobposts/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="jobPostsQueriable" @ref="jobPostGrid">
+    <PropertyColumn Property="jobpost => jobpost.Title" Sortable="true" />
+    <PropertyColumn Property="jobpost => jobpost.IsApplied" Title="Applied" />
+    <PropertyColumn Property="jobpost => jobpost.Company" />
+    <PropertyColumn Property="jobpost => jobpost.ActionToTake" Title="To Do" />
+    <PropertyColumn Property="jobpost => jobpost.JobType" Title="Work">
+        <ColumnOptions>
+            <input type="search" @bind="jobTypeSearch" placeholder="Filter by Job Type"
+                   @bind:after="@(() => {})" />
+        </ColumnOptions>
+    </PropertyColumn>
+    <PropertyColumn Property="jobpost => jobpost.ApplicationDate" Format="MM/dd/yyyy" Title="Submitted" Sortable="true"/>
+    <PropertyColumn Property="jobpost => jobpost.InterviewDate" Format="MM/dd/yyyy" Title="Interview Date" Sortable="true" />
+    <PropertyColumn Property="jobpost => jobpost.InterviewOutcome" Title="Outcome" />
+    <PropertyColumn Property="jobpost => jobpost.ItHasChallenge" Title="Challenge" Sortable="true" />
+
+    <TemplateColumn Context="jobpost">
+        <a href="@($"jobposts/edit?id={jobpost.Id}")">Edit</a> |
+        <a href="@($"jobposts/details?id={jobpost.Id}")">Details</a> |
+        <a href="@($"jobposts/delete?id={jobpost.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private QuickGrid<JobPost>? jobPostGrid; //jobPostGrid.CloseColumnOptionsAsync();
+    private IQueryable<JobPost> jobPostsQueriable => context.JobPost
+        .AsQueryable()
+        .Where(jp => string.IsNullOrEmpty(jobTypeSearch) || 
+               jp.JobBase!.Contains(jobTypeSearch));
+
+    private string jobTypeSearch = string.Empty;
+    private EmploymentBankContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

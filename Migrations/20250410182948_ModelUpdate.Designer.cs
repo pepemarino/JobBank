@@ -4,6 +4,7 @@ using JobBank.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,13 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JobBank.Migrations
 {
     [DbContext(typeof(EmploymentBankContext))]
-    partial class JobBankContextModelSnapshot : ModelSnapshot
+    [Migration("20250410182948_ModelUpdate")]
+    partial class ModelUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -33,8 +36,11 @@ namespace JobBank.Migrations
                     b.Property<string>("ActionToTake")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("ApplicationDate")
+                    b.Property<DateTime>("ApplicationDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("ApplicationDeclined")
+                        .HasColumnType("bit");
 
                     b.Property<string>("ApplicationType")
                         .HasColumnType("nvarchar(max)");
@@ -43,6 +49,7 @@ namespace JobBank.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Company")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ContactEmail")
@@ -76,12 +83,14 @@ namespace JobBank.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("JobType")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ResponseDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Title")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

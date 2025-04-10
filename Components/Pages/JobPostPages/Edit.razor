@@ -34,6 +34,10 @@ else
                     <ValidationMessage For="() => JobPost.IsApplied" class="text-danger" />
                 </div>
                 <div class="mb-3">
+                    <label for="ApplicationDeclined" class="form-label">Declined:</label>
+                    <InputCheckbox id="isapplied" @bind-Value="JobPost.ApplicationDeclined" class="form-check-input" />                    
+                </div>
+                <div class="mb-3">
                     <label for="description" class="form-label">Description:</label>
                     <InputText id="description" @bind-Value="JobPost.Description" class="form-control" />
                     <ValidationMessage For="() => JobPost.Description" class="text-danger" />

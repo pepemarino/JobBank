@@ -30,5 +30,7 @@ namespace JobBank.Models
         public string? ContactPhone { get; set; }
         public string? ContactEmail { get; set; }
         public string? Comments { get; set; }
+
+        public bool ApplicationDeclined { get; set; }
     }
 }

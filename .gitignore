@@ -398,3 +398,16 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/.vs/JobBank/DesignTimeBuild/.dtbcache.v2
+/obj/Debug/net8.0/JobBank.AssemblyInfo.cs
+/obj/Debug/net8.0/ref/JobBank.dll
+/obj/Debug/net8.0/refint/JobBank.dll
+/obj/Debug/net8.0/apphost.exe
+/obj/Debug/net8.0/JobBank.AssemblyInfoInputs.cache
+/obj/Debug/net8.0/JobBank.assets.cache
+/obj/Debug/net8.0/JobBank.csproj.AssemblyReference.cache
+/obj/Debug/net8.0/JobBank.csproj.CoreCompileInputs.cache
+/obj/Debug/net8.0/JobBank.csproj.FileListAbsolute.txt
+/obj/Debug/net8.0/JobBank.dll
+/obj/Debug/net8.0/JobBank.pdb
+/obj/Debug/net8.0/project.razor.vs.bin

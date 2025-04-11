@@ -68,7 +68,7 @@
                 ? jp.ApplicationDeclined == true && jp.JobType!.Contains(jobTypeSearch)
                 : jp.ApplicationDeclined == true
             : !string.IsNullOrEmpty(jobTypeSearch)
-                ? true && jp.JobType!.Contains(jobTypeSearch)
+                ? jp.JobType!.Contains(jobTypeSearch)
                 : true;
         }
     }

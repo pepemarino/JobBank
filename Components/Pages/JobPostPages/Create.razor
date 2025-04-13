@@ -28,7 +28,7 @@
             </div>
             <div class="mb-3">
                 <label for="description" class="form-label">Description:</label>
-                <InputText id="description" @bind-Value="JobPost.Description" class="form-control" />
+                <InputTextArea rows="6" id="description" @bind-Value="JobPost.Description" class="form-control" />
                 <ValidationMessage For="() => JobPost.Description" class="text-danger" />
             </div>
             <div class="mb-3">

@@ -38,8 +38,8 @@ else
                     <InputCheckbox id="isapplied" @bind-Value="JobPost.ApplicationDeclined" class="form-check-input" />                    
                 </div>
                 <div class="mb-3">
-                    <label for="description" class="form-label">Description:</label>
-                    <InputText id="description" @bind-Value="JobPost.Description" class="form-control" />
+                    <label for="description" class="form-label">Description:</label>                    
+                    <InputTextArea id="description" @bind-Value="JobPost.Description" class="form-control" rows="6"/>
                     <ValidationMessage For="() => JobPost.Description" class="text-danger" />
                 </div>
                 <div class="mb-3">

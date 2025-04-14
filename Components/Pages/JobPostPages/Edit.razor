@@ -150,6 +150,7 @@ else
     private async Task UpdateJobPost()
     {
         using var context = DbFactory.CreateDbContext();
+        JobPost!.Timestamp = DateTime.UtcNow;
         context.Attach(JobPost!).State = EntityState.Modified;
 
         try

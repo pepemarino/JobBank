@@ -24,6 +24,7 @@ namespace JobBank.Models
         public DateTime? ApplicationDate { get; set; }
         public DateTime? ResponseDate { get; set; }
         public DateTime? InterviewDate { get; set; }
+        public DateTime? Timestamp { get; set; }
         public string? InterviewType { get; set; }
         public string? InterviewOutcome { get; set; }
         public bool ItHasChallenge { get; set; }

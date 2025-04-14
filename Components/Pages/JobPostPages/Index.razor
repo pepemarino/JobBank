@@ -48,7 +48,8 @@
     private QuickGrid<JobPost>? jobPostGrid;
     private IQueryable<JobPost> jobPostsQueriable => context.JobPost
         .AsQueryable()
-        .Where(Predicate!);
+        .Where(Predicate!)
+        .OrderByDescending(jp => jp.Timestamp);
 
     private string jobTypeSearch = string.Empty;
     private bool applicationDeclined;

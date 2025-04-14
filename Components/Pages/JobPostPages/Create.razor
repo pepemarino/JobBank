@@ -123,6 +123,8 @@
     private async Task AddJobPost()
     {
         using var context = DbFactory.CreateDbContext();
+
+        JobPost.Timestamp = DateTime.UtcNow;
         context.JobPost.Add(JobPost);
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/jobposts");

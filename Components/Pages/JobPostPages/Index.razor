@@ -80,12 +80,12 @@
                 ? jp.ApplicationDeclined == true && jp.JobType!.Contains(jobTypeSearch)
                 : jp.ApplicationDeclined == true
             : pendingOnly
-            ? !string.IsNullOrEmpty(jobTypeSearch)
-                ? jp.ApplicationDeclined == false && jp.JobType!.Contains(jobTypeSearch)
-                : jp.ApplicationDeclined == false
-            : !string.IsNullOrEmpty(jobTypeSearch)
-                ? jp.JobType!.Contains(jobTypeSearch)
-                : true;
+                ? !string.IsNullOrEmpty(jobTypeSearch)
+                    ? jp.ApplicationDeclined == false && jp.JobType!.Contains(jobTypeSearch)
+                    : jp.ApplicationDeclined == false
+                : !string.IsNullOrEmpty(jobTypeSearch)
+                    ? jp.JobType!.Contains(jobTypeSearch)
+                    : true;
         }
     }
 

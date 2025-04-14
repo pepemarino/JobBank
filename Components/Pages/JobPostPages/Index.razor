@@ -17,10 +17,18 @@
 </p>
 
 <div class="m-1">
-    <label>
-        <input type="checkbox" @oninput="LoadRejectedApplication" />
-        Load Rejected Only
-    </label>
+    <div class="@(declinedVisible ? "d-show" : "d-none")">        
+        <label>
+            <input type="checkbox" @oninput="LoadRejectedApplication" />
+            Load Rejected Only
+        </label>
+    </div>
+    <div class="@(pendingVisible ? "d-show" : "d-none")">
+        <label>
+            <input type="checkbox" @oninput="LoadPendingApplication" />
+            Load Pending Only
+        </label>
+    </div>
 </div>
 
 <QuickGrid Class="table" Items="jobPostsQueriable" @ref="jobPostGrid" >   
@@ -52,12 +60,15 @@
         .OrderByDescending(jp => jp.ApplicationDate);
 
     private string jobTypeSearch = string.Empty;
-    private bool applicationDeclined;
+    private bool applicationDeclined, declinedVisible;
+    private bool pendingOnly, pendingVisible;
     private EmploymentBankContext context = default!;
 
     protected override void OnInitialized()
     {
         context = DbFactory.CreateDbContext();
+        declinedVisible = true;
+        pendingVisible = true;
     }
 
     private System.Linq.Expressions.Expression<Func<JobPost, bool>>? Predicate 
@@ -68,6 +79,10 @@
             ? !string.IsNullOrEmpty(jobTypeSearch)
                 ? jp.ApplicationDeclined == true && jp.JobType!.Contains(jobTypeSearch)
                 : jp.ApplicationDeclined == true
+            : pendingOnly
+            ? !string.IsNullOrEmpty(jobTypeSearch)
+                ? jp.ApplicationDeclined == false && jp.JobType!.Contains(jobTypeSearch)
+                : jp.ApplicationDeclined == false
             : !string.IsNullOrEmpty(jobTypeSearch)
                 ? jp.JobType!.Contains(jobTypeSearch)
                 : true;
@@ -77,6 +92,13 @@
     private void LoadRejectedApplication(ChangeEventArgs ev)
     {
         applicationDeclined = (bool)ev.Value!;
+        pendingVisible = !applicationDeclined;
+    }
+
+    private void LoadPendingApplication(ChangeEventArgs ev)
+    {
+        pendingOnly = (bool)ev.Value!;
+        declinedVisible = !pendingOnly;
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();

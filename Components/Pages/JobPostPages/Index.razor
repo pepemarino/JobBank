@@ -49,7 +49,7 @@
     private IQueryable<JobPost> jobPostsQueriable => context.JobPost
         .AsQueryable()
         .Where(Predicate!)
-        .OrderByDescending(jp => jp.Timestamp);
+        .OrderByDescending(jp => jp.ApplicationDate);
 
     private string jobTypeSearch = string.Empty;
     private bool applicationDeclined;

@@ -1,11 +1,7 @@
 ﻿@page "/jobposts"
-@using Microsoft.EntityFrameworkCore
+
 @using Microsoft.AspNetCore.Components.QuickGrid
-@using JobBank.Models
-@using JobBank.Data
-@using System.Linq.Expressions
-@implements IAsyncDisposable
-@inject IDbContextFactory<JobBank.Data.EmploymentBankContext> DbFactory
+@inject JobBank.Components.Pages.JobPostPages.ViewModels.IIndexViewModel IndexViewModel
 @rendermode InteractiveServer
 
 <PageTitle>Index</PageTitle>
@@ -17,28 +13,28 @@
 </p>
 
 <div class="m-1">
-    <div class="@(declinedVisible ? "d-show" : "d-none")">        
+    <div class="@(IndexViewModel.DeclinedVisible ? "d-show" : "d-none")">
         <label>
-            <input type="checkbox" @oninput="LoadRejectedApplication" />
+            <input type="checkbox" @oninput="IndexViewModel.LoadRejectedApplication" checked="@IndexViewModel.ApplicationDeclined" />
             Load Rejected Only
         </label>
     </div>
-    <div class="@(pendingVisible ? "d-show" : "d-none")">
+    <div class="@(IndexViewModel.PendingVisible ? "d-show" : "d-none")">
         <label>
-            <input type="checkbox" @oninput="LoadPendingApplication" />
+            <input type="checkbox" @oninput="IndexViewModel.LoadPendingApplication" checked="@IndexViewModel.PendingOnly" />
             Load Pending Only
         </label>
     </div>
 </div>
 
-<QuickGrid Class="table" Items="jobPostsQueriable" @ref="jobPostGrid" >   
+<QuickGrid Class="table" Items="IndexViewModel.JobPostsQueriable">   
     <PropertyColumn Property="jobpost => jobpost.Title" Sortable="true" />
     <PropertyColumn Property="jobpost => jobpost.IsApplied" Title="Applied" />
     <PropertyColumn Property="jobpost => jobpost.Company" Sortable="true" />
     <PropertyColumn Property="jobpost => jobpost.ActionToTake" Title="To Do" />
     <PropertyColumn Property="jobpost => jobpost.JobType" Title="Work">
         <ColumnOptions>
-            <input type="search" @bind="jobTypeSearch" placeholder="Filter by Job Type" />
+            <input type="search" @bind="IndexViewModel.JobTypeSearch" placeholder="Filter by Job Type" />
         </ColumnOptions>       
     </PropertyColumn>
     <PropertyColumn Property="jobpost => jobpost.ApplicationDate" Format="MM/dd/yyyy" Title="Submitted" Sortable="true"/>
@@ -51,55 +47,3 @@
         <a href="@($"jobposts/delete?id={jobpost.Id}")">Delete</a>
     </TemplateColumn>
 </QuickGrid>
-
-@code {
-    private QuickGrid<JobPost>? jobPostGrid;
-    private IQueryable<JobPost> jobPostsQueriable => context.JobPost
-        .AsQueryable()
-        .Where(Predicate!)
-        .OrderByDescending(jp => jp.ApplicationDate);
-
-    private string jobTypeSearch = string.Empty;
-    private bool applicationDeclined, declinedVisible;
-    private bool pendingOnly, pendingVisible;
-    private EmploymentBankContext context = default!;
-
-    protected override void OnInitialized()
-    {
-        context = DbFactory.CreateDbContext();
-        declinedVisible = true;
-        pendingVisible = true;
-    }
-
-    private System.Linq.Expressions.Expression<Func<JobPost, bool>>? Predicate 
-    { 
-        get
-        {
-            return jp => applicationDeclined
-            ? !string.IsNullOrEmpty(jobTypeSearch)
-                ? jp.ApplicationDeclined == true && jp.JobType!.Contains(jobTypeSearch)
-                : jp.ApplicationDeclined == true
-            : pendingOnly
-                ? !string.IsNullOrEmpty(jobTypeSearch)
-                    ? jp.ApplicationDeclined == false && jp.JobType!.Contains(jobTypeSearch)
-                    : jp.ApplicationDeclined == false
-                : !string.IsNullOrEmpty(jobTypeSearch)
-                    ? jp.JobType!.Contains(jobTypeSearch)
-                    : true;
-        }
-    }
-
-    private void LoadRejectedApplication(ChangeEventArgs ev)
-    {
-        applicationDeclined = (bool)ev.Value!;
-        pendingVisible = !applicationDeclined;
-    }
-
-    private void LoadPendingApplication(ChangeEventArgs ev)
-    {
-        pendingOnly = (bool)ev.Value!;
-        declinedVisible = !pendingOnly;
-    }
-
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
-}

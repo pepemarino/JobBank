@@ -2,6 +2,7 @@ using JobBank.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using JobBank.Data;
+using JobBank.Components.Pages.JobPostPages.ViewModels;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContextFactory<EmploymentBankContext>(options =>
@@ -14,6 +15,8 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddScoped<IIndexViewModel, IndexViewModel>();
 
 var app = builder.Build();
 

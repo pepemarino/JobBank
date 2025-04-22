@@ -1,8 +1,12 @@
 {
   "Files": [
     {
+      "Id": "C:\\Users\\jrmarino\\.nuget\\packages\\chartjs.blazor.fork\\2.0.2\\contentFiles\\any\\netstandard2.1\\wwwroot\\ChartJsBlazorInterop.js",
+      "PackagePath": "staticwebassets\\ChartJsBlazorInterop.js"
+    },
+    {
       "Id": "D:\\ASP.NET Tests\\JobBank\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\JobBank.bundle.scp.css",
-      "PackagePath": "staticwebassets\\JobBank.bundle.scp.css"
+      "PackagePath": "staticwebassets\\JobBank.sen5lb4vy5.bundle.scp.css"
     },
     {
       "Id": "D:\\ASP.NET Tests\\JobBank\\wwwroot\\app.css",
@@ -19,6 +23,10 @@
     {
       "Id": "D:\\ASP.NET Tests\\JobBank\\wwwroot\\favicon.png",
       "PackagePath": "staticwebassets\\favicon.png"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.JobBank.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
     },
     {
       "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.JobBank.Microsoft.AspNetCore.StaticWebAssets.props",

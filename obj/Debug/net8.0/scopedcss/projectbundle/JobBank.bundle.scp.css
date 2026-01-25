@@ -1,4 +1,4 @@
-/* _content/JobBank/Components/Layout/MainLayout.razor.rz.scp.css */
+/* /Components/Layout/MainLayout.razor.rz.scp.css */
 .page[b-d1zhv0im8k] {
     position: relative;
     display: flex;
@@ -95,7 +95,7 @@ main[b-d1zhv0im8k] {
         right: 0.75rem;
         top: 0.5rem;
     }
-/* _content/JobBank/Components/Layout/NavMenu.razor.rz.scp.css */
+/* /Components/Layout/NavMenu.razor.rz.scp.css */
 .navbar-toggler[b-zicfr064il] {
     appearance: none;
     cursor: pointer;

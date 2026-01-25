@@ -1,4 +1,7 @@
-﻿using JobBank.Data;
+﻿using ChartJs.Blazor;
+using ChartJs.Blazor.BarChart;
+using JobBank.Data;
+using Microsoft.AspNetCore.Mvc;
 
 namespace JobBank.Components.Pages.Home.ViewModels
 {
@@ -6,6 +9,11 @@ namespace JobBank.Components.Pages.Home.ViewModels
     {
         string Title { get; }
         string Description { get; }
-        EmploymentBankContext Context { get; }
+        BarConfig Config { get; }
+
+        Chart JobChart { get; set; } 
+        IEnumerable<DailyStatsViewModel> DailyStatsViewModels { get; }
+
+
     }
 }

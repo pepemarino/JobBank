@@ -45,6 +45,7 @@ else
                 <div class="mb-3">
                     <label for="company" class="form-label">Company:</label>
                     <InputText id="company" @bind-Value="JobPost.Company" class="form-control" />
+                    <button id="searchBtn" type="button" class="btn btn-secondary">Search Google</button>
                     <ValidationMessage For="() => JobPost.Company" class="text-danger" />
                 </div>
                 <div class="mb-3">
@@ -169,7 +170,7 @@ else
             }
         }
 
-        NavigationManager.NavigateTo("/jobposts");
+        NavigationManager.NavigateTo("/jobposts", forceLoad: true);
     }
 
     private bool JobPostExists(int id)

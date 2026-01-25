@@ -25,9 +25,19 @@
             Load Pending Only
         </label>
     </div>
+    <div>
+        <label>
+            From: 
+            <InputDate TValue="DateTime?" @bind-Value="IndexViewModel.FromDateTime" max="@IndexViewModel.FromMax"></InputDate>
+        </label>
+        <label>
+            To: 
+            <InputDate TValue="DateTime?" @bind-Value="IndexViewModel.ToDateTime" min="@IndexViewModel.ToMin" max="@IndexViewModel.MaximumDateString"></InputDate>
+        </label>
+    </div>
 </div>
 
-<QuickGrid Class="table" Items="IndexViewModel.JobPostsQueriable">   
+<QuickGrid Class="table" Items="IndexViewModel.FilteredJobPosts">
     <PropertyColumn Property="jobpost => jobpost.Title" Sortable="true" />
     <PropertyColumn Property="jobpost => jobpost.IsApplied" Title="Applied" />
     <PropertyColumn Property="jobpost => jobpost.Company" Sortable="true" />

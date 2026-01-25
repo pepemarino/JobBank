@@ -6,19 +6,13 @@ using System.Linq.Expressions;
 
 namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
-    public class IndexViewModel : IIndexViewModel , IAsyncDisposable
+    public class IndexViewModel : IIndexViewModel, IAsyncDisposable
     {
-        public IQueryable<JobPostViewModel> JobPostsQueriable 
-        { 
-            get
-            {
-                return Context.JobPost                    
+        public IQueryable<JobPostViewModel> JobPostsQueriable => Context.JobPost
                     .Where(Predicate!)
                     .Select(jp => new JobPostViewModel(jp)).AsEnumerable()
                     .OrderByDescending(jp => jp.ApplicationDate)
                     .AsQueryable();
-            }
-        }
 
         public string JobTypeSearch { get; set; } = string.Empty;
 
@@ -31,6 +25,50 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         public bool PendingVisible { get; set; }
 
         public EmploymentBankContext Context { get; }
+
+        private DateTime? _fromDateTime;
+        private DateTime? _toDateTime;
+
+        // From must be <= To. Setting either side will adjust the other if needed.
+        public DateTime? FromDateTime
+        {
+            get => _fromDateTime;
+            set
+            {
+                _fromDateTime = value;
+                if (_fromDateTime.HasValue && _toDateTime.HasValue && _fromDateTime.Value.Date > _toDateTime.Value.Date)
+                {
+                    // keep To at least as large as From
+                    _toDateTime = _fromDateTime;
+                }
+            }
+        }
+
+        public DateTime? ToDateTime
+        {
+            get => _toDateTime;
+            set
+            {
+                _toDateTime = value;
+                if (_fromDateTime.HasValue && _toDateTime.HasValue && _toDateTime.Value.Date < _fromDateTime.Value.Date)
+                {
+                    // keep From no greater than To
+                    _fromDateTime = _toDateTime;
+                }
+            }
+        }
+
+        // Today's date for the input[max]
+        public string? MaximumDateString => DateTime.Today.ToString("yyyy-MM-dd");
+
+        // Max for the From control: either To (if set and earlier than today) or today
+        public string? FromMax =>
+            ToDateTime.HasValue
+                ? (ToDateTime.Value.Date < DateTime.Today ? ToDateTime.Value.ToString("yyyy-MM-dd") : DateTime.Today.ToString("yyyy-MM-dd"))
+                : DateTime.Today.ToString("yyyy-MM-dd");
+
+        // Min for the To control: the From value (if set)
+        public string? ToMin => FromDateTime?.ToString("yyyy-MM-dd");
 
         public Expression<Func<JobPost, bool>>? Predicate 
         {
@@ -47,6 +85,23 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                     : !string.IsNullOrEmpty(JobTypeSearch)
                         ? jp.JobType!.Contains(JobTypeSearch)
                         : true;
+            }
+        }
+
+        public IQueryable<JobPostViewModel> FilteredJobPosts
+        {
+            get
+            {
+                var query = JobPostsQueriable;
+                if (FromDateTime.HasValue)
+                {
+                    query = query.Where(jp => jp.ApplicationDate!.Value.Date >= FromDateTime.Value.Date);
+                }
+                if (ToDateTime.HasValue)
+                {
+                    query = query.Where(jp => jp.ApplicationDate!.Value.Date <= ToDateTime.Value.Date);
+                }
+                return query;
             }
         }
 

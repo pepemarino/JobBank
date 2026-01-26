@@ -399,23 +399,10 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 /.vs/JobBank/DesignTimeBuild/.dtbcache.v2
-/obj/Debug/net8.0/JobBank.AssemblyInfo.cs
-/obj/Debug/net8.0/ref/JobBank.dll
-/obj/Debug/net8.0/refint/JobBank.dll
-/obj/Debug/net8.0/apphost.exe
-/obj/Debug/net8.0/JobBank.AssemblyInfoInputs.cache
-/obj/Debug/net8.0/JobBank.assets.cache
-/obj/Debug/net8.0/JobBank.csproj.AssemblyReference.cache
-/obj/Debug/net8.0/JobBank.csproj.CoreCompileInputs.cache
-/obj/Debug/net8.0/JobBank.csproj.FileListAbsolute.txt
-/obj/Debug/net8.0/JobBank.dll
-/obj/Debug/net8.0/JobBank.pdb
-/obj/Debug/net8.0/project.razor.vs.bin
-/.vs/JobBank/v17/.suo
-/.vs/JobBank/v17/DocumentLayout.json
-/bin/Debug/net8.0/JobBank.dll
-/bin/Debug/net8.0/JobBank.exe
-/bin/Debug/net8.0/JobBank.pdb
-/obj/Debug/net8.0/staticwebassets/msbuild.build.JobBank.props
-/obj/Debug/net8.0/staticwebassets/msbuild.JobBank.Microsoft.AspNetCore.StaticWebAssets.props
-/Properties/launchSettings.json
+
+# Ignore build outputs (all projects)
+**/bin/
+**/obj/
+
+# Ignore sensitive local VS settings
+Properties/launchSettings.json

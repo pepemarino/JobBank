@@ -6,8 +6,18 @@ using JobBank.Components.Pages.JobPostPages.ViewModels;
 using JobBank.Components.Pages.Home.ViewModels;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// get connection string (will pick up env var ConnectionStrings__EmploymentBankContext)
+var connStr = builder.Configuration.GetConnectionString("EmploymentBankContext");
+if (string.IsNullOrWhiteSpace(connStr))
+{
+    throw new InvalidOperationException(
+        "Connection string 'EmploymentBankContext' not found. Set environment variable 'ConnectionStrings__EmploymentBankContext'.");
+}
+
 builder.Services.AddDbContextFactory<EmploymentBankContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("EmploymentBankContext") ?? throw new InvalidOperationException("Connection string 'EmploymentBankContext' not found.")));
+    options.UseSqlServer(connStr)
+);
 
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 

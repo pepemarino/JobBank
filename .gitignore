@@ -418,3 +418,4 @@ FodyWeavers.xsd
 /bin/Debug/net8.0/JobBank.pdb
 /obj/Debug/net8.0/staticwebassets/msbuild.build.JobBank.props
 /obj/Debug/net8.0/staticwebassets/msbuild.JobBank.Microsoft.AspNetCore.StaticWebAssets.props
+/Properties/launchSettings.json

@@ -1,77 +1,167 @@
 ﻿using ChartJs.Blazor;
 using ChartJs.Blazor.BarChart;
+using ChartJs.Blazor.BarChart.Axes;
 using ChartJs.Blazor.Common;
+using ChartJs.Blazor.Common.Axes;
+using ChartJs.Blazor.Common.Axes.Ticks;
 using ChartJs.Blazor.Common.Enums;
 using ChartJs.Blazor.Util;
 using JobBank.Data;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Mono.TextTemplating;
 using System.Drawing;
 
 namespace JobBank.Components.Pages.Home.ViewModels
 {
     public class HomeViewModel : IHomeViewModel, IAsyncDisposable
     {
-        private Chart _chart;
+        private readonly EmploymentBankContext Context;
+        private readonly List<DailyStatsViewModel> _dailyStats = new();
 
         public HomeViewModel(IDbContextFactory<EmploymentBankContext> DbFactory)
         {
             Context = DbFactory.CreateDbContext();
             this.Title = "Job Bank Applications";
-            this.Config = new BarConfig
+
+            // Initialize Config and ensure Data collections exist (ChartJs.Blazor exposes Data as a read-only property).
+            this.Config = new BarConfig();
+            this.Config.Data.Labels.Clear();
+            this.Config.Data.Datasets.Clear();
+
+            // More visible defaults: disable aspect ratio so the chart fills its container,
+            // set a clearer title and keep legend on top.
+            this.Config.Options = new BarOptions
             {
-                Options = new BarOptions
+                Responsive = true,
+                MaintainAspectRatio = false,
+                Legend = new Legend
                 {
-                    Responsive = true,
-                    Legend = new Legend
+                    Position = Position.Top
+                },
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "Applications by Date"
+                },
+                // Ensure the Y axis begins at zero (prevents chart from starting at 1 when there's a single entry).
+                Scales = new BarScales
+                {
+                    YAxes = new List<CartesianAxis>
                     {
-                        Position = Position.Top
+                        new BarLinearCartesianAxis
+                        {
+                            Ticks = new LinearCartesianTicks
+                            {
+                                BeginAtZero = true,
+                                Min = 0 // explicit min helps with some Chart.js versions
+                            },
+                            GridLines = new GridLines
+                            {
+                                Color = ColorUtil.FromDrawingColor(Color.FromArgb(40, 0, 0, 0)) // subtle grid lines
+                            }
+                        }
                     },
-                    Title = new OptionsTitle
+                    XAxes = new List<CartesianAxis>
                     {
-                        Display = true,
-                        Text = "ChartJs.Blazor Bar Chart"
-                    },
-                    MaintainAspectRatio = true,
+                        new BarCategoryAxis
+                        {
+                            Ticks = new CategoryTicks
+                            {
+                                // rotate or auto-skip can be configured here if many labels exist
+                            }
+                        }
+                    }
                 }
             };
+        }
 
-            foreach (var stat in Context.JobPost
+        public Chart JobChart { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+
+        // back the IEnumerable so callers can inspect the stats if needed
+        public IEnumerable<DailyStatsViewModel> DailyStatsViewModels => _dailyStats;
+
+        private BarConfig Config { get; set; }
+
+        BarConfig IHomeViewModel.Config
+        {
+            get => Config;
+            set => Config = value;
+        }
+
+        public async ValueTask DisposeAsync() => await Context.DisposeAsync();
+
+        public async Task InitializeAsync()
+        {
+            await LoadData();
+        }
+
+        private async Task LoadData()
+        {
+            var jobPosts = await Context.JobPost.AsNoTracking()
+                            .ToListAsync();
+
+            // build labels and a single dataset with counts for each date
+            var labels = new List<string>();
+            var values = new List<int>();
+
+            var stats = jobPosts
+                .Where(jp => jp.ApplicationDate.HasValue)
                 .OrderBy(jp => jp.ApplicationDate)
                 .GroupBy(pg => pg.ApplicationDate)
                 .Select(g => new DailyStatsViewModel
                 {
                     Count = g.Count(),
-                    Name = g.Key.Value.ToString("yyyy-MM-dd")
-                }))
+                    Name = g.Key!.Value.ToString("yyyy-MM-dd")
+                })
+                .ToList();
+
+            _dailyStats.Clear();
+            _dailyStats.AddRange(stats);
+
+            foreach (var stat in stats)
             {
-                this.Config.Data.Datasets.Add
-                (
-                   new BarDataset<int>([stat.Count], false)
-                       {
-                           Label = stat.Name,
-                           BackgroundColor = ColorUtil.FromDrawingColor(Color.FromArgb(128)),
-                           BorderColor = ColorUtil.FromDrawingColor(Color.Red),
-                           BorderWidth = 1
-                       }
-                   );
-                }
-            JobChart = new Chart { Config = this.Config };
+                labels.Add(stat.Name);
+                values.Add(stat.Count);
+            }
+
+            // replace labels & datasets (clear previous)
+            this.Config.Data.Labels.Clear();
+            foreach (var l in labels)
+            {
+                this.Config.Data.Labels.Add(l);
+            }
+
+            this.Config.Data.Datasets.Clear();
+
+            if (values.Count == 0)
+            {
+                // show a subtle "no data" placeholder so the UI doesn't look broken
+                this.Config.Data.Labels.Add("No Data");
+                this.Config.Data.Datasets.Add(
+                    new BarDataset<int>(new[] { 0 })
+                    {
+                        Label = "No data",
+                        BackgroundColor = ColorUtil.FromDrawingColor(Color.LightGray),
+                        BorderColor = ColorUtil.FromDrawingColor(Color.DarkGray),
+                        BorderWidth = 1
+                    }
+                );
+            }
+            else
+            {
+                // single dataset with visible styling
+                this.Config.Data.Datasets.Add(
+                    new BarDataset<int>(values)
+                    {
+                        Label = "Applications",
+                        // semi-transparent blue for good contrast
+                        BackgroundColor = ColorUtil.FromDrawingColor(Color.FromArgb(200, 0, 123, 255)),
+                        BorderColor = ColorUtil.FromDrawingColor(Color.FromArgb(255, 0, 82, 204)),
+                        BorderWidth = 1
+                    }
+                );
+            }
         }
-
-        public Chart JobChart { get; set; }
-        public string Title { get; }
-        public string Description { get; }
-
-        public EmploymentBankContext Context { get; }
-
-        public IEnumerable<DailyStatsViewModel> DailyStatsViewModels { get; }
-
-        private BarConfig Config { get; }
-
-        BarConfig IHomeViewModel.Config => Config;
-
-        public async ValueTask DisposeAsync() => await Context.DisposeAsync();
     }
 }

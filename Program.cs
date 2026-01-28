@@ -28,7 +28,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
-                .AddScoped<IHomeViewModel, HomeViewModel>();
+                .AddTransient<IHomeViewModel, HomeViewModel>();
 
 var app = builder.Build();
 

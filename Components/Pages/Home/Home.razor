@@ -1,10 +1,15 @@
 ﻿@page "/"
+@using JobBank.Components.Pages.Home.ViewModels
+@using JobBank.Components.Pages.Init
 
-@inject JobBank.Components.Pages.Home.ViewModels.IHomeViewModel HomeViewModel
+@inherits ViewModelBase<IHomeViewModel>
+
 @rendermode InteractiveServer
 
-<PageTitle>@(HomeViewModel.Title)</PageTitle>
+<PageTitle>@(ViewModel.Title)</PageTitle>
 
-<h1>@(HomeViewModel.Title)</h1>
+<h1>@(ViewModel.Title)</h1>
 
-<Chart Config="HomeViewModel.Config" @ref="HomeViewModel.JobChart"></Chart>
+<div style="height:600px; max-width:900px;">
+    <Chart Config="ViewModel.Config" @ref="ViewModel.JobChart" />
+</div>

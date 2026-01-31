@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using JobBank.Data;
 using JobBank.Components.Pages.JobPostPages.ViewModels;
 using JobBank.Components.Pages.Home.ViewModels;
+using JobBank.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +29,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
-                .AddTransient<IHomeViewModel, HomeViewModel>();
+                .AddTransient<IHomeViewModel, HomeViewModel>()
+                .AddScoped<FilteredStateService>();
 
 var app = builder.Build();
 

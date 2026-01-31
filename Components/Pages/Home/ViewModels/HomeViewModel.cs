@@ -7,6 +7,7 @@ using ChartJs.Blazor.Common.Axes.Ticks;
 using ChartJs.Blazor.Common.Enums;
 using ChartJs.Blazor.Util;
 using JobBank.Data;
+using JobBank.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Drawing;
 
@@ -14,11 +15,23 @@ namespace JobBank.Components.Pages.Home.ViewModels
 {
     public class HomeViewModel : IHomeViewModel, IAsyncDisposable
     {
+        public FilteredStateService StateService { get; private set; }
+
         private readonly EmploymentBankContext Context;
         private readonly List<DailyStatsViewModel> _dailyStats = new();
 
-        public HomeViewModel(IDbContextFactory<EmploymentBankContext> DbFactory)
+        public event Action? OnRequestUIUpdate;
+
+        private DateTime? FromDate { get; set; }
+        private DateTime? ToDate { get; set; }
+
+        public HomeViewModel(IDbContextFactory<EmploymentBankContext> DbFactory, FilteredStateService stateService)
         {
+            StateService = stateService;
+
+            FromDate = StateService.FromDate;
+            ToDate = StateService.ToDate;
+
             Context = DbFactory.CreateDbContext();
             this.Title = "Job Bank Applications";
 
@@ -72,6 +85,8 @@ namespace JobBank.Components.Pages.Home.ViewModels
                     }
                 }
             };
+
+            StateService.OnChange += HandleStateChange;
         }
 
         public Chart JobChart { get; set; }
@@ -89,17 +104,30 @@ namespace JobBank.Components.Pages.Home.ViewModels
             set => Config = value;
         }
 
-        public async ValueTask DisposeAsync() => await Context.DisposeAsync();
+        public async ValueTask DisposeAsync()
+        {
+            await Context.DisposeAsync();
+            StateService.OnChange -= HandleStateChange;
+        }
 
         public async Task InitializeAsync()
-        {
+        {            
             await LoadData();
+        }
+
+        private async void HandleStateChange()
+        {
+            FromDate = StateService.FromDate;
+            ToDate = StateService.ToDate;
+
+            await LoadData();
+            OnRequestUIUpdate?.Invoke();
+
         }
 
         private async Task LoadData()
         {
-            var jobPosts = await Context.JobPost.AsNoTracking()
-                            .ToListAsync();
+            List<Models.JobPost> jobPosts = await DateFilteredJobPosts();
 
             // build labels and a single dataset with counts for each date
             var labels = new List<string>();
@@ -162,6 +190,19 @@ namespace JobBank.Components.Pages.Home.ViewModels
                     }
                 );
             }
+        }
+
+        private async Task<List<Models.JobPost>> DateFilteredJobPosts()
+        {
+            var query = Context.JobPost.AsNoTracking();
+
+            if (FromDate.HasValue)
+                query = query.Where(jp => jp.ApplicationDate >= FromDate.Value); // push date filter to the database
+
+            if (ToDate.HasValue)
+                query = query.Where(jp => jp.ApplicationDate <= ToDate.Value);   // push date filter to the database
+
+            return await query.ToListAsync();
         }
     }
 }

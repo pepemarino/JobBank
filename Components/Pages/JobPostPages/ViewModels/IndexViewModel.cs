@@ -1,5 +1,6 @@
 ﻿using JobBank.Data;
 using JobBank.Models;
+using JobBank.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -23,7 +24,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         public bool PendingOnly { get; set; }
 
         public bool PendingVisible { get; set; }
-
+        public FilteredStateService StateService { get; private set; }
         public EmploymentBankContext Context { get; }
 
         private DateTime? _fromDateTime;
@@ -35,12 +36,17 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             get => _fromDateTime;
             set
             {
+                if (_fromDateTime == value) return;
+
                 _fromDateTime = value;
                 if (_fromDateTime.HasValue && _toDateTime.HasValue && _fromDateTime.Value.Date > _toDateTime.Value.Date)
                 {
                     // keep To at least as large as From
-                    _toDateTime = _fromDateTime;
+                    _toDateTime = _fromDateTime;                                     
                 }
+
+                // BROADCAST only on change   
+                StateService.UpdateFilters(_fromDateTime, _toDateTime);
             }
         }
 
@@ -49,12 +55,17 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             get => _toDateTime;
             set
             {
+                if (_toDateTime == value) return;
                 _toDateTime = value;
+
                 if (_fromDateTime.HasValue && _toDateTime.HasValue && _toDateTime.Value.Date < _fromDateTime.Value.Date)
                 {
                     // keep From no greater than To
                     _fromDateTime = _toDateTime;
                 }
+
+                // BROADCAST only on change
+                StateService.UpdateFilters(_fromDateTime, _toDateTime);
             }
         }
 
@@ -94,19 +105,20 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             {
                 var query = JobPostsQueriable;
                 if (FromDateTime.HasValue)
-                {
+                {                   
                     query = query.Where(jp => jp.ApplicationDate!.Value.Date >= FromDateTime.Value.Date);
                 }
                 if (ToDateTime.HasValue)
                 {
                     query = query.Where(jp => jp.ApplicationDate!.Value.Date <= ToDateTime.Value.Date);
-                }
+                }                
                 return query;
             }
         }
 
-        public IndexViewModel(IDbContextFactory<EmploymentBankContext> DbFactory)
+        public IndexViewModel(IDbContextFactory<EmploymentBankContext> DbFactory, FilteredStateService stateService)
         {
+            StateService = stateService;
             Context = DbFactory.CreateDbContext();
             DeclinedVisible = true;
             PendingVisible = true;

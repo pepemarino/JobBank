@@ -3,6 +3,7 @@
     public interface IAsyncInitialization
     {
         Task InitializeAsync();
+        event Action? OnRequestUIUpdate;
     }
 }
 

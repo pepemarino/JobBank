@@ -7,7 +7,6 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
     public interface IIndexViewModel
     {
-        IQueryable<JobPostViewModel> JobPostsQueriable { get; }
         IQueryable<JobPostViewModel> FilteredJobPosts { get; }
 
         string JobTypeSearch { get; set; }

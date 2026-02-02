@@ -9,12 +9,6 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
     public class IndexViewModel : IIndexViewModel, IAsyncDisposable
     {
-        public IQueryable<JobPostViewModel> JobPostsQueriable => Context.JobPost
-                    .Where(Predicate!)
-                    .Select(jp => new JobPostViewModel(jp)).AsEnumerable()
-                    .OrderByDescending(jp => jp.ApplicationDate)
-                    .AsQueryable();
-
         public string JobTypeSearch { get; set; } = string.Empty;
 
         public bool ApplicationDeclined { get; set; }
@@ -103,18 +97,23 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         {
             get
             {
-                var query = JobPostsQueriable;
+                var query = Context.JobPost.AsQueryable();
+
+                // Apply Predicate (Filters happen in SQL)
+                if (Predicate != null) query = query.Where(Predicate);
+
+                // Apply Date Filters (Filters happen in SQL)
                 if (FromDateTime.HasValue)
-                {                   
-                    query = query.Where(jp => jp.ApplicationDate!.Value.Date >= FromDateTime.Value.Date);
-                }
+                    query = query.Where(jp => jp.ApplicationDate >= FromDateTime.Value);
                 if (ToDateTime.HasValue)
-                {
-                    query = query.Where(jp => jp.ApplicationDate!.Value.Date <= ToDateTime.Value.Date);
-                }                
-                return query;
+                    query = query.Where(jp => jp.ApplicationDate <= ToDateTime.Value);
+
+                // Project to ViewModel 
+                return query.OrderByDescending(jp => jp.ApplicationDate)
+                            .Select(jp => new JobPostViewModel(jp));
             }
         }
+
 
         public IndexViewModel(IDbContextFactory<EmploymentBankContext> DbFactory, FilteredStateService stateService)
         {

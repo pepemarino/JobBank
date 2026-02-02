@@ -17,7 +17,7 @@ if (string.IsNullOrWhiteSpace(connStr))
 }
 
 builder.Services.AddDbContextFactory<EmploymentBankContext>(options =>
-    options.UseSqlServer(connStr)
+    options.UseLazyLoadingProxies().UseSqlServer(connStr)
 );
 
 builder.Services.AddQuickGridEntityFrameworkAdapter();

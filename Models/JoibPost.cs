@@ -33,5 +33,7 @@ namespace JobBank.Models
         public string? Comments { get; set; }
 
         public bool ApplicationDeclined { get; set; }
+
+        public virtual StudyGuide? StudyGuide { get; set; }
     }
 }

@@ -37,7 +37,7 @@
     </div>
 </div>
 
-<QuickGrid Class="table" Items="IndexViewModel.FilteredJobPosts">
+<QuickGrid Class="table" Items="IndexViewModel.FilteredJobPosts" RowClass="@IndexViewModel.GetRowCssClass">
     <PropertyColumn Property="jobpost => jobpost.Title" Sortable="true" />
     <PropertyColumn Property="jobpost => jobpost.IsApplied" Title="Applied" />
     <PropertyColumn Property="jobpost => jobpost.Company" Sortable="true" />

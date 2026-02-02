@@ -54,3 +54,16 @@ h1:focus {
 .rejectedApplication {
     background-color:lightsalmon;
 }
+
+.applied-row {
+    background-color: #f0f5f3 !important; /* Light green */
+}
+
+.pending-row {
+    background-color: #fff3cd !important; /* Light yellow */
+}
+
+.declined-row {
+    background-color: #f8d7da !important; /* Light red */
+    color: #842029;
+}

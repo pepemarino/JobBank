@@ -40,5 +40,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         void LoadRejectedApplication(ChangeEventArgs ev);
 
         void LoadPendingApplication(ChangeEventArgs ev);
+
+        string GetRowCssClass(JobPostViewModel jobPost);
     }
 }

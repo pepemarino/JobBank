@@ -137,5 +137,23 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             PendingOnly = (bool)ev.Value!;
             DeclinedVisible = !PendingOnly;
         }
+
+        public string GetRowCssClass(JobPostViewModel jobPost)
+        {
+            if (jobPost.ApplicationDeclined)
+            {
+                return "declined-row"; 
+            }
+            else if (jobPost.InterviewDate.HasValue && !string.IsNullOrEmpty(jobPost.InterviewOutcome))
+            {
+                return "table-success";
+            }
+            else if (jobPost.InterviewDate.HasValue && string.IsNullOrEmpty(jobPost.InterviewOutcome))
+            {
+                return "table-warning"; 
+            }
+
+            return "applied-row";
+        }
     }
 }

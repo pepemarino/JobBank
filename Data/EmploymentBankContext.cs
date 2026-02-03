@@ -15,5 +15,6 @@ namespace JobBank.Data
         }
 
         public DbSet<JobBank.Models.JobPost> JobPost { get; set; } = default!;
+        public DbSet<JobBank.Models.JobAnalysisCache> JobAnalysisCache { get; set; } = default!;
     }
 }

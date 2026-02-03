@@ -93,27 +93,46 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             }
         }
 
+        /// <summary>
+        /// Note fitlered job posts based on the current Predicate and date range
+        /// are applied in the server query for efficiency.
+        /// Thus only the relevant records are retrieved from the database.
+        /// and sorted by ApplicationDate descending.
+        /// The grid component will then page through these results (TODO) and sort the projection.
+        /// </summary>
         public IQueryable<JobPostViewModel> FilteredJobPosts
         {
             get
             {
-                var query = Context.JobPost.AsQueryable();
+                var query = Context.JobPost.AsNoTracking();
 
-                // Apply Predicate (Filters happen in SQL)
                 if (Predicate != null) query = query.Where(Predicate);
 
-                // Apply Date Filters (Filters happen in SQL)
                 if (FromDateTime.HasValue)
                     query = query.Where(jp => jp.ApplicationDate >= FromDateTime.Value);
-                if (ToDateTime.HasValue)
-                    query = query.Where(jp => jp.ApplicationDate <= ToDateTime.Value);
 
-                // Project to ViewModel 
+                if (ToDateTime.HasValue)
+                {
+                    var endOfDay = ToDateTime.Value.Date.AddDays(1);
+                    query = query.Where(jp => jp.ApplicationDate < endOfDay);
+                }
+
                 return query.OrderByDescending(jp => jp.ApplicationDate)
-                            .Select(jp => new JobPostViewModel(jp));
+                            .Select(jp => new JobPostViewModel
+                            {
+                                Id = jp.Id,
+                                Title = jp.Title,
+                                Company = jp.Company,
+                                InterviewDate = jp.InterviewDate,
+                                InterviewOutcome = jp.InterviewOutcome,
+                                IsApplied = jp.IsApplied,
+                                JobType = jp.JobType,
+                                ActionToTake = jp.ActionToTake,
+                                ApplicationDate = jp.ApplicationDate,
+                                ApplicationDeclined = jp.ApplicationDeclined
+                            });
             }
         }
-
 
         public IndexViewModel(IDbContextFactory<EmploymentBankContext> DbFactory, FilteredStateService stateService)
         {

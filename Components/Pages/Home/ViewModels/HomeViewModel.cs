@@ -33,7 +33,7 @@ namespace JobBank.Components.Pages.Home.ViewModels
             ToDate = StateService.ToDate;
 
             Context = DbFactory.CreateDbContext();
-            this.Title = "Job Bank Applications";
+            this.Title = "Job Bank Active Applications";
 
             // Initialize Config and ensure Data collections exist (ChartJs.Blazor exposes Data as a read-only property).
             this.Config = new BarConfig();
@@ -127,15 +127,15 @@ namespace JobBank.Components.Pages.Home.ViewModels
 
         private async Task LoadData()
         {
-            List<Models.JobPost> jobPosts = await DateFilteredJobPosts();
-
             // build labels and a single dataset with counts for each date
             var labels = new List<string>();
             var values = new List<int>();
 
+            List<Models.JobPost> jobPosts = await DateFilteredJobPosts();
+
+            // group by application date and count
+            // project to DailyStatsViewModel for easier consumption
             var stats = jobPosts
-                .Where(jp => jp.ApplicationDate.HasValue)
-                .OrderBy(jp => jp.ApplicationDate)
                 .GroupBy(pg => pg.ApplicationDate)
                 .Select(g => new DailyStatsViewModel
                 {
@@ -192,6 +192,10 @@ namespace JobBank.Components.Pages.Home.ViewModels
             }
         }
 
+        /// <summary>
+        /// Filtering and ordering job posts by application date is done at the database level for efficiency.
+        /// </summary>
+        /// <returns></returns>
         private async Task<List<Models.JobPost>> DateFilteredJobPosts()
         {
             var query = Context.JobPost.AsNoTracking();
@@ -202,7 +206,10 @@ namespace JobBank.Components.Pages.Home.ViewModels
             if (ToDate.HasValue)
                 query = query.Where(jp => jp.ApplicationDate <= ToDate.Value);   // push date filter to the database
 
-            return await query.ToListAsync();
+            return await query
+                .Where(jp => jp.ApplicationDate.HasValue && !jp.ApplicationDeclined)
+                .OrderBy(jp => jp.ApplicationDate)
+                .ToListAsync();
         }
     }
 }

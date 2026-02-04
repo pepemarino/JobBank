@@ -40,7 +40,11 @@
 <QuickGrid Class="table" Items="IndexViewModel.FilteredJobPosts" RowClass="@IndexViewModel.GetRowCssClass">
     <PropertyColumn Property="jobpost => jobpost.Title" Sortable="true" />
     <PropertyColumn Property="jobpost => jobpost.IsApplied" Title="Applied" />
-    <PropertyColumn Property="jobpost => jobpost.Company" Sortable="true" />
+    <PropertyColumn Property="jobpost => jobpost.Company" Sortable="true" >
+        <ColumnOptions>
+            <input type="search" @bind="IndexViewModel.CompanySearch" placeholder="Filter by Employer" />
+        </ColumnOptions>
+    </PropertyColumn>
     <PropertyColumn Property="jobpost => jobpost.ActionToTake" Title="To Do" />
     <PropertyColumn Property="jobpost => jobpost.JobType" Title="Work">
         <ColumnOptions>

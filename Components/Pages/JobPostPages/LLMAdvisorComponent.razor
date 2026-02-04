@@ -1,0 +1,29 @@
+@page "/jobposts/LLMAdvisorComponent"
+@inherits ViewModelBase<ILLMAdvisorViewModel>
+
+<div class="modal fade show" style="display:block; background-color: rgba(0,0,0,0.5);" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@ViewModel.Title</h5>
+                <button type="button" class="btn-close" @onclick="OnClose"></button>
+            </div>
+            <div class="modal-body">
+                @* Your LLM specific content here *@
+                <p>Analyzing Job Post ID: @JobPostId</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="OnClose">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    [Parameter] public int JobPostId { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    protected override void OnParametersSet() => ViewModel.JobPostId = JobPostId;
+}

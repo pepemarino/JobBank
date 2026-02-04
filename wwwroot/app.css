@@ -67,3 +67,7 @@ h1:focus {
     background-color: #f8d7da !important; /* Light red */
     color: #842029;
 }
+
+.modal-backdrop {
+   background-color: rgba(0, 0, 0, 0.5) !important;
+}

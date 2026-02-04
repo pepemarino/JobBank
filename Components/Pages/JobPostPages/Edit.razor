@@ -39,7 +39,11 @@ else
                 </div>
                 <div class="mb-3">
                     <label for="description" class="form-label">Description:</label>                    
-                    <InputTextArea id="description" @bind-Value="JobPost.Description" class="form-control" rows="6"/>
+                    <InputTextArea id="description" @bind-Value="JobPost.Description" class="form-control" rows="6"/><br />
+
+                    <button type="button" @onclick="() => HandleLLMSugestion(JobPost.Id)" class="btn btn-secondary">
+                        Ask LLM for Suggestions
+                    </button>
                     <ValidationMessage For="() => JobPost.Description" class="text-danger" />
                 </div>
                 <div class="mb-3">
@@ -128,7 +132,18 @@ else
     <a href="/jobposts">Back to List</a>
 </div>
 
+@if (IsShowingDetails)
+{
+    <div class="modal-backdrop">
+        <LLMAdvisorComponent JobPostId="JobPostId" OnClose="CloseModal" />
+    </div>
+}
+
 @code {
+
+    private bool IsShowingDetails { get; set; } = false;
+    private int JobPostId { get; set; }
+
     [SupplyParameterFromQuery]
     private int Id { get; set; }
 
@@ -145,6 +160,14 @@ else
             NavigationManager.NavigateTo("notfound");
         }
     }
+
+    public void HandleLLMSugestion(int jobpostId)
+    {
+        JobPostId = jobpostId;
+        IsShowingDetails = true;
+    }
+
+    private void CloseModal() => IsShowingDetails = false;
 
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.

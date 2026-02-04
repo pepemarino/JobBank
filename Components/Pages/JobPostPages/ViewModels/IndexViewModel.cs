@@ -1,6 +1,7 @@
 ﻿using JobBank.Data;
 using JobBank.Models;
 using JobBank.Services;
+using LinqKit;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -75,22 +76,30 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         // Min for the To control: the From value (if set)
         public string? ToMin => FromDateTime?.ToString("yyyy-MM-dd");
 
-        public Expression<Func<JobPost, bool>>? Predicate 
+        /// <summary>
+        /// Builds the filter expression based on the current search criteria.
+        /// </summary>
+        /// <returns>
+        /// Returns an expression that can be used to filter JobPost entities.
+        /// </returns>
+        private Expression<Func<JobPost, bool>> BuildFilter()
         {
-            get
-            {
-                return jp => ApplicationDeclined
-                ? !string.IsNullOrEmpty(JobTypeSearch)
-                    ? jp.ApplicationDeclined == true && jp.JobType!.Contains(JobTypeSearch)
-                    : jp.ApplicationDeclined == true
-                : PendingOnly
-                    ? !string.IsNullOrEmpty(JobTypeSearch)
-                        ? jp.ApplicationDeclined == false && jp.JobType!.Contains(JobTypeSearch)
-                        : jp.ApplicationDeclined == false
-                    : !string.IsNullOrEmpty(JobTypeSearch)
-                        ? jp.JobType!.Contains(JobTypeSearch)
-                        : true;
-            }
+            // Initialize with 'true' so we can append AND conditions
+            var filter = PredicateBuilder.New<JobPost>(true);
+
+            if (!string.IsNullOrEmpty(JobTypeSearch))
+                filter = filter.And(jp => jp.JobType!.Contains(JobTypeSearch));
+
+            if (!string.IsNullOrEmpty(CompanySearch))
+                filter = filter.And(jp => jp.Company!.Contains(CompanySearch));
+
+            // UI handles exclusivity, so we just check which one is active
+            if (ApplicationDeclined)
+                filter = filter.And(jp => jp.ApplicationDeclined);
+            else if (PendingOnly)
+                filter = filter.And(jp => !jp.ApplicationDeclined);
+
+            return filter;
         }
 
         /// <summary>
@@ -98,26 +107,18 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         /// are applied in the server query for efficiency.
         /// Thus only the relevant records are retrieved from the database.
         /// and sorted by ApplicationDate descending.
-        /// The grid component will then page through these results (TODO) and sort the projection.
+        /// The grid component sorts the projection.
+        /// No paging is applied here; the grid component handles that IF we enable it.
         /// </summary>
         public IQueryable<JobPostViewModel> FilteredJobPosts
         {
             get
             {
-                var query = Context.JobPost.AsNoTracking();
-
-                if (Predicate != null) query = query.Where(Predicate);
-
-                if (FromDateTime.HasValue)
-                    query = query.Where(jp => jp.ApplicationDate >= FromDateTime.Value);
-
-                if (ToDateTime.HasValue)
-                {
-                    var endOfDay = ToDateTime.Value.Date.AddDays(1);
-                    query = query.Where(jp => jp.ApplicationDate < endOfDay);
-                }
-
-                return query.OrderByDescending(jp => jp.ApplicationDate)
+                return Context.JobPost.AsNoTracking().AsExpandable()
+                    .Where(BuildFilter())
+                    .Where(jp => !FromDateTime.HasValue || jp.ApplicationDate >= FromDateTime.Value)
+                    .Where(jp => !ToDateTime.HasValue || jp.ApplicationDate < ToDateTime.Value.Date.AddDays(1))
+                    .OrderByDescending(jp => jp.ApplicationDate)
                             .Select(jp => new JobPostViewModel
                             {
                                 Id = jp.Id,
@@ -133,6 +134,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                             });
             }
         }
+
+        public string CompanySearch { get; set; }
 
         public IndexViewModel(IDbContextFactory<EmploymentBankContext> DbFactory, FilteredStateService stateService)
         {

@@ -11,6 +11,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
         string JobTypeSearch { get; set; }
 
+        string CompanySearch { get; set; }
+
         bool ApplicationDeclined { get; set; }
 
         bool DeclinedVisible  { get; set; }
@@ -33,8 +35,6 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         string? ToMin { get; }
 
         EmploymentBankContext Context { get; } 
-
-        Expression<Func<JobPost, bool>>? Predicate { get; }
 
         void LoadRejectedApplication(ChangeEventArgs ev);
 

@@ -29,7 +29,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
-                .AddScoped<ILLMAdvisorViewModel, LLMAdvisorViewModel>()
+                .AddTransient<ILLMAdvisorViewModel, LLMAdvisorViewModel>()
                 .AddTransient<IHomeViewModel, HomeViewModel>()
                 .AddScoped<FilteredStateService>();
 

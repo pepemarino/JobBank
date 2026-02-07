@@ -9,8 +9,40 @@
                 <button type="button" class="btn-close" @onclick="OnClose"></button>
             </div>
             <div class="modal-body">
-                @* Your LLM specific content here *@
-                <p>Analyzing Job Post ID: @JobPostId</p>
+                @if (ViewModel.IsLoading)
+                {
+                    <div class="text-center p-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p>Analyzing Job Post...</p>
+                    </div>
+                }
+                else if (ViewModel.IsError)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        <p>Analyzing Job Post Title: @ViewModel.JobTitle</p>
+                        <p>Error:</p>
+                        <p>@ViewModel.ErrorDescription</p>
+                    </div>
+                }
+                else
+                {
+                    <p>Analyzing Job Post Title: @ViewModel.JobTitle</p>
+                    <p>Interview Questions:</p>
+                    <ul>
+                        @foreach (var question in ViewModel.InterviewQuestions)
+                        {
+                            <li>@question</li>
+                        }
+                    </ul>
+
+                    <p>Study Subjects</p>
+                    <ul>
+                        @foreach (var subject in ViewModel.StudySubjects)   
+                        {
+                            <li>@subject</li>
+                        }
+                    </ul>   
+                }
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" @onclick="OnClose">Close</button>
@@ -25,5 +57,10 @@
     [Parameter] public int JobPostId { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
 
-    protected override void OnParametersSet() => ViewModel.JobPostId = JobPostId;
+    protected override async Task OnParametersSetAsync()
+    {        
+        ViewModel.JobPostId = JobPostId;
+
+        await ViewModel.InitializeAsync();
+    }
 }

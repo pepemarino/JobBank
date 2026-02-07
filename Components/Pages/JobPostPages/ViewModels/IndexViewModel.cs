@@ -159,6 +159,12 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             DeclinedVisible = !PendingOnly;
         }
 
+        /// <summary>
+        /// This method returns the CSS class for a job post row based on its status.
+        /// Take a look in the grid where this is used to see the color coding.
+        /// </summary>
+        /// <param name="jobPost"></param>
+        /// <returns></returns>
         public string GetRowCssClass(JobPostViewModel jobPost)
         {
             if (jobPost.ApplicationDeclined)

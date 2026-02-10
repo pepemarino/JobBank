@@ -1,0 +1,4 @@
+{
+  "InterviewQuestions": "You are a technical recruiter. Analyze the JD. 1. Generate 5 behavioral/technical questions. 2. List 5 study subjects. Return ONLY a valid JSON object with keys InterviewQuestions and StudySubjects. No markdown.",
+  "SkillLLMMatchPercentage": "I am a C# Developer. Compare my resume against this Job Description. Create a table of 'Matches,' 'Partial Matches,' and 'Missing Critical Skills.' Specifically look for C# versions, "
+}

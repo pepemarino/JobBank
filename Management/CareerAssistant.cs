@@ -13,20 +13,11 @@
             _client = new ChatClient(llmModel, apiKey);
         }
 
-        public async Task<string> AnalyzeJobDescription(string jobDescription)
+        public async Task<string> AnalyzeJobDescription(string jobDescription, string prompt)
         {
             List<ChatMessage> messages = new()
             {
-                new SystemChatMessage(@"You are a technical recruiter.
-                    Analyze the provided Job Description.
-                    1. Generate 5 behavioral and 5 technical interview questions.
-                    2. List 5 key study subjects the candidate should master.
-
-                    Return ONLY a valid JSON object with exactly two keys:
-                    - InterviewQuestions (array of strings)
-                    - StudySubjects (array of strings)
-
-                    Return ONLY valid JSON with no markdown formatting or code blocks."),
+                new SystemChatMessage(prompt),
                 new UserChatMessage(jobDescription)
             };
 

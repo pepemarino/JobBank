@@ -2,6 +2,7 @@
 using JobBank.Extensions;
 using JobBank.Management;
 using JobBank.Models;
+using JobBank.StartUpServices;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
@@ -12,9 +13,11 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         private readonly string _errorString = "{\"interviewQuestions\":[\"Grrr! Operation Error - No INtergiew Questions\"],\"studySubjects\":[\"Oh, no!  Operation Error - No Study Subjects.\"]}";
         private readonly string _apiKeyName = "JOBBANK_OPENAI_API_KEY";
         private readonly string _apiKey = string.Empty;
-        private readonly string _llmModel = "gpt-4o"; // Use GPT-4o or GPT-4o-mini for best reasoning on job descriptions
+        private readonly string _llmModel = "gpt-4o-mini"; // Use GPT-4o or GPT-4o-mini for best reasoning on job descriptions
 
-        public LLMAdvisorViewModel(IDbContextFactory<EmploymentBankContext> DbFactory)
+        private readonly PrompService _prompService;
+
+        public LLMAdvisorViewModel(IDbContextFactory<EmploymentBankContext> DbFactory, PrompService prompService)
         {
             _apiKey = Environment.GetEnvironmentVariable(_apiKeyName);
             if (string.IsNullOrWhiteSpace(_apiKey))
@@ -24,6 +27,20 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             }
 
             Context = DbFactory.CreateDbContext();
+            _prompService = prompService ?? throw new ArgumentNullException(nameof(prompService));
+        }
+
+        private PrompService PrompService
+        {
+            get
+            {
+                if (_prompService == null)
+                {
+                    throw new InvalidOperationException(
+                        "PrompService is not initialized. Ensure it is registered in the DI container.");
+                }
+                return _prompService;
+            }
         }
 
         public EmploymentBankContext Context { get; }
@@ -82,7 +99,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 {
                     var carreerAssistant = new CareerAssistant(_apiKey, _llmModel);
 
-                    analysisResult = await carreerAssistant.AnalyzeJobDescription(jobPost.Description!);                    
+                    analysisResult = await carreerAssistant.AnalyzeJobDescription(jobPost.Description!, PrompService.InterviewQuestions);                    
                     analysisCache = await SaveAnalysisToCacheAsync(jobPost.Description!, jobDescriptionHash, _llmModel, "v1", analysisResult);
                 }
 

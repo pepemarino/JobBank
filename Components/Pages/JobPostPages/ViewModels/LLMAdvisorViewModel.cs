@@ -99,7 +99,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 {
                     var carreerAssistant = new CareerAssistant(_apiKey, _llmModel);
 
-                    analysisResult = await carreerAssistant.AnalyzeJobDescription(jobPost.Description!, PrompService.InterviewQuestions);                    
+                    analysisResult = await carreerAssistant.RunLLMAnalysis(jobPost.Description!, PrompService.InterviewQuestions);                    
                     analysisCache = await SaveAnalysisToCacheAsync(jobPost.Description!, jobDescriptionHash, _llmModel, "v1", analysisResult);
                 }
 

@@ -12,18 +12,33 @@
             _client = new ChatClient(llmModel, apiKey);
         }
 
-        public async Task<string> AnalyzeJobDescription(string jobDescription, string prompt)
+        public async Task<string> RunLLMAnalysis(string subjectDescription, string prompt)
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+
+            try
+            {
+                // Pass the token directly into the async flow because the chat client
+                // accepts a cancellation token!
+                return await Analyze(subjectDescription, prompt, cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return "Operation was cancelled by the system due to timeout.";
+            }
+        }
+
+        private async Task<string> Analyze(string subjectDescription, string prompt, CancellationToken token)
         {
             List<ChatMessage> messages = new()
             {
                 new SystemChatMessage(prompt),
-                new UserChatMessage(jobDescription)
+                new UserChatMessage(subjectDescription)
             };
 
-            // Enforce JSON output for easy parsing
             ChatCompletionOptions options = new();
 
-            ChatCompletion completion = await _client.CompleteChatAsync(messages, options);
+            ChatCompletion completion = await _client.CompleteChatAsync(messages, new ChatCompletionOptions(), token);
 
             return ExtractJson(completion.Content[0].Text);
 

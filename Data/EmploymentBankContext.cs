@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using JobBank.Models;
 using Microsoft.EntityFrameworkCore;
-using JobBank.Models;
 
 namespace JobBank.Data
 {
@@ -14,7 +10,12 @@ namespace JobBank.Data
         {
         }
 
-        public DbSet<JobBank.Models.JobPost> JobPost { get; set; } = default!;
-        public DbSet<JobBank.Models.JobAnalysisCache> JobAnalysisCache { get; set; } = default!;
+        public DbSet<JobPost> JobPost { get; set; } = default!;
+
+        public DbSet<JobAnalysisCache> JobAnalysisCache { get; set; } = default!;
+
+        public DbSet<UserSkillMatchReport> UserSkillMatchReport { get; set;} = default!;
+
+        public DbSet<UserSkills> UserSkills { get; set; } = default!;
     }
 }

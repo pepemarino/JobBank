@@ -1,12 +1,12 @@
 using JobBank.Components;
 using JobBank.Components.Pages.Home.ViewModels;
 using JobBank.Components.Pages.JobPostPages.ViewModels;
+using JobBank.Components.Pages.SkillPages.ViewModels;
 using JobBank.Data;
 using JobBank.Services;
+using JobBank.Services.Abstraction;
 using JobBank.StartUpServices;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualBasic;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,10 +52,12 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
+builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()                
                 .AddTransient<ILLMAdvisorViewModel, LLMAdvisorViewModel>()
                 .AddTransient<IHomeViewModel, HomeViewModel>()
-                .AddScoped<FilteredStateService>();
+                .AddScoped<ISkillViewModel, SkillViewModel>()
+                .AddScoped<FilteredStateService>()
+                .AddScoped<ISkillsService, SkillsService>();
 
 var app = builder.Build();
 

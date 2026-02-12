@@ -1,0 +1,42 @@
+﻿@page "/Skills"
+@using Microsoft.AspNetCore.Components.Web
+@rendermode InteractiveServer
+@inherits ViewModelBase<ISkillViewModel>
+
+<PageTitle>@(ViewModel.Title)</PageTitle>
+
+<h1>@(ViewModel.Title)</h1>
+<div class="m-1">
+    <div class="card mb-3">
+        <div class="card shadow-sm border-0" style="max-width: 700px;">
+            <div class="card-body p-4">
+                <div class="form-floating mb-3">
+                    <textarea class="form-control"
+                              id="skillsInput"
+                              placeholder="Enter skills..."
+                              @bind="ViewModel.RawSkills"
+                              @bind:event="oninput"
+                              style="height: 200px; resize: none;"></textarea>
+                    <label for="skillsInput text-muted">Skills (comma separated)</label>
+                </div>
+
+                <div class="d-flex justify-content-end align-items-center gap-3">
+                    <span class="text-muted small">
+                        @((ViewModel.RawSkills?.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)).Count() ?? 0)) skills detected
+                    </span>
+
+                    <button class="btn btn-primary px-4 shadow-sm"
+                            @onclick="() => ViewModel.SaveCommand.Execute(null)"
+                            disabled="@(!ViewModel.SaveCommand.CanExecute(null))">
+                        <i class="bi bi-save me-2"></i>                         
+                        Save Skills
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+@code {
+
+}

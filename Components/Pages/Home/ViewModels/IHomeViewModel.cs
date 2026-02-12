@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace JobBank.Components.Pages.Home.ViewModels
 {
-    public interface IHomeViewModel : IAsyncInitialization
+    public interface IHomeViewModel : IAsyncInitialization, IAsyncDisposable
     {
         string Title { get; set; }
         string Description { get; set; }

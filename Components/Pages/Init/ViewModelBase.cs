@@ -2,7 +2,7 @@
 
 namespace JobBank.Components.Pages.Init
 {
-    public class ViewModelBase<T> : ComponentBase where T : IAsyncInitialization
+    public class ViewModelBase<T> : ComponentBase, IAsyncDisposable where T : IAsyncInitialization
     {
         [Inject] public T ViewModel { get; set; } = default!;
 
@@ -14,10 +14,17 @@ namespace JobBank.Components.Pages.Init
         }
         private void NotifyStateChanged() => InvokeAsync(StateHasChanged);
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
-            // Clean up to prevent memory leaks
-            ViewModel.OnRequestUIUpdate -= NotifyStateChanged;
+            if (ViewModel != null)
+            {
+                ViewModel.OnRequestUIUpdate -= NotifyStateChanged;
+
+                if (ViewModel is IAsyncDisposable asyncDisposable)
+                    await asyncDisposable.DisposeAsync();
+                else if (ViewModel is IDisposable disposable)
+                    disposable.Dispose();
+            }
         }
     }
 }

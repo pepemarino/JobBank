@@ -8,7 +8,7 @@ using System.Text.Json;
 
 namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
-    public class LLMAdvisorViewModel : ILLMAdvisorViewModel, IAsyncDisposable
+    public class LLMAdvisorViewModel : ILLMAdvisorViewModel
     {
         private readonly string _errorString = "{\"interviewQuestions\":[\"Grrr! Operation Error - No INtergiew Questions\"],\"studySubjects\":[\"Oh, no!  Operation Error - No Study Subjects.\"]}";
         private readonly string _apiKeyName = "JOBBANK_OPENAI_API_KEY";
@@ -118,7 +118,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 OnRequestUIUpdate?.Invoke();
             }
 
-            Task<JobAnalysisCache> SaveAnalysisToCacheAsync(string jobDescription, string jobDescriptionHash, string modelUsed, string promptVersion, string analysisResult)
+            async Task<JobAnalysisCache> SaveAnalysisToCacheAsync(string jobDescription, string jobDescriptionHash, string modelUsed, string promptVersion, string analysisResult)
             {
                 var newCacheEntry = new JobAnalysisCache
                 {
@@ -130,8 +130,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                     Result = analysisResult
                 };
                 Context.JobAnalysisCache.Add(newCacheEntry);
-                Context.SaveChangesAsync();
-                return Task.FromResult(newCacheEntry);
+                await Context.SaveChangesAsync();
+                return newCacheEntry;
             }
 
             void UILoadCachedAnalysis(JobAnalysisCache analysisCache)
@@ -158,6 +158,11 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 Title = $"LLM Advisor - {errorType}";
                 ErrorDescription = errorMessage;
             }
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
         }
     }
 }

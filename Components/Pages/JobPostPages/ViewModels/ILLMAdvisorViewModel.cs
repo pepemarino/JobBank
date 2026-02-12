@@ -3,7 +3,7 @@ using JobBank.Data;
 
 namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
-    public interface ILLMAdvisorViewModel : IAsyncInitialization
+    public interface ILLMAdvisorViewModel : IAsyncInitialization, IAsyncDisposable
     {
         int JobPostId { get; set; }
         string Title { get; set; }

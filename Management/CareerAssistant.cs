@@ -12,9 +12,9 @@
             _client = new ChatClient(llmModel, apiKey);
         }
 
-        public async Task<string> RunLLMAnalysis(string subjectDescription, string prompt)
+        public async Task<string> RunLLMAnalysis(string subjectDescription, string prompt, long timeoutSeconds)
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
 
             try
             {

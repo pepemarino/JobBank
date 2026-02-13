@@ -12,20 +12,13 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
     {
         private readonly string _errorString = "{\"interviewQuestions\":[\"Grrr! Operation Error - No INtergiew Questions\"],\"studySubjects\":[\"Oh, no!  Operation Error - No Study Subjects.\"]}";
         private readonly string _apiKeyName = "JOBBANK_OPENAI_API_KEY";
-        private readonly string _apiKey = string.Empty;
+        private string _apiKey = string.Empty;
         private readonly string _llmModel = "gpt-4o-mini"; // Use GPT-4o or GPT-4o-mini for best reasoning on job descriptions
 
         private readonly PrompService _prompService;
 
         public LLMAdvisorViewModel(IDbContextFactory<EmploymentBankContext> DbFactory, PrompService prompService)
-        {
-            _apiKey = Environment.GetEnvironmentVariable(_apiKeyName);
-            if (string.IsNullOrWhiteSpace(_apiKey))
-            {
-                throw new InvalidOperationException(
-                    $"OpenAI API Key not found. Set environment variable '{_apiKeyName}'.");
-            }
-
+        {            
             Context = DbFactory.CreateDbContext();
             _prompService = prompService ?? throw new ArgumentNullException(nameof(prompService));
         }
@@ -73,6 +66,15 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
             try
             {
+                _apiKey = Environment.GetEnvironmentVariable("_apiKeyName");
+                if (string.IsNullOrWhiteSpace(_apiKey))
+                {
+                    IsError = true;
+                    UILoadError("Configuration Error",
+                        $"API key not configured. Set environment variable '{_apiKeyName}'.");
+                    return;
+                }
+
                 // Get JobPost 
                 var jobPost = await Context
                     .JobPost.AsNoTracking()
@@ -99,7 +101,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 {
                     var carreerAssistant = new CareerAssistant(_apiKey, _llmModel);
 
-                    analysisResult = await carreerAssistant.RunLLMAnalysis(jobPost.Description!, PrompService.InterviewQuestions);                    
+                    analysisResult = await carreerAssistant.RunLLMAnalysis(jobPost.Description!, PrompService.InterviewQuestions, PrompService.TimeoutSeconds);                    
                     analysisCache = await SaveAnalysisToCacheAsync(jobPost.Description!, jobDescriptionHash, _llmModel, "v1", analysisResult);
                 }
 

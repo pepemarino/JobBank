@@ -1,28 +1,43 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿<div class="top-row ps-3 navbar navbar-dark shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">Job Bank</a>
+        <a class="navbar-brand fw-bold" href="">
+            <i class="bi bi-briefcase-fill me-2"></i>Job Bank
+        </a>
     </div>
 </div>
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
+    <nav class="flex-column mt-2">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Job Bank Application Summary
+            <NavLink class="nav-link rounded-2 mb-1" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-speedometer2 me-2" aria-hidden="true"></span> Summary
             </NavLink>
         </div>
+
+        <div class="nav-item px-3 mt-3 mb-1">
+            <small class="text-uppercase text-muted fw-bold p-2" style="font-size: 0.75rem; letter-spacing: 1px;">Management</small>
+        </div>
+
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/jobposts">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Jobs
+            <NavLink class="nav-link rounded-2 mb-1" href="/jobposts">
+                <span class="bi bi-journal-text me-2" aria-hidden="true"></span> Job Posts
             </NavLink>
         </div>
+
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/Skills">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Skills
+            <NavLink class="nav-link rounded-2 mb-1" href="/Skills">
+                <span class="bi bi-stars me-2" aria-hidden="true"></span> My Skills
+            </NavLink>
+        </div>
+
+        <hr class="mx-3 text-secondary" />
+
+        <div class="nav-item px-3 mt-2">
+            <NavLink class="nav-link btn btn-primary text-white text-center justify-content-center" href="/jobposts/create">
+                <span class="bi bi-plus-circle me-2" aria-hidden="true"></span> Add New Job
             </NavLink>
         </div>
     </nav>
 </div>
-

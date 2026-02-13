@@ -4,62 +4,151 @@
 @inject IDbContextFactory<JobBank.Data.EmploymentBankContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Details</PageTitle>
+<PageTitle>Job Details</PageTitle>
 
-<h1>Details</h1>
-
-<div>
-    <h2>JobPost</h2>
-    <hr />
+<div class="container pb-5">
     @if (jobpost is null)
     {
-        <p><em>Loading...</em></p>
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading job details...</p>
+        </div>
     }
-    else {
-        <dl class="row">
-            <dt class="col-sm-2 my-2">Title</dt>
-            <dd class="col-sm-10 my-2">@jobpost.Title</dd>
-            <dt class="col-sm-2 my-2">Applied</dt>
-            <dd class="col-sm-10 my-2">@jobpost.IsApplied</dd>
-            <dt class="col-sm-2 my-2">Rejected</dt>
-            <dd class="col-sm-10 my-2">@jobpost.ApplicationDeclined</dd>
-            <dt class="col-sm-2 my-2">Description</dt>
-            <dd class="col-sm-10 my-2">
-                <div class="col-sm-6 my-2">@jobpost.Description</div></dd>
-            <dt class="col-sm-2 my-2">Company</dt>
-            <dd class="col-sm-10 my-2">@jobpost.Company</dd>
-            <dt class="col-sm-2 my-2">Impression</dt>
-            <dd class="col-sm-10 my-2">@jobpost.Impression</dd>
-            <dt class="col-sm-2 my-2">To Do</dt>
-            <dd class="col-sm-10 my-2">@jobpost.ActionToTake</dd>
-            <dt class="col-sm-2 my-2">Work</dt>
-            <dd class="col-sm-10 my-2">@jobpost.JobType</dd>
-            <dt class="col-sm-2 my-2">HQ</dt>
-            <dd class="col-sm-10 my-2">@jobpost.JobBase</dd>
-            <dt class="col-sm-2 my-2">Applied</dt>
-            <dd class="col-sm-10 my-2">@jobpost.ApplicationType</dd>
-            <dt class="col-sm-2 my-2">Application Date</dt>
-            <dd class="col-sm-10 my-2">@jobpost.ApplicationDate</dd>
-            <dt class="col-sm-2 my-2">Response Date</dt>
-            <dd class="col-sm-10 my-2">@jobpost.ResponseDate</dd>
-            <dt class="col-sm-2 my-2">Interview Date</dt>
-            <dd class="col-sm-10 my-2">@jobpost.InterviewDate</dd>
-            <dt class="col-sm-2 my-2">Interview Type</dt>
-            <dd class="col-sm-10 my-2">@jobpost.InterviewType</dd>
-            <dt class="col-sm-2 my-2">Interview Outcome</dt>
-            <dd class="col-sm-10 my-2">@jobpost.InterviewOutcome</dd>
-            <dt class="col-sm-2 my-2">Challenge</dt>
-            <dd class="col-sm-10 my-2">@jobpost.ItHasChallenge</dd>
-            <dt class="col-sm-2 my-2">Contact Phone</dt>
-            <dd class="col-sm-10 my-2">@jobpost.ContactPhone</dd>
-            <dt class="col-sm-2 my-2">Contact Email</dt>
-            <dd class="col-sm-10 my-2">@jobpost.ContactEmail</dd>
-            <dt class="col-sm-2 my-2">Comments</dt>
-            <dd class="col-sm-10 my-2">@jobpost.Comments</dd>
-        </dl>
-        <div>
-            <a href="@($"/jobposts/edit?id={jobpost.Id}")">Edit</a> |
-            <a href="@($"/jobposts")">Back to List</a>
+    else
+    {
+        <div class="d-flex justify-content-between align-items-center my-4">
+            <div>
+                <h1 class="display-5 mb-0">@jobpost.Title</h1>
+                <p class="text-muted fs-4">@jobpost.Company</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="@($"/jobposts/edit?id={jobpost.Id}")" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> Edit Post
+                </a>
+                <a href="/jobposts" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-light border-0">
+                    <div class="card-body d-flex justify-content-around text-center">
+                        <div>
+                            <small class="text-uppercase text-muted d-block">Status</small>
+                            @if (jobpost.ApplicationDeclined)
+                            {
+                                <span class="badge bg-danger fs-6">Declined</span>
+                            }
+                            else if (jobpost.IsApplied)
+                            {
+                                <span class="badge bg-success fs-6">Applied</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark fs-6">Interested</span>
+                            }
+                        </div>
+                        <div class="vr"></div>
+                        <div>
+                            <small class="text-uppercase text-muted d-block">Work Type</small>
+                            <span class="fw-bold">@(jobpost.JobType ?? "N/A")</span>
+                        </div>
+                        <div class="vr"></div>
+                        <div>
+                            <small class="text-uppercase text-muted d-block">Next Step</small>
+                            <span class="text-primary fw-bold">@(jobpost.ActionToTake ?? "None")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0 mt-1">Description & Notes</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted" style="white-space: pre-wrap;">@jobpost.Description</p>
+
+                        <hr />
+
+                        <h6>Initial Impressions</h6>
+                        <p>@(jobpost.Impression ?? "No impressions recorded.")</p>
+
+                        <h6 class="mt-3">Comments</h6>
+                        <p class="mb-0 italic text-secondary">@jobpost.Comments</p>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0 mt-1">Interview Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-6 mb-3">
+                                <label class="text-muted small d-block">Interview Date</label>
+                                <span>@(jobpost.InterviewDate?.ToShortDateString() ?? "Not scheduled")</span>
+                            </div>
+                            <div class="col-sm-6 mb-3">
+                                <label class="text-muted small d-block">Interview Type</label>
+                                <span>@jobpost.InterviewType</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="text-muted small d-block">Outcome</label>
+                                <span class="fw-bold">@jobpost.InterviewOutcome</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="text-muted small d-block">Challenge Included</label>
+                                <span>@(jobpost.ItHasChallenge ? "Yes ✅" : "No")</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm mb-4 border-start border-primary border-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Timeline</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3">
+                                <i class="bi bi-send text-primary me-2"></i>
+                                <small class="text-muted d-block">Applied via @jobpost.ApplicationType</small>
+                                <strong>@(jobpost.ApplicationDate?.ToShortDateString() ?? "Pending")</strong>
+                            </li>
+                            <li>
+                                <i class="bi bi-chat-dots text-primary me-2"></i>
+                                <small class="text-muted d-block">Last Response</small>
+                                <strong>@(jobpost.ResponseDate?.ToShortDateString() ?? "No response yet")</strong>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Contact Info</h5>
+                        <div class="mb-3">
+                            <i class="bi bi-envelope me-2"></i>
+                            <a href="mailto:@jobpost.ContactEmail">@jobpost.ContactEmail</a>
+                        </div>
+                        <div>
+                            <i class="bi bi-telephone me-2"></i>
+                            <span>@jobpost.ContactPhone</span>
+                        </div>
+                        <hr />
+                        <small class="text-muted d-block">Location / HQ</small>
+                        <span>@jobpost.JobBase</span>
+                    </div>
+                </div>
+            </div>
         </div>
     }
 </div>

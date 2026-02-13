@@ -5,114 +5,121 @@
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Create Job Post</PageTitle>
 
-<h1>Create</h1>
-
-<h2>JobPost</h2>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <EditForm method="post" Model="JobPost" OnValidSubmit="AddJobPost" FormName="create" Enhance>
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="mb-3">
-                <label for="title" class="form-label">Title:</label>
-                <InputText id="title" @bind-Value="JobPost.Title" class="form-control" />
-                <ValidationMessage For="() => JobPost.Title" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="isapplied" class="form-label">IsApplied:</label>
-                <InputCheckbox id="isapplied" @bind-Value="JobPost.IsApplied" class="form-check-input" />
-                <ValidationMessage For="() => JobPost.IsApplied" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="description" class="form-label">Description:</label>
-                <InputTextArea rows="6" id="description" @bind-Value="JobPost.Description" class="form-control" />
-                <ValidationMessage For="() => JobPost.Description" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="company" class="form-label">Company:</label>
-                <InputText id="company" @bind-Value="JobPost.Company" class="form-control" />
-                <ValidationMessage For="() => JobPost.Company" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="impression" class="form-label">Impression:</label>
-                <InputText id="impression" @bind-Value="JobPost.Impression" class="form-control" />
-                <ValidationMessage For="() => JobPost.Impression" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="actiontotake" class="form-label">ActionToTake:</label>
-                <InputText id="actiontotake" @bind-Value="JobPost.ActionToTake" class="form-control" />
-                <ValidationMessage For="() => JobPost.ActionToTake" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="jobtype" class="form-label">JobType:</label>
-                <InputText id="jobtype" @bind-Value="JobPost.JobType" class="form-control" />
-                <ValidationMessage For="() => JobPost.JobType" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="jobbase" class="form-label">JobBase:</label>
-                <InputText id="jobbase" @bind-Value="JobPost.JobBase" class="form-control" />
-                <ValidationMessage For="() => JobPost.JobBase" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="applicationtype" class="form-label">ApplicationType:</label>
-                <InputText id="applicationtype" @bind-Value="JobPost.ApplicationType" class="form-control" />
-                <ValidationMessage For="() => JobPost.ApplicationType" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="applicationdate" class="form-label">ApplicationDate:</label>
-                <InputDate id="applicationdate" @bind-Value="JobPost.ApplicationDate" class="form-control" />
-                <ValidationMessage For="() => JobPost.ApplicationDate" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="responsedate" class="form-label">ResponseDate:</label>
-                <InputDate id="responsedate" @bind-Value="JobPost.ResponseDate" class="form-control" />
-                <ValidationMessage For="() => JobPost.ResponseDate" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="interviewdate" class="form-label">InterviewDate:</label>
-                <InputDate id="interviewdate" @bind-Value="JobPost.InterviewDate" class="form-control" />
-                <ValidationMessage For="() => JobPost.InterviewDate" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="interviewtype" class="form-label">InterviewType:</label>
-                <InputText id="interviewtype" @bind-Value="JobPost.InterviewType" class="form-control" />
-                <ValidationMessage For="() => JobPost.InterviewType" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="interviewoutcome" class="form-label">InterviewOutcome:</label>
-                <InputText id="interviewoutcome" @bind-Value="JobPost.InterviewOutcome" class="form-control" />
-                <ValidationMessage For="() => JobPost.InterviewOutcome" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="ithaschallenge" class="form-label">ItHasChallenge:</label>
-                <InputCheckbox id="ithaschallenge" @bind-Value="JobPost.ItHasChallenge" class="form-check-input" />
-                <ValidationMessage For="() => JobPost.ItHasChallenge" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="contactphone" class="form-label">ContactPhone:</label>
-                <InputText id="contactphone" @bind-Value="JobPost.ContactPhone" class="form-control" />
-                <ValidationMessage For="() => JobPost.ContactPhone" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="contactemail" class="form-label">ContactEmail:</label>
-                <InputText id="contactemail" @bind-Value="JobPost.ContactEmail" class="form-control" />
-                <ValidationMessage For="() => JobPost.ContactEmail" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="comments" class="form-label">Comments:</label>
-                <InputText id="comments" @bind-Value="JobPost.Comments" class="form-control" />
-                <ValidationMessage For="() => JobPost.Comments" class="text-danger" />
-            </div>
-            <button type="submit" class="btn btn-primary">Create</button>
-        </EditForm>
+<div class="container pb-5">
+    <div class="d-flex justify-content-between align-items-center my-4">
+        <h1>Create Job Post</h1>
+        <a href="/jobposts" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
     </div>
-</div>
 
-<div>
-    <a href="/jobposts">Back to List</a>
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <EditForm method="post" Model="JobPost" OnValidSubmit="AddJobPost" FormName="create" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary class="alert alert-danger" role="alert" />
+
+                <h5 class="text-primary mb-3">Job Details</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="title" class="form-label fw-bold">Job Title</label>
+                        <InputText id="title" @bind-Value="JobPost.Title" class="form-control" placeholder="e.g. Senior Developer" />
+                        <ValidationMessage For="() => JobPost.Title" class="text-danger" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="company" class="form-label fw-bold">Company</label>
+                        <InputText id="company" @bind-Value="JobPost.Company" class="form-control" placeholder="Company Name" />
+                        <ValidationMessage For="() => JobPost.Company" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label fw-bold">Description</label>
+                    <InputTextArea rows="4" id="description" @bind-Value="JobPost.Description" class="form-control" />
+                    <ValidationMessage For="() => JobPost.Description" class="text-danger" />
+                </div>
+
+                <hr class="my-4" />
+
+                <h5 class="text-primary mb-3">Classification</h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="jobtype" class="form-label fw-bold">Job Type</label>
+                        <InputText id="jobtype" @bind-Value="JobPost.JobType" class="form-control" placeholder="Full-time, Contract..." />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="jobbase" class="form-label fw-bold">Work Location</label>
+                        <InputText id="jobbase" @bind-Value="JobPost.JobBase" class="form-control" placeholder="Remote, Hybrid, On-site" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="applicationtype" class="form-label fw-bold">App Method</label>
+                        <InputText id="applicationtype" @bind-Value="JobPost.ApplicationType" class="form-control" placeholder="LinkedIn, Referral..." />
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <h5 class="text-primary mb-3">Timeline & Status</h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="applicationdate" class="form-label fw-bold">Applied On</label>
+                        <InputDate id="applicationdate" @bind-Value="JobPost.ApplicationDate" class="form-control" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="responsedate" class="form-label fw-bold">Response Received</label>
+                        <InputDate id="responsedate" @bind-Value="JobPost.ResponseDate" class="form-control" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="interviewdate" class="form-label fw-bold">Interview Date</label>
+                        <InputDate id="interviewdate" @bind-Value="JobPost.InterviewDate" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="row align-items-center mt-2">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check form-switch mt-2">
+                            <InputCheckbox id="isapplied" @bind-Value="JobPost.IsApplied" class="form-check-input" />
+                            <label for="isapplied" class="form-check-label fw-bold">Mark as Applied</label>
+                        </div>
+                        <div class="form-check form-switch mt-2">
+                            <InputCheckbox id="ithaschallenge" @bind-Value="JobPost.ItHasChallenge" class="form-check-input" />
+                            <label for="ithaschallenge" class="form-check-label fw-bold">Coding Challenge Included?</label>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <h5 class="text-primary mb-3">Contact & Follow-up</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="contactemail" class="form-label fw-bold">Contact Email</label>
+                        <InputText id="contactemail" @bind-Value="JobPost.ContactEmail" class="form-control" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="contactphone" class="form-label fw-bold">Contact Phone</label>
+                        <InputText id="contactphone" @bind-Value="JobPost.ContactPhone" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="impression" class="form-label fw-bold">Initial Impression</label>
+                    <InputText id="impression" @bind-Value="JobPost.Impression" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="comments" class="form-label fw-bold">Notes / Comments</label>
+                    <InputTextArea id="comments" @bind-Value="JobPost.Comments" class="form-control" rows="2" />
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Save Job Post</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
 </div>
 
 @code {

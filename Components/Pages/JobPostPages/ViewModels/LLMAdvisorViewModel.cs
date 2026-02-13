@@ -66,7 +66,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
             try
             {
-                _apiKey = Environment.GetEnvironmentVariable("_apiKeyName");
+                _apiKey = Environment.GetEnvironmentVariable(_apiKeyName);
                 if (string.IsNullOrWhiteSpace(_apiKey))
                 {
                     IsError = true;

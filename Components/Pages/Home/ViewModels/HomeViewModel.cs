@@ -33,7 +33,7 @@ namespace JobBank.Components.Pages.Home.ViewModels
             ToDate = StateService.ToDate;
 
             Context = DbFactory.CreateDbContext();
-            this.Title = "Job Bank Active Applications";
+            this.Title = "WORKS Commons Active Applications";
 
             // Initialize Config and ensure Data collections exist (ChartJs.Blazor exposes Data as a read-only property).
             this.Config = new BarConfig();

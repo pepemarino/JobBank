@@ -24,11 +24,18 @@
                     <span class="text-muted small">
                         @((ViewModel.RawSkills?.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)).Count() ?? 0)) skills detected
                     </span>
-
-                    <button class="btn btn-primary px-4 shadow-sm"
+                    <button class="btn @(ViewModel.SaveCommand.CanExecute(null) ? "btn-primary" : "btn-outline-secondary") px-4 shadow-sm"
                             @onclick="() => ViewModel.SaveCommand.Execute(null)"
                             disabled="@(!ViewModel.SaveCommand.CanExecute(null))">
-                        <i class="bi bi-save me-2"></i>                         
+
+                        @if (!ViewModel.SaveCommand.CanExecute(null))
+                        {
+                            <i class="bi bi-lock-fill me-2"></i> @* Visual hint that it's locked *@
+                        }
+                        else
+                        {
+                            <i class="bi bi-save me-2"></i>
+                        }
                         Save Skills
                     </button>
                 </div>

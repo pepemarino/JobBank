@@ -19,6 +19,12 @@ namespace JobBank.ModelConfiguration
              builder
                 .HasIndex(b => b.Hash)               
                 .IsUnique();
+
+            builder
+                .HasOne(b => b.JobPost)
+                .WithOne(j => j.UserSkillMatchReport)
+                .HasForeignKey<UserSkillMatchReport>(b => b.JobPostId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

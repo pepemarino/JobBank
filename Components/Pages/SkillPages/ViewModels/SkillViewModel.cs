@@ -11,10 +11,10 @@ namespace JobBank.Components.Pages.SkillPages.ViewModels
         public SkillViewModel(ISkillsService skillsService)
         {
             this._skillsService = skillsService;
-            SaveCommand = new RelayCommand(ExecuteSave, CanExecute);
+            SaveCommand = new AsyncRelayCommand(ExecuteSaveAsync, CanExecute);
         }
 
-        private void ExecuteSave()
+        private async Task ExecuteSaveAsync()
         {
             try
             {
@@ -24,7 +24,7 @@ namespace JobBank.Components.Pages.SkillPages.ViewModels
                     RawSkills = RawSkills,
                     Version = Version
                 };
-                Task.Run(() => _skillsService.UpdateOrAddUserSkillsAsync(skillsDto));  // smell?
+                await _skillsService.UpdateOrAddUserSkillsAsync(skillsDto);
             }
             catch (Exception ex)
             {
@@ -51,7 +51,7 @@ namespace JobBank.Components.Pages.SkillPages.ViewModels
             }
         }
 
-        public RelayCommand SaveCommand { get; }
+        public AsyncRelayCommand SaveCommand { get; }
         public int Version { get; set; }
         public int? UserId { get; set; }        
 
@@ -65,12 +65,21 @@ namespace JobBank.Components.Pages.SkillPages.ViewModels
             {
                 Version = skillSet.Version;
                 UserId = skillSet.UserId;
-                RawSkills = skillSet.RawSkills;
+                _rawSkills = skillSet.RawSkills;  // Double Triggering when setting the property.
+                                                  // Set backing field directly to avoid double-triggering
             }
             else
             {
                 Version = 1;
             }
+
+            // Force the command to re-evaluate after initialization
+            SaveCommand.NotifyCanExecuteChanged();
+            OnRequestUIUpdate?.Invoke();
+
+            // TODO: Still problems with the state of the save button after initialization.
+            // It should be disabled if there are no changes, but it is enabled.
+            // Need more coffe, donuts and debugging to figure this out.
         }
     }
 }

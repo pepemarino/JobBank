@@ -62,9 +62,15 @@
                     <div class="mb-3">
                         <label for="description" class="form-label fw-bold">Job Description</label>
                         <InputTextArea id="description" @bind-Value="JobPost.Description" class="form-control mb-2" rows="6" />
-                        <button type="button" @onclick="() => HandleLLMSugestion(JobPost.Id)" class="btn btn-sm btn-info text-white">
-                            <i class="bi bi-cpu"></i> Ask AI for Suggestions
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" @onclick="() => HandleLLMSugestion(JobPost.Id)" class="btn btn-sm btn-primary">
+                                <i class="bi bi-cpu"></i> AI Suggestions
+                            </button>
+                            <button type="button" @onclick="() => HandleSkillAnalysis(JobPost.Id)" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-bullseye"></i> Skill Analysis
+                            </button>
+                        </div>
+
                         <ValidationMessage For="() => JobPost.Description" class="text-danger" />
                     </div>
 
@@ -176,16 +182,23 @@
     }
 </div>
 
-@if (IsShowingDetails)
+@if (IsShowingJobDescriptionAnalysis)
 {
     <div class="modal-backdrop">
         <LLMAdvisorComponent JobPostId="@JobPostId" OnClose="CloseModal" />
     </div>
 }
 
-@code {
+@if (IsShowingSkillSetAnalysis)
+{
+    <div class="modal-backdrop">
+        <SkillMacthAnalysis JobPostId="@JobPostId" OnClose="CloseModal" />
+    </div>
+}
 
-    private bool IsShowingDetails { get; set; } = false;
+@code {
+    private bool IsShowingJobDescriptionAnalysis { get; set; } = false;
+    private bool IsShowingSkillSetAnalysis { get; set; } = false;
     private int JobPostId { get; set; }
 
     [SupplyParameterFromQuery]
@@ -208,10 +221,20 @@
     public void HandleLLMSugestion(int jobpostId)
     {
         JobPostId = jobpostId;
-        IsShowingDetails = true;
+        IsShowingJobDescriptionAnalysis = true;
     }
 
-    private void CloseModal() => IsShowingDetails = false;
+    public void HandleSkillAnalysis(int jobpostId)
+    {
+        JobPostId = jobpostId;
+        IsShowingSkillSetAnalysis = true;
+    }
+
+    private void CloseModal() 
+    { 
+        IsShowingJobDescriptionAnalysis = false;
+        IsShowingSkillSetAnalysis = false;
+    }
 
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.

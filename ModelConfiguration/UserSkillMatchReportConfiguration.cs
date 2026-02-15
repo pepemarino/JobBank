@@ -16,7 +16,11 @@ namespace JobBank.ModelConfiguration
                 .Property(b => b.CreatedDate)
                 .HasDefaultValueSql("GETUTCDATE()");
 
-             builder
+            builder
+                .Property(b => b.Timestamp)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            builder
                 .HasIndex(b => b.Hash)               
                 .IsUnique();
 

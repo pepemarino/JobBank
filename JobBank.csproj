@@ -7,6 +7,7 @@
   </PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
 		<PackageReference Include="ChartJs.Blazor" Version="1.1.0" />
 		<PackageReference Include="ChartJs.Blazor.Fork" Version="2.0.2" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
@@ -23,16 +24,10 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Options" Version="10.0.0" />
-
-		<!-- FIX: Updated to v10 to match your target framework -->
-		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.0" />
-
-		<!-- FIX: Direct reference to solve the 'Microsoft.CodeAnalysis.Common' conflict -->
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.0" />		
 		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.14.0" />
-
 		<PackageReference Include="OpenAI" Version="2.8.0" />
 	</ItemGroup>
-
 
 	<ItemGroup>
     <Folder Include="Migrations\" />

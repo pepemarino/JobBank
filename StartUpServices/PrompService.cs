@@ -17,5 +17,8 @@
         /// LLM enough time to respond and not keeping the user waiting too long.
         /// </summary>
         public long TimeoutSeconds { get; set; } = 45;
+
+        public string ApiKeyName { get; set; } = string.Empty;
+        public string LLMModel { get; set; } = string.Empty;
     }
 }

@@ -9,18 +9,19 @@ using System.Text.Json;
 namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
     public class LLMAdvisorViewModel : ILLMAdvisorViewModel
-    {
-        private readonly string _errorString = "{\"interviewQuestions\":[\"Grrr! Operation Error - No INtergiew Questions\"],\"studySubjects\":[\"Oh, no!  Operation Error - No Study Subjects.\"]}";
-        private readonly string _apiKeyName = "JOBBANK_OPENAI_API_KEY";
+    {        
+        private readonly string _apiKeyName;
         private string _apiKey = string.Empty;
-        private readonly string _llmModel = "gpt-4o-mini"; // Use GPT-4o or GPT-4o-mini for best reasoning on job descriptions
+        private readonly string _llmModel;          // Use GPT-4o or GPT-4o-mini for best reasoning on job descriptions
 
         private readonly PrompService _prompService;
 
         public LLMAdvisorViewModel(IDbContextFactory<EmploymentBankContext> DbFactory, PrompService prompService)
         {            
             Context = DbFactory.CreateDbContext();
-            _prompService = prompService ?? throw new ArgumentNullException(nameof(prompService));
+            _prompService = prompService;
+            _llmModel = _prompService.LLMModel;
+            _apiKeyName = _prompService.ApiKeyName;
         }
 
         private PrompService PrompService

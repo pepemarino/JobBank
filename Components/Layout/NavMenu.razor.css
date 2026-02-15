@@ -11,9 +11,9 @@
     background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.75rem rgba(255, 255, 255, 0.1);
 }
 
-.navbar-toggler:checked {
-    background-color: rgba(255, 255, 255, 0.5);
-}
+    .navbar-toggler:checked {
+        background-color: rgba(255, 255, 255, 0.5);
+    }
 
 .top-row {
     height: 3.5rem;
@@ -71,15 +71,15 @@
         width: 100%;
     }
 
-.nav-item ::deep a.active {
-    background-color: rgba(255,255,255,0.37);
-    color: white;
-}
+    .nav-item ::deep a.active {
+        background-color: rgba(255,255,255,0.37);
+        color: white;
+    }
 
-.nav-item ::deep .nav-link:hover {
-    background-color: rgba(255,255,255,0.1);
-    color: white;
-}
+    .nav-item ::deep .nav-link:hover {
+        background-color: rgba(255,255,255,0.1);
+        color: white;
+    }
 
 .nav-scrollable {
     display: none;
@@ -97,7 +97,6 @@
     .nav-scrollable {
         /* Never collapse the sidebar for wide screens */
         display: block;
-
         /* Allow sidebar to scroll for tall menus */
         height: calc(100vh - 3.5rem);
         overflow-y: auto;
@@ -110,3 +109,59 @@
     border-left: 4px solid #0d6efd; /* Adds a nice blue accent line */
     font-weight: 600;
 }
+
+
+.navbar-brand {
+    font-size: 1.5rem;
+}
+
+.nav-link {
+    font-size: 1.15rem;
+    padding: 0.75rem 1rem; /* Adds a bit more 'click area' for the larger text */
+}
+
+
+.nav-item small {
+    font-size: 0.9rem !important;
+}
+
+.nav-link span {
+    font-size: 1.25rem;
+    margin-right: 0.75rem;
+}
+
+.sidebar {
+    width: 280px; /* Default is usually 250px, a bit more room */
+}
+
+.nav-item {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}
+
+.nav-link span {
+    font-size: 1.25rem;
+    vertical-align: middle;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    font-size: 1.15rem;
+    padding: 0.5rem 1rem;
+}
+
+    .nav-link span,
+    .nav-link i {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem; /* Space between icon and text */
+        line-height: 1;
+        height: 1em;
+    }
+
+    .nav-link.btn {
+        display: inline-flex;
+        width: 100%;
+        justify-content: center;

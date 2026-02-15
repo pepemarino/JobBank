@@ -1,10 +1,6 @@
-﻿using JobBank.ModelConfiguration;
-using Microsoft.EntityFrameworkCore;
-
-namespace JobBank.Models
+﻿namespace JobBank.ModelsDTO
 {
-    [EntityTypeConfiguration(typeof(UserSkillMatchReportConfiguration))]
-    public class UserSkillMatchReport
+    public class UserSkillMatchReportDTO
     {
         public int Id { get; set; }
 
@@ -15,15 +11,12 @@ namespace JobBank.Models
         public string RawSkillSet { get; set; } = string.Empty;
 
         public string JobDescription { get; set; } = string.Empty;
-        
+
         public int Version { get; set; } = 1;
-        public DateTime CreatedDate { get; set; }
-        public DateTime? Timestamp { get; set; }
         public string? ModelUsed { get; set; }
         public string? PromptVersion { get; set; }
         public string? Result { get; set; }
 
         public int JobPostId { get; set; }
-        public virtual JobPost JobPost  { get; set; }
     }
 }

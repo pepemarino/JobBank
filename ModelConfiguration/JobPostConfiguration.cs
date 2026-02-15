@@ -20,6 +20,9 @@ namespace JobBank.ModelConfiguration
              builder
                 .Property(b => b.ApplicationDate)
                 .IsRequired();
+            builder
+                .Property(b => b.Timestamp)
+                .HasDefaultValueSql("GETUTCDATE()");
         }
     }
 }

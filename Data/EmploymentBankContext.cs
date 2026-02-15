@@ -10,6 +10,11 @@ namespace JobBank.Data
         {
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(EmploymentBankContext).Assembly);
+        }
+
         public DbSet<JobPost> JobPost { get; set; } = default!;
 
         public DbSet<JobAnalysisCache> JobAnalysisCache { get; set; } = default!;

@@ -41,7 +41,7 @@ builder.Services.AddSingleton(llmPrompts);
 #endregion Load LLM Prompts from JSON file - Fail fast is not available
 
 builder.Services.AddDbContextFactory<EmploymentBankContext>(options =>
-    options.UseLazyLoadingProxies().UseSqlServer(connStr)
+    options.UseSqlServer(connStr)
 );
 
 builder.Services.AddQuickGridEntityFrameworkAdapter();
@@ -55,9 +55,13 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()                
                 .AddTransient<ILLMAdvisorViewModel, LLMAdvisorViewModel>()
                 .AddTransient<IHomeViewModel, HomeViewModel>()
-                .AddScoped<ISkillViewModel, SkillViewModel>()
+                .AddScoped<ISkillViewModel, SkillViewModel>() 
+                .AddScoped<ISkillMacthAnalysisViewModel, SkillMacthAnalysisViewModel>()
                 .AddScoped<FilteredStateService>()
-                .AddScoped<ISkillsService, SkillsService>();
+                .AddScoped<IJobPostService, JobPostService>()
+                .AddScoped<ISkillsService, SkillsService>(); 
+
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 var app = builder.Build();
 

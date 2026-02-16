@@ -1,13 +1,15 @@
 ﻿using JobBank.Data;
 using JobBank.Models;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.QuickGrid;
 using System.Linq.Expressions;
 
 namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
     public interface IIndexViewModel
     {
-        IQueryable<JobPostViewModel> FilteredJobPosts { get; }
+        ValueTask<GridItemsProviderResult<JobPostViewModel>> GetJobPosts(GridItemsProviderRequest<JobPostViewModel> request);
+        PaginationState Pagination { get; }
 
         string JobTypeSearch { get; set; }
 
@@ -33,8 +35,6 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
         // For binding min on the input
         string? ToMin { get; }
-
-        EmploymentBankContext Context { get; } 
 
         void LoadRejectedApplication(ChangeEventArgs ev);
 

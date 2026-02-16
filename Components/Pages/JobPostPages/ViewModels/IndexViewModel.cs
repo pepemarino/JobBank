@@ -3,13 +3,25 @@ using JobBank.Models;
 using JobBank.Services;
 using LinqKit;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.QuickGrid;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
-    public class IndexViewModel : IIndexViewModel, IAsyncDisposable
+    public class IndexViewModel : IIndexViewModel
     {
+        private readonly IDbContextFactory<EmploymentBankContext> _dbFactory;
+
+        public IndexViewModel(IDbContextFactory<EmploymentBankContext> DbFactory, FilteredStateService stateService)
+        {
+            StateService = stateService;
+            _dbFactory = DbFactory;
+            DeclinedVisible = true;
+            PendingVisible = true;
+        }
+
         public string JobTypeSearch { get; set; } = string.Empty;
 
         public bool ApplicationDeclined { get; set; }
@@ -20,7 +32,6 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
         public bool PendingVisible { get; set; }
         public FilteredStateService StateService { get; private set; }
-        public EmploymentBankContext Context { get; }
 
         private DateTime? _fromDateTime;
         private DateTime? _toDateTime;
@@ -37,7 +48,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 if (_fromDateTime.HasValue && _toDateTime.HasValue && _fromDateTime.Value.Date > _toDateTime.Value.Date)
                 {
                     // keep To at least as large as From
-                    _toDateTime = _fromDateTime;                                     
+                    _toDateTime = _fromDateTime;
                 }
 
                 // BROADCAST only on change   
@@ -103,49 +114,68 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         }
 
         /// <summary>
-        /// Note fitlered job posts based on the current Predicate and date range
-        /// are applied in the server query for efficiency.
-        /// Thus only the relevant records are retrieved from the database.
-        /// and sorted by ApplicationDate descending.
-        /// The grid component sorts the projection.
-        /// No paging is applied here; the grid component handles that IF we enable it.
+        /// QuickGrid calls this method to get the data to display. 
+        /// The filtering, sorting, and paging are all applied in the database query for efficiency.
+        /// The property FilteredJobPosts is not used by the grid directly, but it can be useful 
+        /// for other purposes (e.g. export) where we want the full filtered set without paging.
         /// </summary>
-        public IQueryable<JobPostViewModel> FilteredJobPosts
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public async ValueTask<GridItemsProviderResult<JobPostViewModel>> GetJobPosts(
+               GridItemsProviderRequest<JobPostViewModel> request)
         {
-            get
+            await using var context = await _dbFactory.CreateDbContextAsync(request.CancellationToken);
+
+            var baseQuery = context.JobPost
+                .AsNoTracking()
+                .AsExpandable()
+                .Where(BuildFilter())
+                .Where(jp => !FromDateTime.HasValue || jp.ApplicationDate >= FromDateTime.Value)
+                .Where(jp => !ToDateTime.HasValue || jp.ApplicationDate < ToDateTime.Value.Date.AddDays(1));
+
+            // count from filtered base query
+            var totalCount = await baseQuery.CountAsync(request.CancellationToken);
+
+            // Now project
+            var projectedQuery = baseQuery.Select(jp => new JobPostViewModel
             {
-                return Context.JobPost.AsNoTracking().AsExpandable()
-                    .Where(BuildFilter())
-                    .Where(jp => !FromDateTime.HasValue || jp.ApplicationDate >= FromDateTime.Value)
-                    .Where(jp => !ToDateTime.HasValue || jp.ApplicationDate < ToDateTime.Value.Date.AddDays(1))
-                    .OrderByDescending(jp => jp.ApplicationDate)
-                            .Select(jp => new JobPostViewModel
-                            {
-                                Id = jp.Id,
-                                Title = jp.Title,
-                                Company = jp.Company,
-                                InterviewDate = jp.InterviewDate,
-                                InterviewOutcome = jp.InterviewOutcome,
-                                IsApplied = jp.IsApplied,
-                                JobType = jp.JobType,
-                                ActionToTake = jp.ActionToTake,
-                                ApplicationDate = jp.ApplicationDate,
-                                ApplicationDeclined = jp.ApplicationDeclined
-                            });
+                Id = jp.Id,
+                Title = jp.Title,
+                Company = jp.Company,
+                InterviewDate = jp.InterviewDate,
+                InterviewOutcome = jp.InterviewOutcome,
+                IsApplied = jp.IsApplied,
+                JobType = jp.JobType,
+                ActionToTake = jp.ActionToTake,
+                ApplicationDate = jp.ApplicationDate,
+                ApplicationDeclined = jp.ApplicationDeclined
+            });
+
+            // Apply default ordering
+            projectedQuery = projectedQuery.OrderByDescending(x => x.ApplicationDate);
+
+            // Apply QuickGrid sorting
+            projectedQuery = request.ApplySorting(projectedQuery);
+
+            if (request.Count is not int pageSize)
+            {
+                throw new InvalidOperationException("QuickGrid pagination expected a page size.");  // this should not happen since we set
+                                                                                                    // Pagination.ItemsPerPage,
+                                                                                                    // but just in case, we want to know if it does
             }
+
+            var items = await projectedQuery
+                .Skip(request.StartIndex)
+                .Take(pageSize)
+                .ToListAsync(request.CancellationToken);
+
+            return GridItemsProviderResult.From(items, totalCount);
         }
+
+
+        public PaginationState Pagination { get; } = new() { ItemsPerPage = 20 };  // default to 20, but user can change
 
         public string CompanySearch { get; set; }
-
-        public IndexViewModel(IDbContextFactory<EmploymentBankContext> DbFactory, FilteredStateService stateService)
-        {
-            StateService = stateService;
-            Context = DbFactory.CreateDbContext();
-            DeclinedVisible = true;
-            PendingVisible = true;
-        }
-
-        public async ValueTask DisposeAsync() => await Context.DisposeAsync();
 
         public void LoadRejectedApplication(ChangeEventArgs ev)
         {
@@ -169,7 +199,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         {
             if (jobPost.ApplicationDeclined)
             {
-                return "declined-row"; 
+                return "declined-row";
             }
             else if (jobPost.InterviewDate.HasValue && !string.IsNullOrEmpty(jobPost.InterviewOutcome))
             {
@@ -177,7 +207,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             }
             else if (jobPost.InterviewDate.HasValue && string.IsNullOrEmpty(jobPost.InterviewOutcome))
             {
-                return "table-warning"; 
+                return "table-warning";
             }
 
             return "applied-row";

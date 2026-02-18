@@ -122,55 +122,59 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         /// <param name="request"></param>
         /// <returns></returns>
         public async ValueTask<GridItemsProviderResult<JobPostViewModel>> GetJobPosts(
-               GridItemsProviderRequest<JobPostViewModel> request)
+                GridItemsProviderRequest<JobPostViewModel> request)
         {
-            await using var context = await _dbFactory.CreateDbContextAsync(request.CancellationToken);
+            try
+            {
+                await using var context = await _dbFactory.CreateDbContextAsync(request.CancellationToken);
 
-            var baseQuery = context.JobPost
-                .AsNoTracking()
-                .AsExpandable()
-                .Where(BuildFilter())
-                .Where(jp => !FromDateTime.HasValue || jp.ApplicationDate >= FromDateTime.Value)
-                .Where(jp => !ToDateTime.HasValue || jp.ApplicationDate < ToDateTime.Value.Date.AddDays(1));
+                var baseQuery = context.JobPost
+                    .AsNoTracking()
+                    .AsExpandable()
+                    .Where(BuildFilter())
+                    .Where(jp => !FromDateTime.HasValue || jp.ApplicationDate >= FromDateTime.Value)
+                    .Where(jp => !ToDateTime.HasValue || jp.ApplicationDate < ToDateTime.Value.Date.AddDays(1));
 
             // count from filtered base query
-            var totalCount = await baseQuery.CountAsync(request.CancellationToken);
+                var totalCount = await baseQuery.CountAsync(request.CancellationToken);
 
             // Now project
-            var projectedQuery = baseQuery.Select(jp => new JobPostViewModel
-            {
-                Id = jp.Id,
-                Title = jp.Title,
-                Company = jp.Company,
-                InterviewDate = jp.InterviewDate,
-                InterviewOutcome = jp.InterviewOutcome,
-                IsApplied = jp.IsApplied,
-                JobType = jp.JobType,
-                ActionToTake = jp.ActionToTake,
-                ApplicationDate = jp.ApplicationDate,
-                ApplicationDeclined = jp.ApplicationDeclined
-            });
+                var projectedQuery = baseQuery.Select(jp => new JobPostViewModel
+                {
+                    Id = jp.Id,
+                    Title = jp.Title,
+                    Company = jp.Company,
+                    InterviewDate = jp.InterviewDate,
+                    InterviewOutcome = jp.InterviewOutcome,
+                    IsApplied = jp.IsApplied,
+                    JobType = jp.JobType,
+                    ActionToTake = jp.ActionToTake,
+                    ApplicationDate = jp.ApplicationDate,
+                    ApplicationDeclined = jp.ApplicationDeclined
+                });
 
             // Apply default ordering
-            projectedQuery = projectedQuery.OrderByDescending(x => x.ApplicationDate);
-
+                projectedQuery = projectedQuery.OrderByDescending(x => x.ApplicationDate);
             // Apply QuickGrid sorting
-            projectedQuery = request.ApplySorting(projectedQuery);
+                projectedQuery = request.ApplySorting(projectedQuery);
 
-            if (request.Count is not int pageSize)
-            {
-                throw new InvalidOperationException("QuickGrid pagination expected a page size.");  // this should not happen since we set
-                                                                                                    // Pagination.ItemsPerPage,
-                                                                                                    // but just in case, we want to know if it does
+                if (request.Count is not int pageSize)
+                    throw new InvalidOperationException("QuickGrid pagination expected a page size.");
+
+                var items = await projectedQuery
+                    .Skip(request.StartIndex)
+                    .Take(pageSize)
+                    .ToListAsync(request.CancellationToken);
+
+                return GridItemsProviderResult.From(items, totalCount);
             }
-
-            var items = await projectedQuery
-                .Skip(request.StartIndex)
-                .Take(pageSize)
-                .ToListAsync(request.CancellationToken);
-
-            return GridItemsProviderResult.From(items, totalCount);
+            catch (OperationCanceledException)
+            {
+                // Cancellation is expected from Virtualization/QuickGrid ignore it
+                return default;
+            }
         }
+
 
 
         public PaginationState Pagination { get; } = new() { ItemsPerPage = 20 };  // default to 20, but user can change

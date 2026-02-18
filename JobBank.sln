@@ -5,6 +5,8 @@ VisualStudioVersion = 17.9.34723.18
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobBank", "JobBank.csproj", "{11CC189B-1D12-493C-8B5B-AAFFFE611251}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WORKSCommons.Tests", "WORKSCommons.Tests\WORKSCommons.Tests.csproj", "{487B964C-1D84-8559-C0A4-8D4B21D06184}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{11CC189B-1D12-493C-8B5B-AAFFFE611251}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11CC189B-1D12-493C-8B5B-AAFFFE611251}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11CC189B-1D12-493C-8B5B-AAFFFE611251}.Release|Any CPU.Build.0 = Release|Any CPU
+		{487B964C-1D84-8559-C0A4-8D4B21D06184}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{487B964C-1D84-8559-C0A4-8D4B21D06184}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{487B964C-1D84-8559-C0A4-8D4B21D06184}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{487B964C-1D84-8559-C0A4-8D4B21D06184}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

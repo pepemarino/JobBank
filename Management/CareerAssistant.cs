@@ -1,6 +1,7 @@
 ﻿namespace JobBank.Management
 {
     using OpenAI.Chat;
+    using System.Text.Json;
     using System.Text.Json.Serialization;
 
     public class CareerAssistant
@@ -35,8 +36,6 @@
                 new SystemChatMessage(prompt),
                 new UserChatMessage(subjectDescription)
             };
-
-            ChatCompletionOptions options = new();
 
             ChatCompletion completion = await _client.CompleteChatAsync(messages, new ChatCompletionOptions(), token);
 
@@ -74,5 +73,8 @@
 
         [JsonPropertyName("StudySubjects")]
         public List<string> StudySubjects { get; set; } = new();
+
+        //[JsonPropertyName("JobDescriptionSkills")]  // not ready
+        //public List<string> JobDescriptionSkills { get; set; } = new();
     }
 }

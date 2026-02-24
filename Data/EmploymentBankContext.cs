@@ -22,5 +22,7 @@ namespace JobBank.Data
         public DbSet<UserSkillMatchReport> UserSkillMatchReport { get; set;} = default!;
 
         public DbSet<UserSkills> UserSkills { get; set; } = default!;
+
+        public DbSet<JobRejectionAnalysis> JobRejectionAnalyses { get; set; } = default!;
     }
 }

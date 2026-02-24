@@ -1,4 +1,6 @@
-﻿namespace JobBank.StartUpServices
+﻿using System.Security.Policy;
+
+namespace JobBank.StartUpServices
 {
     public class PrompService
     {
@@ -20,5 +22,6 @@
 
         public string ApiKeyName { get; set; } = string.Empty;
         public string LLMModel { get; set; } = string.Empty;
+        public string SkillGap {  get; set; } = string.Empty;
     }
 }

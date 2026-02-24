@@ -3,10 +3,12 @@ using JobBank.Components.Pages.Home.ViewModels;
 using JobBank.Components.Pages.JobPostPages.ViewModels;
 using JobBank.Components.Pages.SkillPages.ViewModels;
 using JobBank.Data;
+using JobBank.Management;
 using JobBank.Services;
 using JobBank.Services.Abstraction;
 using JobBank.StartUpServices;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,14 +54,17 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()                
+builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
                 .AddTransient<ILLMAdvisorViewModel, LLMAdvisorViewModel>()
                 .AddTransient<IHomeViewModel, HomeViewModel>()
-                .AddScoped<ISkillViewModel, SkillViewModel>() 
+                .AddScoped<ISkillViewModel, SkillViewModel>()
                 .AddScoped<ISkillMacthAnalysisViewModel, SkillMacthAnalysisViewModel>()
                 .AddScoped<FilteredStateService>()
                 .AddScoped<IJobPostService, JobPostService>()
-                .AddScoped<ISkillsService, SkillsService>(); 
+                .AddScoped<ISkillsService, SkillsService>()
+                .AddScoped<CareerAssistant>()
+                .AddHostedService<RejectionAnalysisWorker>()
+                .AddSingleton<AnalysisChannel>();  // the channel needs to be a singleton
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

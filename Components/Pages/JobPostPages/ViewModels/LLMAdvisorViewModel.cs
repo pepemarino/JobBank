@@ -2,7 +2,6 @@
 using JobBank.Extensions;
 using JobBank.Management;
 using JobBank.Models;
-using JobBank.StartUpServices;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
@@ -10,31 +9,14 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
     public class LLMAdvisorViewModel : ILLMAdvisorViewModel
     {        
-        private readonly string _apiKeyName;
-        private string _apiKey = string.Empty;
-        private readonly string _llmModel;          // Use GPT-4o or GPT-4o-mini for best reasoning on job descriptions
+        private readonly CareerAssistant _careerAssistant;
 
-        private readonly PrompService _prompService;
-
-        public LLMAdvisorViewModel(IDbContextFactory<EmploymentBankContext> DbFactory, PrompService prompService)
+        public LLMAdvisorViewModel(
+            IDbContextFactory<EmploymentBankContext> DbFactory, 
+            CareerAssistant careerAssistant)
         {            
             Context = DbFactory.CreateDbContext();
-            _prompService = prompService;
-            _llmModel = _prompService.LLMModel;
-            _apiKeyName = _prompService.ApiKeyName;
-        }
-
-        private PrompService PrompService
-        {
-            get
-            {
-                if (_prompService == null)
-                {
-                    throw new InvalidOperationException(
-                        "PrompService is not initialized. Ensure it is registered in the DI container.");
-                }
-                return _prompService;
-            }
+            _careerAssistant = careerAssistant;
         }
 
         public EmploymentBankContext Context { get; }
@@ -66,16 +48,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             IsLoading = true;
 
             try
-            {
-                _apiKey = Environment.GetEnvironmentVariable(_apiKeyName);
-                if (string.IsNullOrWhiteSpace(_apiKey))
-                {
-                    IsError = true;
-                    UILoadError("Configuration Error",
-                        $"API key not configured. Set environment variable '{_apiKeyName}'.");
-                    return;
-                }
-
+            {                
                 // Get JobPost 
                 var jobPost = await Context
                     .JobPost.AsNoTracking()
@@ -96,14 +69,11 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                     .JobAnalysisCache
                     .AsNoTracking()
                     .FirstOrDefaultAsync(jac => jac.Hash == jobDescriptionHash);
-
-                string analysisResult = string.Empty;
+                
                 if (analysisCache == null)
                 {
-                    var carreerAssistant = new CareerAssistant(_apiKey, _llmModel);
-
-                    analysisResult = await carreerAssistant.RunLLMAnalysis(jobPost.Description!, PrompService.InterviewQuestions, PrompService.TimeoutSeconds);                    
-                    analysisCache = await SaveAnalysisToCacheAsync(jobPost.Description!, jobDescriptionHash, _llmModel, "v1", analysisResult);
+                    LLMAnalysisResult analysisResult = await _careerAssistant.RunLLMAnalysis(jobPost.Description!);                    
+                    analysisCache = await SaveAnalysisToCacheAsync(jobPost.Description!, jobDescriptionHash, analysisResult.Model, analysisResult.Version, analysisResult.Analysis);
                 }
 
                 UILoadCachedAnalysis(analysisCache);
@@ -121,7 +91,12 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 OnRequestUIUpdate?.Invoke();
             }
 
-            async Task<JobAnalysisCache> SaveAnalysisToCacheAsync(string jobDescription, string jobDescriptionHash, string modelUsed, string promptVersion, string analysisResult)
+            async Task<JobAnalysisCache> SaveAnalysisToCacheAsync(
+                string jobDescription, 
+                string jobDescriptionHash, 
+                string modelUsed, 
+                string promptVersion, 
+                string analysisResult)
             {
                 var newCacheEntry = new JobAnalysisCache
                 {

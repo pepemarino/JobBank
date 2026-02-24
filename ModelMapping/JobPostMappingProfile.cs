@@ -15,6 +15,13 @@ namespace JobBank.ModelMapping
                                                                              // This is a violation and when detected throw exception.
                                                                              // this is extra protection
                 });
+
+            // Mapping for AgentAnalysisDTO - this is the DTO that the agent will use to perform its analysis.
+            CreateMap<JobPost, AgentAnalysisDTO>()
+                .ForMember(dest => dest.JobPostId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
+                .ForMember(dest => dest.AnalysisResult, opt => opt.Ignore()) // This will be set by the agent, so we ignore it in the mapping
+                .ForMember(dest => dest.UserSkillSet, opt => opt.Ignore());  // This will be set by WORKS Commons, so we ignore it in the mapping
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿@page "/jobposts/edit"
+@using JobBank.Management
 @using Microsoft.EntityFrameworkCore
 @using JobBank.Models
+@using System.Threading.Channels
 @inject IDbContextFactory<JobBank.Data.EmploymentBankContext> DbFactory
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
@@ -201,6 +203,8 @@
     private bool IsShowingSkillSetAnalysis { get; set; } = false;
     private int JobPostId { get; set; }
 
+    [Inject] public AnalysisChannel Channel { get; set; }
+
     [SupplyParameterFromQuery]
     private int Id { get; set; }
 
@@ -230,8 +234,8 @@
         IsShowingSkillSetAnalysis = true;
     }
 
-    private void CloseModal() 
-    { 
+    private void CloseModal()
+    {
         IsShowingJobDescriptionAnalysis = false;
         IsShowingSkillSetAnalysis = false;
     }
@@ -241,26 +245,23 @@
     private async Task UpdateJobPost()
     {
         using var context = DbFactory.CreateDbContext();
+
+        if (!JobPostExists(JobPost!.Id))
+            NavigationManager.NavigateTo("notfound");
+
         JobPost!.Timestamp = DateTime.UtcNow;
         context.Attach(JobPost!).State = EntityState.Modified;
 
-        try
+        await context.SaveChangesAsync();
+        if (JobPost!.ApplicationDeclined)
         {
-            await context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!JobPostExists(JobPost!.Id))
-            {
-                NavigationManager.NavigateTo("notfound");
-            }
-            else
-            {
-                throw;
-            }
+            var jobId = JobPost.Id;
+            var userId =  "1"; // JobPost.UserId; 
+            await Channel.Writer.WriteAsync(new AnalysisRequest(jobId, userId)); // this should be done on startup in case that there is a crash
+                                                                                 // look for declined and analysis null
         }
 
-        NavigationManager.NavigateTo("/jobposts", forceLoad: true);
+        NavigationManager.NavigateTo("/jobposts");
     }
 
     private bool JobPostExists(int id)

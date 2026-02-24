@@ -70,7 +70,7 @@
         <div class="row">
             <div class="col-lg-8">
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-white">
+                    <div class="card-header bg-secondary text-white">
                         <h5 class="mb-0 mt-1">Description & Notes</h5>
                     </div>
                     <div class="card-body">
@@ -83,11 +83,36 @@
 
                         <h6 class="mt-3">Comments</h6>
                         <p class="mb-0 italic text-secondary">@jobpost.Comments</p>
-                    </div>
+                    </div>                    
                 </div>
 
+                @if(jobpost.ApplicationDeclined)
+                {
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0 mt-1">Rejection Analysis</h5>
+                        </div>
+                        @if(DisplayAnalysis)
+                        {
+                            <div class="card-body">
+                                <p class="text-muted" style="white-space: pre-wrap;">
+                                    @jobpost.JobRejectionAnalysis!.Analisis
+                                </p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="card-body">
+                                <p class="text-muted" style="white-space: pre-wrap;">
+                                    <strong>Rejection Analysis cannot be displayed. Make sure My Skills Section is not empty and/or the analysis job has executed.</strong>
+                                </p>
+                            </div>
+                        }
+                    </div>
+                }
+                
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-white">
+                    <div class="card-header bg-secondary text-white">
                         <h5 class="mb-0 mt-1">Interview Details</h5>
                     </div>
                     <div class="card-body">
@@ -158,15 +183,24 @@
 
     [SupplyParameterFromQuery]
     private int Id { get; set; }
+    public bool DisplayAnalysis { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        jobpost = await context.JobPost.FirstOrDefaultAsync(m => m.Id == Id);
+        jobpost = await context
+        .JobPost
+            .Include(j => j.JobRejectionAnalysis)
+            .FirstOrDefaultAsync(m => m.Id == Id);
 
         if (jobpost is null)
         {
             NavigationManager.NavigateTo("notfound");
+            return;
         }
+
+        if (jobpost.JobRejectionAnalysis != null &&
+            !string.IsNullOrEmpty(jobpost.JobRejectionAnalysis.Analisis))
+            DisplayAnalysis = true;
     }
 }

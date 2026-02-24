@@ -32,7 +32,7 @@ namespace JobBank.Services
         /// <param name="id"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public async Task<UserSkillsDTO> GetUserSkillsWithLazyPropsAsync(int userId)
+        public async Task<UserSkillsDTO> GetUserSkillsAsync(int userId)
         {            
             try
             {

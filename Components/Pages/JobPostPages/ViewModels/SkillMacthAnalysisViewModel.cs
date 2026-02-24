@@ -72,7 +72,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 JobTitle = jobPost!.Title!;
 
                 // if no skills fast exit
-                var userSkills = await _skillsService.GetUserSkillsWithLazyPropsAsync(1); // we have no users yet. Next
+                var userSkills = await _skillsService.GetUserSkillsAsync(1); // we have no users yet. Next
                 if (userSkills == null || string.IsNullOrEmpty(userSkills.RawSkills))
                 {
                     IsErrorOrWarning = true;

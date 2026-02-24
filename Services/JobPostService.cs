@@ -6,6 +6,7 @@ using JobBank.Models;
 using JobBank.ModelsDTO;
 using JobBank.Services.Abstraction;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace JobBank.Services
 {
@@ -37,6 +38,30 @@ namespace JobBank.Services
             }
         }
 
+        public async Task<IEnumerable<T>> GetJobPostsByQueryAsync<T>(Expression<Func<JobPost, bool>>? predicate)
+            where T : class
+        {
+            try
+            {
+                var query = _context.JobPost.AsQueryable();
+                
+                if (predicate != null)
+                {
+                    query = query.Where(predicate);
+                }
+
+                // Project directly to the requested type T and execute the query
+                return await query
+                    .ProjectTo<T>(_mapper.ConfigurationProvider)
+                    .ToListAsync();
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Custom exception handling for data integrity or mapping issues
+                throw new DataIntegrityException("A system error occurred. Please contact support.", ex);
+            }
+        }
+
         public async Task UpdateOrAddJobPostAsync(JobPostDTO jobPostDto)
         {
             var now = DateTime.UtcNow;
@@ -56,6 +81,7 @@ namespace JobBank.Services
                 // Load the existing entity WITH its nested report
                 var existingJob = await _context.JobPost
                     .Include(j => j.UserSkillMatchReport)                   // include UserSkillMatchReport please
+                    .Include(j => j.JobRejectionAnalysis)
                     .FirstOrDefaultAsync(j => j.Id == jobPostDto.Id);
 
                 if (existingJob == null)                                    // Oh, this is something strange. Should never happen

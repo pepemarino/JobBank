@@ -60,7 +60,7 @@ namespace JobBank.Components.Pages.SkillPages.ViewModels
 
         public async Task InitializeAsync()
         {
-            var skillSet = await this._skillsService.GetUserSkillsWithLazyPropsAsync(1); // the user id is not used yet
+            var skillSet = await this._skillsService.GetUserSkillsAsync(1); // the user id is not used yet
             if (skillSet != null)
             {
                 Version = skillSet.Version;

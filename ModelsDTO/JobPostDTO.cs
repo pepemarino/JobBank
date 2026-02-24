@@ -27,6 +27,7 @@ namespace JobBank.ModelsDTO
 
         public bool ApplicationDeclined { get; set; }
 
+        public JobRejectionAnalysisDTO? JobRejectionAnalysis { get; set; }
         public UserSkillMatchReportDTO? UserSkillMatchReport { get; set; }
     }
 }

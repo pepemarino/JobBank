@@ -1,5 +1,6 @@
 ﻿@page "/jobposts/edit"
 @using JobBank.Management
+@using JobBank.Services.Abstraction
 @using Microsoft.EntityFrameworkCore
 @using JobBank.Models
 @using System.Threading.Channels
@@ -204,6 +205,7 @@
     private int JobPostId { get; set; }
 
     [Inject] public AnalysisChannel Channel { get; set; }
+    [Inject] public ILLMProvider LLMProvider { get; set; }
 
     [SupplyParameterFromQuery]
     private int Id { get; set; }
@@ -253,7 +255,7 @@
         context.Attach(JobPost!).State = EntityState.Modified;
 
         await context.SaveChangesAsync();
-        if (JobPost!.ApplicationDeclined)
+        if (JobPost!.ApplicationDeclined && LLMProvider.IsAvailable)
         {
             var jobId = JobPost.Id;
             var userId =  "1"; // JobPost.UserId; 

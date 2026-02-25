@@ -1,6 +1,8 @@
 ﻿namespace JobBank.Management
 {
     using JobBank.ModelsDTO;
+    using JobBank.Services;
+    using JobBank.Services.Abstraction;
     using JobBank.StartUpServices;
     using OpenAI.Chat;
     using System.Text.Json.Serialization;
@@ -24,26 +26,33 @@
         private readonly string _prompt;
         private readonly string _apiKey;
         private readonly long _timeout;
+        private readonly bool _llmEnablede;
 
-        public CareerAssistant(PrompService prompService)
+        private readonly ILLMProvider _llmProvider;
+
+        public CareerAssistant(PrompService prompService, ILLMProvider llmProvider)
         {
             _timeout = prompService.TimeoutSeconds;
             _llmModel = prompService.LLMModel;
             _prompt = prompService.InterviewQuestions;
+            _llmProvider = llmProvider;
 
-            _apiKey = Environment.GetEnvironmentVariable(prompService.ApiKeyName);
-            if (string.IsNullOrWhiteSpace(_apiKey))
+            if (CanAnalyse)
             {
-                throw new InvalidOperationException($"API key not configured. Set environment variable '{prompService.ApiKeyName}'.");
-            }
-
-            _client = new ChatClient(_llmModel, _apiKey);
+                _client = new ChatClient(_llmModel, _llmProvider.GetApiKey());
+            }            
         }
 
         private ChatClient ChatClient  => _client;
 
+        private bool CanAnalyse => _llmProvider.IsAvailable;
+
         public async Task<LLMAnalysisResult> RunLLMAnalysis(string subjectDescription)
         {
+            // Early check for API key presence to avoid unnecessary processing and provide immediate feedback.
+            if (!CanAnalyse)           
+                return new (ErrorMessage: "LLM analysis is not enabled. API key is missing.", Version: _version, Model: _llmModel);
+            
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeout));
 
             try
@@ -60,6 +69,12 @@
 
         public async Task<AgentAnalysisDTO> RunLLMAnalysis(AgentAnalysisDTO analysisDTO, string prompt)
         {
+            if (!CanAnalyse)
+            {
+                    analysisDTO.AnalysisResult = "LLM analysis is not enabled. API key is missing.";
+                    return analysisDTO;
+            }
+
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeout));
             try
             {

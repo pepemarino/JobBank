@@ -34,7 +34,7 @@
             // parts[0] could be the general description before any section,
             // put it in a "General" category
             // when i is odd, it's a header
-            // when i is even, it's the content of the previous header
+            // when i is even, it's the content of the previous header.  This makes more sense when looking at the SectionPattern
             for (int i = 1; i < parts.Length; i += 2)
             {
                 string header = parts[i].Trim().ToLower();

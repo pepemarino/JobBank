@@ -23,5 +23,6 @@ namespace JobBank.StartUpServices
         public string ApiKeyName { get; set; } = string.Empty;
         public string LLMModel { get; set; } = string.Empty;
         public string SkillGap {  get; set; } = string.Empty;
+        public bool LLMEnabled { get; set; } = false;
     }
 }

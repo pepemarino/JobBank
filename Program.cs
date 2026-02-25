@@ -8,10 +8,11 @@ using JobBank.Services;
 using JobBank.Services.Abstraction;
 using JobBank.StartUpServices;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
+
+#region Connection String - Fail fast is available
 
 // get connection string (will pick up env var ConnectionStrings__EmploymentBankContext)
 var connStr = builder.Configuration.GetConnectionString("EmploymentBankContext");
@@ -20,6 +21,8 @@ if (string.IsNullOrWhiteSpace(connStr))
     throw new InvalidOperationException(
         "Connection string 'EmploymentBankContext' not found. Set environment variable 'ConnectionStrings__EmploymentBankContext'.");
 }
+
+#endregion Connection String - Fail fast is available
 
 #region Load LLM Prompts from JSON file - Fail fast is not available
 
@@ -50,6 +53,8 @@ builder.Services.AddQuickGridEntityFrameworkAdapter();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+#region DI registration
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -64,9 +69,14 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
                 .AddScoped<ISkillsService, SkillsService>()
                 .AddScoped<CareerAssistant>()
                 .AddHostedService<RejectionAnalysisWorker>()
-                .AddSingleton<AnalysisChannel>();  // the channel needs to be a singleton
+                .AddSingleton<ILLMProvider, LLMProvider>()
+                .AddSingleton<JobDescriptionParser>()   // stateless, can be singleton
+                .AddSingleton<RankingEngine>()          // stateless, can be singleton
+                .AddSingleton<AnalysisChannel>();       // the channel needs to be a singleton
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+#endregion DI registration
 
 var app = builder.Build();
 

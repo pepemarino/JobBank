@@ -1,10 +1,8 @@
 ﻿
 using AutoMapper;
 using JobBank.Models;
-using JobBank.Services;
 using JobBank.Services.Abstraction;
 using JobBank.StartUpServices;
-using static JobBank.Components.Pages.JobPostPages.ViewModels.SkillMacthAnalysisViewModel;
 
 namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
@@ -102,8 +100,6 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
                 // Load analysis result from cache
                 Title = $"Skill Analysis - Cached Analysis (Model: {analysisCache.ModelUsed}, Prompt Version: {analysisCache.PromptVersion})";
-
-
             }
  
             void UILoadErrorOrWarning(string errorType, string errorMessage, ExitType exitType)

@@ -3,6 +3,7 @@ using JobBank.Extensions;
 using JobBank.Management;
 using JobBank.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
 
 namespace JobBank.Components.Pages.JobPostPages.ViewModels
@@ -72,7 +73,11 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 
                 if (analysisCache == null)
                 {
-                    LLMAnalysisResult analysisResult = await _careerAssistant.RunLLMAnalysis(jobPost.Description!);                    
+                    LLMAnalysisResult analysisResult = await _careerAssistant.RunLLMAnalysis(jobPost.Description!); 
+                    if (!string.IsNullOrEmpty(analysisResult.ErrorMessage))
+                    {
+                        throw new InvalidOperationException($"LLM analysis failed: {analysisResult.ErrorMessage}");
+                    }
                     analysisCache = await SaveAnalysisToCacheAsync(jobPost.Description!, jobDescriptionHash, analysisResult.Model, analysisResult.Version, analysisResult.Analysis);
                 }
 

@@ -2,6 +2,8 @@
 @using JobBank.Components.Pages.Home.ViewModels
 @using JobBank.Components.Pages.Init
 
+@attribute [Authorize]
+
 @inherits ViewModelBase<IHomeViewModel>
 
 @rendermode InteractiveServer

@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Components.Web
 @rendermode InteractiveServer
 @inherits ViewModelBase<ISkillViewModel>
-
+@attribute [Authorize]
 <PageTitle>@(ViewModel.Title)</PageTitle>
 
 <h1>@(ViewModel.Title)</h1>

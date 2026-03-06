@@ -1,5 +1,5 @@
-using AuthSample.Data;
 using JobBank.Components;
+using JobBank.Components.Account;
 using JobBank.Components.Pages.Home.ViewModels;
 using JobBank.Components.Pages.JobPostPages.ViewModels;
 using JobBank.Components.Pages.SkillPages.ViewModels;
@@ -9,6 +9,7 @@ using JobBank.Models.Identity;
 using JobBank.Services;
 using JobBank.Services.Abstraction;
 using JobBank.StartUpServices;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -60,6 +61,8 @@ builder.Services.AddIdentityCore<JobBankUser>(options => options.SignIn.RequireC
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
+builder.Services.AddSingleton<IEmailSender<JobBankUser>, IdentityNoOpEmailSender>();
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
@@ -79,6 +82,10 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<IdentityRedirectManager>();
+builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
 builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
                 .AddTransient<ILLMAdvisorViewModel, LLMAdvisorViewModel>()
@@ -120,5 +127,8 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// Add additional endpoints required by the Identity /Account Razor components.
+app.MapAdditionalIdentityEndpoints();
 
 app.Run();

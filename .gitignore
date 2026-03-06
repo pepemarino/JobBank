@@ -406,3 +406,4 @@ FodyWeavers.xsd
 
 # Ignore sensitive local VS settings
 Properties/launchSettings.json
+/JobBank.csproj.user

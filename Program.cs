@@ -1,12 +1,15 @@
+using AuthSample.Data;
 using JobBank.Components;
 using JobBank.Components.Pages.Home.ViewModels;
 using JobBank.Components.Pages.JobPostPages.ViewModels;
 using JobBank.Components.Pages.SkillPages.ViewModels;
 using JobBank.Data;
 using JobBank.Management;
+using JobBank.Models.Identity;
 using JobBank.Services;
 using JobBank.Services.Abstraction;
 using JobBank.StartUpServices;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
@@ -49,6 +52,24 @@ builder.Services.AddDbContextFactory<EmploymentBankContext>(options =>
     options.UseSqlServer(connStr)
 );
 
+builder.Services.AddDbContext<JobBankIdentityDbContext>(options =>
+    options.UseSqlServer(connStr));
+
+builder.Services.AddIdentityCore<JobBankUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddEntityFrameworkStores<JobBankIdentityDbContext>() // This must match your Identity Context
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = IdentityConstants.ApplicationScheme;
+        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+    })
+    .AddIdentityCookies();
+
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddAuthorizationBuilder();
+
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -90,6 +111,9 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication(); // Must be AFTER StaticFiles
+app.UseAuthorization();  // Must be AFTER Authentication
 
 app.UseStaticFiles();
 app.UseAntiforgery();

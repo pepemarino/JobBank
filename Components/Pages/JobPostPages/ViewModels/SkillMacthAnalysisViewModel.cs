@@ -12,6 +12,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         private readonly IJobPostService _jobPostService;
         private readonly ISkillsService _skillsService;
         private readonly IMapper _mapper;
+        private readonly IIdentityService _identityService;
 
         public enum ExitType
         {
@@ -23,12 +24,14 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             PrompService prompService, 
             IMapper mapper, 
             IJobPostService jobPostService, 
-            ISkillsService skillsService)
+            ISkillsService skillsService,
+            IIdentityService identityService)
         {
             _mapper = mapper;
             _prompService = prompService;
             _jobPostService = jobPostService;
             _skillsService = skillsService;
+            _identityService = identityService;
         }
 
         public int JobPostId { get; set; }
@@ -69,8 +72,13 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
                 JobTitle = jobPost!.Title!;
 
+                // the user id is never  null or empty string because of the Authorize
+                // attribute on the page, but we need to check for it to satisfy the nullable reference type warnings
+                var userId = await _identityService.GetUserIdAsync();
+                
+                var userSkills = await _skillsService.GetUserSkillsAsync(userId);
+
                 // if no skills fast exit
-                var userSkills = await _skillsService.GetUserSkillsAsync(1); // we have no users yet. Next
                 if (userSkills == null || string.IsNullOrEmpty(userSkills.RawSkills))
                 {
                     IsErrorOrWarning = true;
@@ -78,8 +86,6 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                         "List them separated by commas (e.g., Food Safety, Electrical Theory, Class 5 DL).";
                     UILoadErrorOrWarning("Skills Required for Analysis", ErrorOrWarningDescription, ExitType.IsWarning);
                 }
-
-
             }
             catch (Exception ex)
             {

@@ -96,6 +96,7 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
                 .AddScoped<IJobPostService, JobPostService>()
                 .AddScoped<ISkillsService, SkillsService>()
                 .AddScoped<CareerAssistant>()
+                .AddScoped<IIdentityService, IdentityService>()
                 .AddHostedService<RejectionAnalysisWorker>()
                 .AddSingleton<ILLMProvider, LLMProvider>()
                 .AddSingleton<JobDescriptionParser>()   // stateless, can be singleton

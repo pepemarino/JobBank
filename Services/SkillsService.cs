@@ -32,14 +32,14 @@ namespace JobBank.Services
         /// <param name="id"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public async Task<UserSkillsDTO> GetUserSkillsAsync(int userId)
+        public async Task<UserSkillsDTO?> GetUserSkillsAsync(string userId)
         {            
             try
             {
-                return await _context.UserSkills
+                var dto = await _context.UserSkills
                     .AsNoTracking()
-                    .Where(u => true) //u.UserId == userId)             // Where the guacamole changes
-                    .Select(u => new UserSkillsDTO 
+                    .Where(u => u.UserId == userId)
+                    .Select(u => new UserSkillsDTO
                     {
                         UserId = u.UserId,
                         RawSkills = u.RawSkills,
@@ -47,6 +47,8 @@ namespace JobBank.Services
                         UpdatedAt = u.UpdatedAt
                     })
                     .SingleOrDefaultAsync();
+
+                return dto;
             }
             catch (InvalidOperationException ex)
             {
@@ -64,7 +66,7 @@ namespace JobBank.Services
         /// <returns></returns>
         public async Task UpdateOrAddUserSkillsAsync(UserSkillsDTO userSkill)
         {
-            var skills = await _context.UserSkills.SingleOrDefaultAsync(s => true);// s.UserId == userSkill.UserId);  // it shouild be one in the db 
+            var skills = await _context.UserSkills.SingleOrDefaultAsync(s => s.UserId == userSkill.UserId);
             if (skills == null)
             {
                 // we are adding

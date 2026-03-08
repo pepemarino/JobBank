@@ -2,7 +2,7 @@
 {
     public class UserSkillsDTO
     {
-        public int? UserId { get; set; }
+        public string? UserId { get; set; }
 
         public string RawSkills { get; set; } = string.Empty;
 

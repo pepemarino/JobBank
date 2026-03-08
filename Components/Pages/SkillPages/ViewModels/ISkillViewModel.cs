@@ -10,7 +10,7 @@ namespace JobBank.Components.Pages.SkillPages.ViewModels
         string Title { get; set; }
         string RawSkills { get; set; }
         int Version { get; set; }
-        int? UserId { get; set; }
+        string? UserId { get; set; }
         AsyncRelayCommand SaveCommand { get; }
         event Action? OnRequestUIUpdate;
     }

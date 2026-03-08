@@ -5,6 +5,7 @@ namespace JobBank.ModelsDTO
     public class JobPostDTO
     {
         public int Id { get; set; }
+        public string? UserId { get; set; }
         public string? Title { get; set; }
         public bool IsApplied { get; set; }
         public string? Description { get; set; }

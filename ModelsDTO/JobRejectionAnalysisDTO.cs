@@ -14,5 +14,6 @@
         public string PromptVersion { get; set; } = string.Empty;
 
         public int JobPostId { get; set; }
+        public string UserId { get; set; } = string.Empty;
     }
 }

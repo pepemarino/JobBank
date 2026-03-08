@@ -207,6 +207,7 @@
 
     [Inject] public AnalysisChannel Channel { get; set; }
     [Inject] public ILLMProvider LLMProvider { get; set; }
+    [Inject] public IIdentityService IdentityService { get; set; }
 
     [SupplyParameterFromQuery]
     private int Id { get; set; }
@@ -259,7 +260,7 @@
         if (JobPost!.ApplicationDeclined && LLMProvider.IsAvailable)
         {
             var jobId = JobPost.Id;
-            var userId =  "1"; // JobPost.UserId; 
+            var userId = await IdentityService.GetUserIdAsync() ?? string.Empty;
             await Channel.Writer.WriteAsync(new AnalysisRequest(jobId, userId)); // this should be done on startup in case that there is a crash
                                                                                  // look for declined and analysis null
         }

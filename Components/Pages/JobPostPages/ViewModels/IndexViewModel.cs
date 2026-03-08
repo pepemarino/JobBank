@@ -1,6 +1,7 @@
 ﻿using JobBank.Data;
 using JobBank.Models;
 using JobBank.Services;
+using JobBank.Services.Abstraction;
 using LinqKit;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.QuickGrid;
@@ -13,9 +14,13 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
     public class IndexViewModel : IIndexViewModel
     {
         private readonly IDbContextFactory<EmploymentBankContext> _dbFactory;
-
-        public IndexViewModel(IDbContextFactory<EmploymentBankContext> DbFactory, FilteredStateService stateService)
+        private readonly IIdentityService _identityService;
+        public IndexViewModel(
+            IDbContextFactory<EmploymentBankContext> DbFactory, 
+            FilteredStateService stateService,
+            IIdentityService identityService)
         {
+            _identityService = identityService;
             StateService = stateService;
             _dbFactory = DbFactory;
             DeclinedVisible = true;
@@ -93,10 +98,11 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         /// <returns>
         /// Returns an expression that can be used to filter JobPost entities.
         /// </returns>
-        private Expression<Func<JobPost, bool>> BuildFilter()
+        private Expression<Func<JobPost, bool>> BuildFilter(string userId)
         {
             // Initialize with 'true' so we can append AND conditions
             var filter = PredicateBuilder.New<JobPost>(true);
+            filter = filter.And(jp => jp.UserId == userId);
 
             if (!string.IsNullOrEmpty(JobTypeSearch))
                 filter = filter.And(jp => jp.JobType!.Contains(JobTypeSearch));
@@ -126,12 +132,13 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         {
             try
             {
+                var userId = await _identityService.GetUserIdAsync();
                 await using var context = await _dbFactory.CreateDbContextAsync(request.CancellationToken);
 
                 var baseQuery = context.JobPost
                     .AsNoTracking()
                     .AsExpandable()
-                    .Where(BuildFilter())
+                    .Where(BuildFilter(userId))
                     .Where(jp => !FromDateTime.HasValue || jp.ApplicationDate >= FromDateTime.Value)
                     .Where(jp => !ToDateTime.HasValue || jp.ApplicationDate < ToDateTime.Value.Date.AddDays(1));
 

@@ -9,7 +9,9 @@ namespace JobBank.Management
         private readonly AnalysisChannel _analysisChannel;
         private readonly IServiceScopeFactory _scopeFactory;
 
-        public RejectionAnalysisWorker(AnalysisChannel channel, IServiceScopeFactory scopeFactory)
+        public RejectionAnalysisWorker(
+            AnalysisChannel channel,
+            IServiceScopeFactory scopeFactory)
         {
             _analysisChannel = channel;
             _scopeFactory = scopeFactory;
@@ -30,34 +32,38 @@ namespace JobBank.Management
                 while (_analysisChannel.Reader.TryRead(out var request))
                 {
                     await using var scope = _scopeFactory.CreateAsyncScope();
-
                     var jobPostService = scope.ServiceProvider.GetRequiredService<IJobPostService>();
                     var prompService = scope.ServiceProvider.GetRequiredService<PrompService>();
                     var careerAssistant = scope.ServiceProvider.GetRequiredService<CareerAssistant>();
                     var userSkillService = scope.ServiceProvider.GetRequiredService<ISkillsService>();
 
-                    var userSkills = await userSkillService.GetUserSkillsAsync(1); // we do not have users yet.  AFTER THIS!  THIS IS GROWING!!!  JOSE!!!  Stop BSin!
+                    // Use the UserId from the request instead of trying to get it from AuthenticationStateProvider
+                    var currentUserId = request.UserId;
+
+                    if (string.IsNullOrEmpty(currentUserId))
+                        continue;
+
+                    var userSkills = await userSkillService.GetUserSkillsAsync(currentUserId);
                     if (userSkills == null)
-                        return;                                                    // No skills: Do not bother; keep going
+                        continue;
 
                     var jobId = request.JobApplicationId;
 
                     // the query is showing the Rejection Guard pattern
                     var jobApplications = await jobPostService
-                        .GetJobPostsByQueryAsync<AgentAnalysisDTO>(jp => jp.ApplicationDeclined && 
-                                                       jp.JobRejectionAnalysis == null && 
+                        .GetJobPostsByQueryAsync<AgentAnalysisDTO>(jp => jp.ApplicationDeclined &&
+                                                       jp.JobRejectionAnalysis == null &&
                                                        jp.Id == jobId);
-                        
-                    var jobAppkication = jobApplications.FirstOrDefault();
-                    if (jobAppkication == null) return;                           // this would be an error
 
-                    // Again the growing problem.  Because Job Application is not related to user yet this is a 
-                    // veggy stew
+                    var jobAppkication = jobApplications.FirstOrDefault();
+                    if (jobAppkication == null) continue;
+
                     jobAppkication.UserSkillSet = userSkills.RawSkills;
                     jobAppkication = await careerAssistant.RunLLMAnalysis(jobAppkication, prompService.SkillGap);
 
                     var rejectedApplication = await jobPostService.GetJobPostByIdAsync(jobId);
                     if (rejectedApplication == null) return;                     // this is exception, but 
+
                     rejectedApplication.JobRejectionAnalysis = new JobRejectionAnalysisDTO
                     {
                         JobPostId = jobId,
@@ -67,7 +73,8 @@ namespace JobBank.Management
                         JobDescription = jobAppkication.Description,
                         IsProcessed = true,
                         ModelUsed = prompService.LLMModel,
-                        PromptVersion = "v1"
+                        PromptVersion = "v1",
+                        UserId = currentUserId  // Include the user ID when queuing work
                     };
 
                     await jobPostService.UpdateOrAddJobPostAsync(rejectedApplication);

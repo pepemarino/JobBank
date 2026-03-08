@@ -7,6 +7,7 @@ namespace JobBank.Models
     public class UserSkillMatchReport
     {
         public int Id { get; set; }
+        public string? UserId { get; set; }
 
         /// <summary>
         /// This hash is generated from Denormalized UserSkills

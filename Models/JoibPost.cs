@@ -8,6 +8,7 @@ namespace JobBank.Models
     public class JobPost
     {
         public int Id { get; set; }
+        public string? UserId { get; set; }
 
         [Required]
         public string? Title { get; set; }

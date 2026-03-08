@@ -8,10 +8,14 @@ namespace JobBank.Components.Pages.SkillPages.ViewModels
     public class SkillViewModel : ISkillViewModel
     {
         private readonly ISkillsService _skillsService;
-        public SkillViewModel(ISkillsService skillsService)
+        private readonly IIdentityService _identityService;
+
+        public SkillViewModel(
+            ISkillsService skillsService, IIdentityService identityService)
         {
             this._skillsService = skillsService;
             SaveCommand = new AsyncRelayCommand(ExecuteSaveAsync, CanExecute);
+            _identityService = identityService;
         }
 
         private async Task ExecuteSaveAsync()
@@ -53,18 +57,18 @@ namespace JobBank.Components.Pages.SkillPages.ViewModels
 
         public AsyncRelayCommand SaveCommand { get; }
         public int Version { get; set; }
-        public int? UserId { get; set; }        
+        public string? UserId { get; set; }        
 
         public event Action? OnRequestUIUpdate;
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public async Task InitializeAsync()
         {
-            var skillSet = await this._skillsService.GetUserSkillsAsync(1); // the user id is not used yet
+            UserId = await _identityService.GetUserIdAsync();
+            var skillSet = await this._skillsService.GetUserSkillsAsync(UserId); // the user id is not used yet
             if (skillSet != null)
             {
-                Version = skillSet.Version;
-                UserId = skillSet.UserId;
+                Version = skillSet.Version;                
                 _rawSkills = skillSet.RawSkills;  // Double Triggering when setting the property.
                                                   // Set backing field directly to avoid double-triggering
             }

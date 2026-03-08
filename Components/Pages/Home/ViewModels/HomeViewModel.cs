@@ -8,6 +8,8 @@ using ChartJs.Blazor.Common.Enums;
 using ChartJs.Blazor.Util;
 using JobBank.Data;
 using JobBank.Services;
+using JobBank.Services.Abstraction;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Drawing;
 
@@ -15,6 +17,7 @@ namespace JobBank.Components.Pages.Home.ViewModels
 {
     public class HomeViewModel : IHomeViewModel, IAsyncDisposable
     {
+        private readonly IIdentityService _identityService;
         public FilteredStateService StateService { get; private set; }
 
         private readonly EmploymentBankContext Context;
@@ -25,9 +28,13 @@ namespace JobBank.Components.Pages.Home.ViewModels
         private DateTime? FromDate { get; set; }
         private DateTime? ToDate { get; set; }
 
-        public HomeViewModel(IDbContextFactory<EmploymentBankContext> DbFactory, FilteredStateService stateService)
+        public HomeViewModel(
+            IDbContextFactory<EmploymentBankContext> DbFactory, 
+            FilteredStateService stateService,
+            IIdentityService identityService)
         {
             StateService = stateService;
+            _identityService = identityService;
 
             FromDate = StateService.FromDate;
             ToDate = StateService.ToDate;
@@ -198,7 +205,8 @@ namespace JobBank.Components.Pages.Home.ViewModels
         /// <returns></returns>
         private async Task<List<Models.JobPost>> DateFilteredJobPosts()
         {
-            var query = Context.JobPost.AsNoTracking();
+            var userId = await _identityService.GetUserIdAsync();
+            var query = Context.JobPost.AsNoTracking().Where(jp => jp.UserId == userId);
 
             if (FromDate.HasValue)
                 query = query.Where(jp => jp.ApplicationDate >= FromDate.Value); // push date filter to the database

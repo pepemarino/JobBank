@@ -16,9 +16,8 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-#region Connection String - Fail fast is available
+#region Connection String - Fail fast
 
-// get connection string (will pick up env var ConnectionStrings__EmploymentBankContext)
 var connStr = builder.Configuration.GetConnectionString("EmploymentBankContext");
 if (string.IsNullOrWhiteSpace(connStr))
 {
@@ -26,110 +25,116 @@ if (string.IsNullOrWhiteSpace(connStr))
         "Connection string 'EmploymentBankContext' not found. Set environment variable 'ConnectionStrings__EmploymentBankContext'.");
 }
 
-#endregion Connection String - Fail fast is available
+#endregion
 
-#region Load LLM Prompts from JSON file - Fail fast is not available
+#region Load LLM Prompts from JSON file
 
 string filePath = Path.Combine(AppContext.BaseDirectory, "StartUpServices/prompts.json");
-
 if (!File.Exists(filePath))
-{
     throw new FileNotFoundException($"Startup Failed: Required file '{filePath}' is missing.");
-}
 
 string jsonString = File.ReadAllText(filePath);
-var llmPrompts = JsonSerializer.Deserialize<PrompService>(jsonString);
-
-if (llmPrompts == null)
-{
-    throw new InvalidDataException("Startup Failed: StartUpServices/prompts.json is empty or malformed.");
-}
+var llmPrompts = JsonSerializer.Deserialize<PrompService>(jsonString)
+    ?? throw new InvalidDataException("Startup Failed: StartUpServices/prompts.json is empty or malformed.");
 
 builder.Services.AddSingleton(llmPrompts);
 
-#endregion Load LLM Prompts from JSON file - Fail fast is not available
+#endregion
+
+#region DbContexts
 
 builder.Services.AddDbContextFactory<EmploymentBankContext>(options =>
-    options.UseSqlServer(connStr)
-);
+    options.UseSqlServer(connStr));
 
 builder.Services.AddDbContext<JobBankIdentityDbContext>(options =>
     options.UseSqlServer(connStr));
 
-builder.Services.AddIdentityCore<JobBankUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<JobBankIdentityDbContext>() // This must match your Identity Context
-    .AddSignInManager()
-    .AddDefaultTokenProviders();
+#endregion
+
+#region Identity + Passkeys
+
+builder.Services.AddIdentity<JobBankUser, IdentityRole>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+
+    // Required for passkey (WebAuthn) support
+    options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
+})
+.AddEntityFrameworkStores<JobBankIdentityDbContext>()
+.AddSignInManager()
+.AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<JobBankUser>, IdentityNoOpEmailSender>();
 
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = IdentityConstants.ApplicationScheme;
-        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
-    .AddIdentityCookies();
+#endregion
+
+#region Blazor Server Authentication State
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthorizationBuilder();
 
-builder.Services.AddQuickGridEntityFrameworkAdapter();
+#endregion
 
+builder.Services.AddQuickGridEntityFrameworkAdapter();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-#region DI registration
+#region DI registrations
 
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
 builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
-                .AddTransient<ILLMAdvisorViewModel, LLMAdvisorViewModel>()
-                .AddTransient<IHomeViewModel, HomeViewModel>()
-                .AddScoped<ISkillViewModel, SkillViewModel>()
-                .AddScoped<ISkillMacthAnalysisViewModel, SkillMacthAnalysisViewModel>()
-                .AddScoped<FilteredStateService>()
-                .AddScoped<IJobPostService, JobPostService>()
-                .AddScoped<ISkillsService, SkillsService>()
-                .AddScoped<CareerAssistant>()
-                .AddScoped<IIdentityService, IdentityService>()
-                .AddHostedService<RejectionAnalysisWorker>()
-                .AddSingleton<ILLMProvider, LLMProvider>()
-                .AddSingleton<JobDescriptionParser>()   // stateless, can be singleton
-                .AddSingleton<RankingEngine>()          // stateless, can be singleton
-                .AddSingleton<AnalysisChannel>();       // the channel needs to be a singleton
+    .AddTransient<ILLMAdvisorViewModel, LLMAdvisorViewModel>()
+    .AddTransient<IHomeViewModel, HomeViewModel>()
+    .AddScoped<ISkillViewModel, SkillViewModel>()
+    .AddScoped<ISkillMacthAnalysisViewModel, SkillMacthAnalysisViewModel>()
+    .AddScoped<FilteredStateService>()
+    .AddScoped<IJobPostService, JobPostService>()
+    .AddScoped<ISkillsService, SkillsService>()
+    .AddScoped<CareerAssistant>()
+    .AddScoped<IIdentityService, IdentityService>()
+    .AddHostedService<RejectionAnalysisWorker>()
+    .AddSingleton<ILLMProvider, LLMProvider>()
+    .AddSingleton<JobDescriptionParser>()
+    .AddSingleton<RankingEngine>()
+    .AddSingleton<AnalysisChannel>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-#endregion DI registration
+#endregion
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+#region Middleware pipeline
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
     app.UseMigrationsEndPoint();
 }
 
 app.UseHttpsRedirection();
-
-app.UseAuthentication(); // Must be AFTER StaticFiles
-app.UseAuthorization();  // Must be AFTER Authentication
-
 app.UseStaticFiles();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseAntiforgery();
+
+#endregion
+
+#region Blazor endpoints
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Add additional endpoints required by the Identity /Account Razor components.
+// Add Identity Razor pages/endpoints
 app.MapAdditionalIdentityEndpoints();
+
+#endregion
 
 app.Run();

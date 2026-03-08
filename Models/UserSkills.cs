@@ -7,7 +7,7 @@ namespace JobBank.Models
     public class UserSkills
     {
         public int Id { get; set; }
-        public string? UserId { get; set; }
+        public string UserId { get; set; }
 
         /// <summary>
         /// Try to store raw text, this way pass to the LLM clean text 

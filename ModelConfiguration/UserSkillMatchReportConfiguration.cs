@@ -12,6 +12,9 @@ namespace JobBank.ModelConfiguration
                 .Property(b => b.Version)
                 .HasDefaultValue(1);
 
+            builder.Property(b => b.UserId)
+                .IsRequired();
+
             builder
                 .Property(b => b.CreatedDate)
                 .HasDefaultValueSql("GETUTCDATE()");

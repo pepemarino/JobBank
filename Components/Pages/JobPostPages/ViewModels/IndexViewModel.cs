@@ -5,6 +5,7 @@ using JobBank.Services.Abstraction;
 using LinqKit;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.QuickGrid;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Linq.Expressions;
@@ -128,7 +129,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         /// <param name="request"></param>
         /// <returns></returns>
         public async ValueTask<GridItemsProviderResult<JobPostViewModel>> GetJobPosts(
-                GridItemsProviderRequest<JobPostViewModel> request)
+        GridItemsProviderRequest<JobPostViewModel> request)
         {
             try
             {
@@ -142,10 +143,10 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                     .Where(jp => !FromDateTime.HasValue || jp.ApplicationDate >= FromDateTime.Value)
                     .Where(jp => !ToDateTime.HasValue || jp.ApplicationDate < ToDateTime.Value.Date.AddDays(1));
 
-            // count from filtered base query
+                // count from filtered base query
                 var totalCount = await baseQuery.CountAsync(request.CancellationToken);
 
-            // Now project
+                // Now project
                 var projectedQuery = baseQuery.Select(jp => new JobPostViewModel
                 {
                     Id = jp.Id,
@@ -160,9 +161,9 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                     ApplicationDeclined = jp.ApplicationDeclined
                 });
 
-            // Apply default ordering
+                // Apply default ordering
                 projectedQuery = projectedQuery.OrderByDescending(x => x.ApplicationDate);
-            // Apply QuickGrid sorting
+                // Apply QuickGrid sorting
                 projectedQuery = request.ApplySorting(projectedQuery);
 
                 if (request.Count is not int pageSize)
@@ -178,6 +179,13 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             catch (OperationCanceledException)
             {
                 // Cancellation is expected from Virtualization/QuickGrid ignore it
+                return default;
+            }
+            catch (SqlException ex) when (ex.Message.Contains("Operation cancelled"))
+            {
+                // ISSUE 12:  SQL Server throws SqlException when the connection is terminated during command execution
+                // This is effectively a cancellation and should be handled gracefully
+                // This is not the final solution
                 return default;
             }
         }

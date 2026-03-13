@@ -5,6 +5,7 @@ using JobBank.Components.Pages.JobPostPages.ViewModels;
 using JobBank.Components.Pages.SkillPages.ViewModels;
 using JobBank.Data;
 using JobBank.Management;
+using JobBank.Management.Abstraction;
 using JobBank.Models.Identity;
 using JobBank.Services;
 using JobBank.Services.Abstraction;
@@ -98,6 +99,7 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddScoped<IIdentityService, IdentityService>()
     .AddHostedService<RejectionAnalysisWorker>()
     .AddSingleton<ILLMProvider, LLMProvider>()
+    .AddScoped<ILLMManager, LLMManager>()
     .AddSingleton<JobDescriptionParser>()
     .AddSingleton<RankingEngine>()
     .AddSingleton<AnalysisChannel>();

@@ -1,22 +1,28 @@
 ﻿@page "/Account/Manage"
+@rendermode InteractiveServer
 
 @using System.ComponentModel.DataAnnotations
 @using JobBank.Models.Identity
+@using JobBank.Services
+@using JobBank.StartUpServices
+@using JobBank.Validation
 @using Microsoft.AspNetCore.Identity
 @using JobBank.Data
 
 @inject UserManager<JobBankUser> UserManager
 @inject SignInManager<JobBankUser> SignInManager
 @inject IdentityRedirectManager RedirectManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
 
 <PageTitle>Profile</PageTitle>
 
 <h3>Profile</h3>
-<StatusMessage />
+<StatusMessage Message="@statusMessage" />
 
 <div class="row">
     <div class="col-xl-6">
-        <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
+        <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
@@ -28,7 +34,38 @@
                 <label for="Input.PhoneNumber" class="form-label">Phone number</label>
                 <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+
+            @if (HasKey)
+            {
+                <p class="text-success">✔ API Key is configured. <button type="button" @onclick="ClearKey" class="btn btn-danger">Remove Key</button></p>
+            }
+            else
+            {
+                <p class="text-warning">No API Key found.</p>
+            }
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.AIKey" id="Input.AIKey" class="form-control" aria-required="false" type="password" />
+                <label>@(HasKey ? "Update API Key" : "Add API Key")</label>
+                <ValidationMessage For="@(() => Input.AIKey)" />
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.LLModel" id="Input.LLModel" class="form-control" autocomplete="userllmodel" aria-required="false" placeholder="your AI Model" />
+                <label for="Input.LLModel">AI Model</label>
+                <ValidationMessage For="@(() => Input.LLModel)" />
+            </div>
+            <button type="submit" class="w-100 btn btn-lg btn-primary" disabled="@isSaving">
+                @if (isSaving)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    <text>Saving...</text>
+                }
+                else
+                {
+                    <text>Save</text>
+                }
+            </button>
         </EditForm>
     </div>
 </div>
@@ -37,21 +74,33 @@
     private JobBankUser? user;
     private string? username;
     private string? phoneNumber;
-
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    private string? apiKey;
+    private string? statusMessage;
+    private bool isSaving = false;
 
     [SupplyParameterFromForm]
     private InputModel Input { get; set; } = default!;
+
+    [Inject]
+    private PrompService PrompService { get; set; } = default!;
+
+    private bool HasKey { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
     {
         Input ??= new();
 
-        user = await UserManager.GetUserAsync(HttpContext.User);
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var userPrincipal = authState.User;
+
+        if (userPrincipal?.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        user = await UserManager.GetUserAsync(userPrincipal);
         if (user is null)
         {
-            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
             return;
         }
 
@@ -59,28 +108,104 @@
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
 
         Input.PhoneNumber ??= phoneNumber;
+
+        HasKey = !string.IsNullOrEmpty(user.CipherText) && 
+                 !string.IsNullOrEmpty(user.Nonce) && 
+                 !string.IsNullOrEmpty(user.Tag);
+
+        if (HasKey && !string.IsNullOrEmpty(user.LLModel))
+        {
+            Input.LLModel = user.LLModel;
+            try
+            {
+                Input.AIKey = ApiKeyEncryptor
+                    .Decrypt(
+                       cipherTextB64: user.CipherText!,
+                        nonceB64: user.Nonce!,
+                        tagB64: user.Tag!,
+                        ApiKeyEncryptor.GetMasterKey(PrompService.APIKeyEncryptionKayName));
+                apiKey = Input.AIKey;
+            }
+            catch
+            {
+                HasKey = false;
+            }
+        }
     }
 
     private async Task OnValidSubmitAsync()
     {
         if (user is null)
         {
-            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
+            statusMessage = "Error: User not found.";
             return;
         }
 
-        if (Input.PhoneNumber != phoneNumber)
+        isSaving = true;
+        statusMessage = null;
+
+        try
         {
-            var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
-            if (!setPhoneResult.Succeeded)
+            if (Input.PhoneNumber != phoneNumber)
             {
-                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
+                var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
+                if (!setPhoneResult.Succeeded)
+                {
+                    statusMessage = "Error: Failed to set phone number.";
+                    isSaving = false;
+                    return;
+                }
+                phoneNumber = Input.PhoneNumber;
+            }
+
+            if (!string.IsNullOrEmpty(Input.AIKey) &&
+                !string.IsNullOrEmpty(Input.LLModel))
+            {
+                var encryptedResult = ApiKeyEncryptor
+                    .Encrypt(Input.AIKey, ApiKeyEncryptor.GetMasterKey(PrompService.APIKeyEncryptionKayName));
+
+                user.CipherText = encryptedResult.CipherText;
+                user.Nonce = encryptedResult.Nonce;
+                user.Tag = encryptedResult.Tag;
+
+                user.LLModel = Input.LLModel;
+            }
+            else
+            {
+                user.CipherText = string.Empty;
+                user.Nonce = string.Empty;
+                user.Tag = string.Empty;
+                user.LLModel = string.Empty;
+            }
+
+            var updateResult = await UserManager.UpdateAsync(user);
+            if (!updateResult.Succeeded)
+            {
+                statusMessage = "Error: Failed to update profile.";
+                isSaving = false;
                 return;
             }
-        }
 
-        await SignInManager.RefreshSignInAsync(user);
-        RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
+            statusMessage = "Your profile has been updated.";
+            
+            HasKey = !string.IsNullOrEmpty(user.CipherText) && 
+                     !string.IsNullOrEmpty(user.Nonce) && 
+                     !string.IsNullOrEmpty(user.Tag);
+
+            isSaving = false;
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error: {ex.Message}";
+            isSaving = false;
+        }
+    }
+
+    private void ClearKey(MouseEventArgs args)
+    {
+        Input.AIKey = string.Empty;
+        Input.LLModel = string.Empty;
+        statusMessage = null;
     }
 
     private sealed class InputModel
@@ -88,5 +213,15 @@
         [Phone]
         [Display(Name = "Phone number")]
         public string? PhoneNumber { get; set; }
+
+        [RequiredIfOtherPropertyHasValue(dependentProperty: nameof(LLModel), ErrorMessage = "AI Key is required if AI Model is provided.")]
+        [DataType(DataType.Text)]
+        [Display(Name = "AI Key")]
+        public string AIKey { get; set; } = "";
+
+        [RequiredIfOtherPropertyHasValue(dependentProperty: nameof(AIKey), ErrorMessage = "AI Model is required if AI Key is provided.")]
+        [DataType(DataType.Text)]
+        [Display(Name = "AI Model")]
+        public string LLModel { get; set; } = "";
     }
 }

@@ -1,5 +1,7 @@
-﻿using JobBank.Services.Abstraction;
+﻿using JobBank.Models.Identity;
+using JobBank.Services.Abstraction;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 
 namespace JobBank.Services
@@ -7,9 +9,13 @@ namespace JobBank.Services
     public class IdentityService : IIdentityService
     {
         private readonly AuthenticationStateProvider _authStateProvider;
-        public IdentityService(AuthenticationStateProvider authStateProvider)
+        private readonly UserManager<JobBankUser> _userManager;
+        public IdentityService(
+            AuthenticationStateProvider authStateProvider,
+            UserManager<JobBankUser> userManager)
         {
             _authStateProvider = authStateProvider;
+            _userManager = userManager;
         }
 
         public async Task<ClaimsPrincipal> GetCurrentUserAsync()
@@ -42,6 +48,14 @@ namespace JobBank.Services
             return user != null && user.Identity!.IsAuthenticated
                 ? user.Identity!.Name!
                 : "Guest";
+        }
+
+        public async Task<JobBankUser?> GetCurrentUserDetailsAsync()
+        {
+            var userId = await GetUserIdAsync();
+            if (userId == null)
+                return null;
+            return await _userManager.FindByIdAsync(userId);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using JobBank.Models.Identity;
+using System.Security.Claims;
 
 namespace JobBank.Services.Abstraction
 {
@@ -7,6 +8,7 @@ namespace JobBank.Services.Abstraction
         Task<ClaimsPrincipal> GetCurrentUserAsync();
         Task<bool> IsInRoleAsync(string role);
         Task<string?> GetUserIdAsync();
-        Task<string> GetCurrentUserNameAsync(); 
+        Task<string> GetCurrentUserNameAsync();
+        Task<JobBankUser?> GetCurrentUserDetailsAsync();
     }
 }

@@ -59,7 +59,8 @@ namespace JobBank.Management
                     if (jobAppkication == null) continue;
 
                     jobAppkication.UserSkillSet = userSkills.RawSkills;
-                    jobAppkication = await careerAssistant.RunLLMAnalysis(jobAppkication, prompService.SkillGap);
+                    
+                    jobAppkication = await careerAssistant.RunLLMAnalysis(jobAppkication, prompService.SkillGap, currentUserId);
 
                     var rejectedApplication = await jobPostService.GetJobPostByIdAsync(jobId);
                     if (rejectedApplication == null) return;                     // this is exception, but 

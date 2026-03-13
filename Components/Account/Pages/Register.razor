@@ -3,6 +3,9 @@
 @using System.ComponentModel.DataAnnotations
 @using System.Text
 @using System.Text.Encodings.Web
+@using JobBank.Services
+@using JobBank.StartUpServices
+@using JobBank.Validation
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using JobBank.Data
@@ -11,6 +14,7 @@
 @inject IUserStore<JobBankUser> UserStore
 @inject SignInManager<JobBankUser> SignInManager
 @inject IEmailSender<JobBankUser> EmailSender
+
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
@@ -42,6 +46,16 @@
                 <label for="Input.ConfirmPassword">Confirm Password</label>
                 <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
             </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.AIKey" id="Input.AIKey" class="form-control" autocomplete="userapikey" aria-required="false" placeholder="your API Key" />
+                <label for="Input.AIKey">AI API Key</label>
+                <ValidationMessage For="@(() => Input.AIKey)" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.LLModel" id="Input.LLModel" class="form-control" autocomplete="userllmodel" aria-required="false" placeholder="your AI Model" />
+                <label for="Input.LLModel">AI Model</label>
+                <ValidationMessage For="@(() => Input.LLModel)" />
+            </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </EditForm>
     </div>    
@@ -55,6 +69,9 @@
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
+
+    [Inject]
+    private PrompService PrompService { get; set; } = default!;
 
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
 
@@ -70,6 +87,20 @@
         await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
         var emailStore = GetEmailStore();
         await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+
+        if(!string.IsNullOrEmpty(Input.AIKey) &&
+           !string.IsNullOrEmpty(Input.LLModel))
+        {
+            var encryptedResult = ApiKeyEncryptor
+                .Encrypt(Input.AIKey, ApiKeyEncryptor.GetMasterKey(PrompService.APIKeyEncryptionKayName));
+
+            user.CipherText = encryptedResult.CipherText;
+            user.Nonce = encryptedResult.Nonce;
+            user.Tag = encryptedResult.Tag;
+
+            user.LLModel = Input.LLModel;
+        }
+        
         var result = await UserManager.CreateAsync(user, Input.Password);
 
         if (!result.Succeeded)
@@ -141,5 +172,15 @@
         [Display(Name = "Confirm password")]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; } = "";
+
+        [RequiredIfOtherPropertyHasValue(dependentProperty: nameof(LLModel), ErrorMessage = "AI Key is required if AI Model is provided.")]
+        [DataType(DataType.Text)]
+        [Display(Name = "AI Key")]
+        public string AIKey { get; set; } = "";
+
+        [RequiredIfOtherPropertyHasValue(dependentProperty: nameof(AIKey), ErrorMessage = "AI Model is required if AI Key is provided.")]
+        [DataType(DataType.Text)]
+        [Display(Name = "AI Model")]
+        public string LLModel { get; set; } = "";
     }
 }

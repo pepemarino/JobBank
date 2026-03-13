@@ -1,15 +1,13 @@
-﻿using JobBank.ModelsDTO;
-using Microsoft.CodeAnalysis;
-using Microsoft.Identity.Client;
-using OpenAI.Chat;
-using System;
-using System.Text.Json;
-
-namespace JobBank.Management
+﻿namespace JobBank.Management
 {
+    using JobBank.ModelsDTO;
+    using Microsoft.CodeAnalysis;
+    using OpenAI.Chat;
+    using System.Text.Json;
+
     public partial class CareerAssistant
     {
-        private async Task<LLMAnalysisResult> Analyze(string subjectDescription, string prompt, CancellationToken token)
+        private async Task<LLMAnalysisResult> Analyze(string subjectDescription, string prompt, string? userId, CancellationToken token)
         {
             List<ChatMessage> messages = new()
             {
@@ -17,17 +15,19 @@ namespace JobBank.Management
                 new UserChatMessage(subjectDescription)
             };
 
-            ChatCompletion completion = await ChatClient.CompleteChatAsync(messages, new ChatCompletionOptions(), token);
+            await EnsureAPIKeyLoadedAsync(userId);
+            var chatClient = new ChatClient(apiKey: _apiKey, model: _llmModel);
+            ChatCompletion completion = await chatClient.CompleteChatAsync(messages, new ChatCompletionOptions(), token);
 
-            return new(Analysis: ExtractJson(completion.Content[0].Text), Version: _version, Model: _llmModel);           
+            return new(Analysis: ExtractJson(completion.Content[0].Text), Version: _version, Model: _llmModel);
         }
 
         private async Task<AgentAnalysisDTO> Analyze(
             AgentAnalysisDTO analysisDTO,
             string prompt,
+            string? userId,
             CancellationToken token)
         {
-            // Only send what the model actually needs
             var modelInput = new
             {
                 analysisDTO.Description,
@@ -39,7 +39,7 @@ namespace JobBank.Management
             var options = new ChatCompletionOptions
             {
                 ResponseFormat = ChatResponseFormat.CreateJsonObjectFormat(),
-                Temperature = 0.2f // lower = more deterministic
+                Temperature = 0.2f
             };
 
             var messages = new List<ChatMessage>
@@ -48,7 +48,9 @@ namespace JobBank.Management
                 new UserChatMessage(jsonInput)
             };
 
-            ChatCompletion completion = await _client.CompleteChatAsync(messages, options, token);
+            await EnsureAPIKeyLoadedAsync(userId);
+            var chatClient = new ChatClient(apiKey: _apiKey, model: _llmModel);
+            ChatCompletion completion = await chatClient.CompleteChatAsync(messages, options, token);
 
             string rawText = string.Concat(completion.Content.Select(c => c.Text));
 
@@ -71,7 +73,6 @@ namespace JobBank.Management
                     "Model returned empty AnalysisResult.");
             }
 
-            // Merge safely
             analysisDTO.AnalysisResult = result.AnalysisResult;
 
             return analysisDTO;
@@ -97,6 +98,15 @@ namespace JobBank.Management
             }
 
             return rawResponse.Trim();
+        }
+
+        private async Task EnsureAPIKeyLoadedAsync(string? userId = null)
+        {
+            if (string.IsNullOrEmpty(_apiKey))
+                _apiKey = await _llmManager.GetApiKeyAsync(userId);
+
+            if (string.IsNullOrEmpty(_apiKey))
+                throw new InvalidOperationException("API key is not available for LLM analysis.");
         }
     }
 }

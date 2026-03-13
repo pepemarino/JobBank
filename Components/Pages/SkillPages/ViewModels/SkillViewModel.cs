@@ -29,6 +29,11 @@ namespace JobBank.Components.Pages.SkillPages.ViewModels
                     Version = Version
                 };
                 await _skillsService.UpdateOrAddUserSkillsAsync(skillsDto);
+                
+                // After successful save, update the original value
+                _originalRawSkills = RawSkills;
+                SaveCommand.NotifyCanExecuteChanged();
+                OnRequestUIUpdate?.Invoke();
             }
             catch (Exception ex)
             {
@@ -36,11 +41,13 @@ namespace JobBank.Components.Pages.SkillPages.ViewModels
             }
         }
 
-        private bool CanExecute() => !string.IsNullOrEmpty(RawSkills);
+        private bool CanExecute() => !string.IsNullOrEmpty(RawSkills) && RawSkills != _originalRawSkills;
 
         public string Title { get; set; } = "Skills";
 
         private string _rawSkills = string.Empty;
+        private string _originalRawSkills = string.Empty;  // Track original value from database
+
         public string RawSkills
         {
             get => _rawSkills;
@@ -65,25 +72,22 @@ namespace JobBank.Components.Pages.SkillPages.ViewModels
         public async Task InitializeAsync()
         {
             UserId = await _identityService.GetUserIdAsync();
-            var skillSet = await this._skillsService.GetUserSkillsAsync(UserId); // the user id is not used yet
+            var skillSet = await this._skillsService.GetUserSkillsAsync(UserId);
             if (skillSet != null)
             {
                 Version = skillSet.Version;                
-                _rawSkills = skillSet.RawSkills;  // Double Triggering when setting the property.
-                                                  // Set backing field directly to avoid double-triggering
+                _rawSkills = skillSet.RawSkills;
+                _originalRawSkills = skillSet.RawSkills;  // Store the original value
             }
             else
             {
                 Version = 1;
+                _originalRawSkills = string.Empty;
             }
 
-            // Force the command to re-evaluate after initialization
+            // force the command to re-evaluate after initialization
             SaveCommand.NotifyCanExecuteChanged();
             OnRequestUIUpdate?.Invoke();
-
-            // TODO: Still problems with the state of the save button after initialization.
-            // It should be disabled if there are no changes, but it is enabled.
-            // Need more coffe, donuts and debugging to figure this out.
         }
     }
 }

@@ -2,6 +2,7 @@
 using JobBank.Extensions;
 using JobBank.Management;
 using JobBank.Models;
+using JobBank.Services.Abstraction;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
@@ -11,13 +12,16 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
     public class LLMAdvisorViewModel : ILLMAdvisorViewModel
     {        
         private readonly CareerAssistant _careerAssistant;
+        private readonly IIdentityService _identityService;
 
         public LLMAdvisorViewModel(
             IDbContextFactory<EmploymentBankContext> DbFactory, 
-            CareerAssistant careerAssistant)
+            CareerAssistant careerAssistant,
+            IIdentityService identityService)
         {            
             Context = DbFactory.CreateDbContext();
             _careerAssistant = careerAssistant;
+            _identityService = identityService; 
         }
 
         public EmploymentBankContext Context { get; }
@@ -73,7 +77,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 
                 if (analysisCache == null)
                 {
-                    LLMAnalysisResult analysisResult = await _careerAssistant.RunLLMAnalysis(jobPost.Description!); 
+                    var userId = await _identityService.GetUserIdAsync();
+                    LLMAnalysisResult analysisResult = await _careerAssistant.RunLLMAnalysis(jobPost.Description!, userId); 
                     if (!string.IsNullOrEmpty(analysisResult.ErrorMessage))
                     {
                         throw new InvalidOperationException($"LLM analysis failed: {analysisResult.ErrorMessage}");

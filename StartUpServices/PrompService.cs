@@ -1,4 +1,5 @@
-﻿using System.Security.Policy;
+﻿using System.Runtime.CompilerServices;
+using System.Security.Policy;
 
 namespace JobBank.StartUpServices
 {
@@ -24,5 +25,9 @@ namespace JobBank.StartUpServices
         public string LLMModel { get; set; } = string.Empty;
         public string SkillGap {  get; set; } = string.Empty;
         public bool LLMEnabled { get; set; } = false;
+
+        // this is is only the name of the key. The actual key is generated
+        // this value is used to encrypt the Model API key before saving it to the database
+        public string APIKeyEncryptionKayName { get; set; } = string.Empty;
     }
 }

@@ -77,19 +77,15 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
             try
             {
-                // 3. Call your Service (e.g., OpenAI/Semantic Kernel)
-                // Pass the 'History' list so the AI has the full context
                 var response = "// await _interviewService.GetNextQuestionAsync(History)";
 
-                // 4. Add AI's response to History
                 History.Add(new ChatMessage("Interviewer", response, DateTime.Now));
             }
             finally
             {
                 IsProcessing = false;
                 OnRequestUIUpdate?.Invoke();
-                await _jsRuntime.InvokeVoidAsync("scrollToBottom", "chat-container");  // fire the scrollong, on who?
-                                                                                // the chat container div, to scroll to the bottom after adding the new message
+                await _jsRuntime.InvokeVoidAsync("scrollToBottom", "chat-container");
             }
         }
 

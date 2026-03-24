@@ -67,7 +67,16 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
                 if (jobPost == null)
                 {
-                    throw new InvalidOperationException($"JobPost with Id {JobPostId} not found.");
+                    IsErrorOrWarning = true;
+                    UILoadErrorOrWarning("Data Error", $"Job Application with Id {JobPostId} not found.", ExitType.IsError);
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(jobPost.Description))
+                {
+                    IsErrorOrWarning = true;
+                    UILoadErrorOrWarning("Data Error", "Job description is empty. Please provide a job description to analyze the skill match.", ExitType.IsError);
+                    return;
                 }
 
                 JobTitle = jobPost!.Title!;

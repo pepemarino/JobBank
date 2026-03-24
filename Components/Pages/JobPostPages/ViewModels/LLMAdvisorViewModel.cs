@@ -63,7 +63,12 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 {
                     // It should never happen because the page is only navigated to with a valid JobPostId,
                     // but we should still handle it just in case - Should we add loging here?
-                    throw new InvalidOperationException($"JobPost with Id {JobPostId} not found.");
+                    throw new InvalidOperationException($"Job Application with Id {JobPostId} not found.");
+                }
+
+                if (string.IsNullOrEmpty(jobPost.Description))
+                {
+                    throw new InvalidOperationException("Job Application description is empty. LLM analysis cannot be performed.");
                 }
 
                 var jobDescriptionHash = jobPost.Description!.ToCanonicalHash();
@@ -146,11 +151,6 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 Title = $"LLM Advisor - {errorType}";
                 ErrorDescription = errorMessage;
             }
-        }
-
-        public void Dispose()
-        {
-            throw new NotImplementedException();
         }
     }
 }

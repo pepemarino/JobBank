@@ -15,5 +15,6 @@ namespace JobBank.Services.Abstraction
         Task<IEnumerable<T>> GetJobPostsByQueryAsync<T>(Expression<Func<JobPost, bool>>? predicate)  where T : class;
         Task<JobPostDTO> GetJobPostByIdAsync(int jobPostId);
         Task UpdateOrAddJobPostAsync(JobPostDTO jobPostDto);
+        Task<bool> JobPostExists(int jobPostId);
     }
 }

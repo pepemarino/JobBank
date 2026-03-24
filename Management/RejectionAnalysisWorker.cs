@@ -55,12 +55,12 @@ namespace JobBank.Management
                                                        jp.JobRejectionAnalysis == null &&
                                                        jp.Id == jobId);
 
-                    var jobAppkication = jobApplications.FirstOrDefault();
-                    if (jobAppkication == null) continue;
+                    var jobApplication = jobApplications.FirstOrDefault();
+                    if (jobApplication == null || string.IsNullOrEmpty(jobApplication.Description)) continue;
 
-                    jobAppkication.UserSkillSet = userSkills.RawSkills;
+                    jobApplication.UserSkillSet = userSkills.RawSkills;
                     
-                    jobAppkication = await careerAssistant.RunLLMAnalysis(jobAppkication, prompService.SkillGap, currentUserId);
+                    jobApplication = await careerAssistant.RunLLMAnalysis(jobApplication, prompService.SkillGap, currentUserId);
 
                     var rejectedApplication = await jobPostService.GetJobPostByIdAsync(jobId);
                     if (rejectedApplication == null) return;                     // this is exception, but 
@@ -69,9 +69,9 @@ namespace JobBank.Management
                     {
                         JobPostId = jobId,
                         Version = 1,
-                        ApplicantSkills = jobAppkication.UserSkillSet,
-                        Analisis = jobAppkication.AnalysisResult,
-                        JobDescription = jobAppkication.Description,
+                        ApplicantSkills = jobApplication.UserSkillSet,
+                        Analisis = jobApplication.AnalysisResult,
+                        JobDescription = jobApplication.Description,
                         IsProcessed = true,
                         ModelUsed = prompService.LLMModel,
                         PromptVersion = "v1",

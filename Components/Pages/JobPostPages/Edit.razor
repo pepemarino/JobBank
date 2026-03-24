@@ -257,7 +257,11 @@
         context.Attach(JobPost!).State = EntityState.Modified;
 
         await context.SaveChangesAsync();
-        if (JobPost!.ApplicationDeclined && LLMProvider.IsAvailable)
+
+        // A JobPost can be saved wihout a description, but if there is one and the application was 
+        // declined, we want to trigger the analysis to give the user insights on why it was declined 
+        // and what to improve for next applications, so the description is needed for the analysis.
+        if (JobPost!.ApplicationDeclined && LLMProvider.IsAvailable && !string.IsNullOrEmpty(JobPost.Description))
         {
             var jobId = JobPost.Id;
             var userId = await IdentityService.GetUserIdAsync() ?? string.Empty;

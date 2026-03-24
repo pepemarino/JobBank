@@ -62,6 +62,11 @@ namespace JobBank.Services
             }
         }
 
+        public Task<bool> JobPostExists(int jobPostId)
+        {
+            return _context.JobPost.AnyAsync(jp => jp.Id == jobPostId);
+        }
+
         public async Task UpdateOrAddJobPostAsync(JobPostDTO jobPostDto)
         {
             var now = DateTime.UtcNow;

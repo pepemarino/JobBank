@@ -40,61 +40,56 @@
 </div>
 
 <div class="row mb-4">
-<div class="" container-fluid px-4"">
-
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header">
-            <div>@ViewModel.Title</div>
-        </div>
-        <div class="card-body">
-            <div><p style="white-space: pre-wrap;">@ViewModel.JobDescription</p></div>
-        </div>
-
-        <div class="card-footer text-muted">
-            Last updated
-        </div>
-    </div>
-
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="content">
+    <div class="container-fluid px-4"">
+        <div class="card border-0 shadow-sm mb-4">
             <div class="card-header">
-                <h5 class="card-title">@ViewModel.Title</h5>
+                <div>@ViewModel.Title</div>
             </div>
-            <div class="text-body">
-                @if (!string.IsNullOrEmpty(ViewModel.ResponseMessage))
-                {
-                    <div class="alert alert-success" role="alert">
-                        @ViewModel.ResponseMessage
-                    </div>
-                }
-
-                    <div id="chat-container" style="height: 500px; overflow-y: auto; scroll-behavior: smooth;">
-                        @foreach (var chat in ViewModel.History)
-                        {
-                            <div class="d-flex @(chat.Role == "User" ? "justify-content-end" : "justify-content-start") mb-2">
-                                <div class="p-3 rounded-3 @(chat.Role == "User" ? "bg-primary text-white" : "bg-light border")"
-                                     style="max-width: 80%;">
-                                    <strong>@chat.Role:</strong>
-                                    <div>@chat.Content</div>
-                                    <small class="opacity-50">@chat.Timestamp.ToString("t")</small>
+            <div class="card-body">
+                <div><p style="white-space: pre-wrap;">@ViewModel.JobDescription</p></div>
+            </div>
+        </div>
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="content">
+                <div class="text-body">
+                    @if (!string.IsNullOrEmpty(ViewModel.ResponseMessage))
+                    {
+                        <div class="alert alert-success" role="alert">
+                            @ViewModel.ResponseMessage
+                        </div>
+                    }
+                    @if (ViewModel.IsJobDescriptionAvailable)
+                    {
+                        <div id="chat-container" style="height: 500px; overflow-y: auto; scroll-behavior: smooth;">
+                            @foreach (var chat in ViewModel.History)
+                            {
+                                <div class="d-flex @(chat.Role == "User" ? "justify-content-end" : "justify-content-start") mb-2">
+                                    <div class="p-3 rounded-3 @(chat.Role == "User" ? "bg-primary text-white" : "bg-light border")"
+                                         style="max-width: 80%;">
+                                        <strong>@chat.Role:</strong>
+                                        <div>@chat.Content</div>
+                                        <small class="opacity-50">@chat.Timestamp.ToString("t")</small>
+                                    </div>
                                 </div>
-                            </div>
-                        }
-                    </div>
+                            }
+                        </div>
 
-                <input type="hidden" id="JobPostId" value="@ViewModel.JobPostId" />
-                <div class="mb-3">
-                    <label for="interviewUserAnswer" class="form-label fw-bold">Your Response</label>
-                    <InputTextArea id="interviewUserAnswer" 
-                                   @bind-Value="ViewModel.InterviewAnswer" 
-                                   @onkeydown="ViewModel.SendAnswerAsync"  
-                                   class="form-control" />
-                    <button class="btn btn-primary" @onclick="ViewModel.ProcessAnswerAsync">Click me</button>
+                        <div class="mb-3">
+                            <strong>@ViewModel.QuestionProgressCounter</strong> @ViewModel.InterviewAgentQuestion                            
+                        </div>
+                        <input type="hidden" id="JobPostId" value="@ViewModel.JobPostId" />
+                        <div class="mb-3">
+                            <label for="interviewUserAnswer" class="form-label fw-bold">Your Response</label>
+                            <InputTextArea id="interviewUserAnswer"
+                                           @bind-Value="ViewModel.InterviewAnswer"                                           
+                                           class="form-control" />
+                            <button class="btn btn-sm btn-primary interview-send-response" @onclick="ViewModel.ProcessAnswerAsync" style="margin: 1rem;">Click to Answer</button>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
     </div>
-</div>
 </div>
 
 @code {

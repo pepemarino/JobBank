@@ -18,8 +18,7 @@
     public partial class CareerAssistant
     {
         private readonly string _version = "v1";
-        private readonly string _llmModel;
-        private readonly string _prompt;
+        private readonly string _llmModel;        
         private readonly long _timeout;
         private string _apiKey; // Store
 
@@ -28,8 +27,7 @@
         public CareerAssistant(PrompService prompService, ILLMManager llmManager)
         {
             _timeout = prompService.TimeoutSeconds;
-            _llmModel = prompService.LLMModel;
-            _prompt = prompService.InterviewQuestions;
+            _llmModel = prompService.LLMModel;            
             _llmManager = llmManager;          
         }
 
@@ -38,7 +36,14 @@
             return await _llmManager.IsAvailableAsync();            
         }
 
-        public async Task<LLMAnalysisResult> RunLLMAnalysis(string subjectDescription, string? userId = null)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="subjectDescription"></param>
+        /// <param name="prompt"></param>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public async Task<LLMAnalysisResult> RunLLMAnalysis(string subjectDescription, string prompt, string? userId = null)
         {
             var canAnalyse = await _llmManager.IsAvailableAsync(userId);
             if (!canAnalyse)
@@ -48,7 +53,7 @@
 
             try
             {
-                return await Analyze(subjectDescription, _prompt, userId, cts.Token);
+                return await Analyze(subjectDescription, prompt, userId, cts.Token);
             }
             catch (OperationCanceledException)
             {
@@ -56,7 +61,14 @@
             }
         }
 
-        public async Task<AgentAnalysisDTO> RunLLMAnalysis(AgentAnalysisDTO analysisDTO, string prompt, string? userId = null)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="analysisDTO"></param>
+        /// <param name="prompt"></param>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public async Task<JobApplicationAnalysisDTO> RunLLMAnalysis(JobApplicationAnalysisDTO analysisDTO, string prompt, string? userId = null)
         {
             var canAnalyse = await _llmManager.IsAvailableAsync(userId);
             if (!canAnalyse)
@@ -75,6 +87,8 @@
                 throw;
             }
         }
+
+
     }
 
     // Data model for structured response
@@ -85,8 +99,5 @@
 
         [JsonPropertyName("StudySubjects")]
         public List<string> StudySubjects { get; set; } = new();
-
-        //[JsonPropertyName("JobDescriptionSkills")]  // not ready
-        //public List<string> JobDescriptionSkills { get; set; } = new();
     }
 }

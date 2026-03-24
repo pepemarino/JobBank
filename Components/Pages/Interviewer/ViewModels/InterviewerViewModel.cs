@@ -1,4 +1,5 @@
-﻿using JobBank.Services.Abstraction;
+﻿using JobBank.Extensions;
+using JobBank.Services.Abstraction;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
@@ -6,14 +7,17 @@ using static JobBank.Components.Pages.Interviewer.ViewModels.IInterviewerViewMod
 
 namespace JobBank.Components.Pages.Interviewer.ViewModels
 {
-    public class InterviewerViewModel : IInterviewerViewModel
+    public partial class InterviewerViewModel : IInterviewerViewModel
     {
         private readonly IJobPostService _jobPostService;
         private readonly IJSRuntime _jsRuntime;
-        public InterviewerViewModel(IJobPostService jobPostService, IJSRuntime js)
+        private readonly IAnalysisCacheService _analysisCacheService;
+        
+        public InterviewerViewModel(IJobPostService jobPostService, IJSRuntime js, IAnalysisCacheService analysisCacheService)
         {
             _jobPostService = jobPostService;
             _jsRuntime = js;
+            _analysisCacheService = analysisCacheService;
         }
 
         /// <summary>
@@ -21,7 +25,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         /// </summary>
         public List<ChatMessage> History { get; set; } = new ();
 
-        public string Title { get; set; } = "Interviewer";
+        public string Title { get; set; } = interviewAgentName;
 
         [SupplyParameterFromQuery]
         public int JobPostId { get; set; }
@@ -30,6 +34,9 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         [SupplyParameterFromForm]
         public string? InterviewAnswer { get; set; }
         public bool IsProcessing { get; set; }
+
+        public bool IsJobDescriptionAvailable { get; set; } = false;
+
         public string? ResponseMessage { get; set; }
 
         public string CompanyName { get; set; } = string.Empty;
@@ -45,7 +52,16 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         }
 
         public bool ShouldPreventDefault { get; set; } = false;
+        public int QuestionCount { get; set; } = 1;
 
+        public int QuestionMax => maxQuestions;
+
+        /// <summary>
+        /// This is not working. Need to see if this is because S-SSR, but the intention is to allow the user to hit 
+        /// enter to submit the answer, but it is not working
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
         public async Task SendAnswerAsync(KeyboardEventArgs e)
         {
             if (e.Key == "Enter" || e.Code == "NumpadEnter")
@@ -77,15 +93,20 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
             try
             {
+                
+                // Pass the 'History' list so the AI has the full context
                 var response = "// await _interviewService.GetNextQuestionAsync(History)";
 
+                // 4. Add AI's response to History
                 History.Add(new ChatMessage("Interviewer", response, DateTime.Now));
+                QuestionCount++;
             }
             finally
             {
                 IsProcessing = false;
                 OnRequestUIUpdate?.Invoke();
-                await _jsRuntime.InvokeVoidAsync("scrollToBottom", "chat-container");
+                await _jsRuntime.InvokeVoidAsync("scrollToBottom", "chat-container");  // fire the scrollong, on who?
+                                                                                       // the chat container div, to scroll to the bottom after adding the new message
             }
         }
 
@@ -108,14 +129,25 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                 {
                     CompanyName = jobPost.Company ?? string.Empty;
                     JobTitle = jobPost.Title ?? string.Empty;
-                    JobDescription = jobPost.Description ?? string.Empty;
+
+                    // this is shown in the view if the job description is not available,
+                    // so we want to set it to a message instead of leaving it blank
+                    JobDescription = jobPost.Description ?? "No job description provided. Interview not available.";
+                                        
+                    IsJobDescriptionAvailable = !string.IsNullOrEmpty(jobPost.Description);
+                    if(!IsJobDescriptionAvailable) return;
+                    
+                    var jobDescriptionHash = jobPost.Description!.ToCanonicalHash();
+
+
+
                     InterviewAgentQuestion = $"As an interviewer for {CompanyName}, what are the top 3 " +
                         $"qualities you look for in a candidate for the {JobTitle} position?";
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Console.WriteLine(ex);  // need to log this properly
             }
             finally
             {

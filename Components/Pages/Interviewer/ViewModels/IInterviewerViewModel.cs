@@ -16,12 +16,20 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
         string JobTitle { get; set; }
 
+        int QuestionCount { get; set; }
+
+        int QuestionMax { get; }
+
+        string QuestionProgressCounter => $"{QuestionCount}/{QuestionMax}";
+
         string JobDescription { get; set; }
 
         string InterviewAgentQuestion { get; set; }
         string? InterviewAnswer { get; set; }
 
         bool ShouldPreventDefault { get; set; }
+
+        bool IsJobDescriptionAvailable { get; set; }
 
         bool IsProcessing { get; set; }
         string? ResponseMessage { get; set; }

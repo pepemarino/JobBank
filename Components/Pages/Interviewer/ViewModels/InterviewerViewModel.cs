@@ -20,8 +20,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         private readonly PrompService _prompService;
 
         public InterviewerViewModel(
-            IJobPostService jobPostService, 
-            IJSRuntime js, 
+            IJobPostService jobPostService,
+            IJSRuntime js,
             IAnalysisCacheService analysisCacheService,
             IInterviewStateStore interviewStateStore,
             IInterviewService llmInterviewService,
@@ -31,14 +31,14 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             _jsRuntime = js;
             _analysisCacheService = analysisCacheService;
             _interviewStateStore = interviewStateStore;
-            _llmInterviewService = llmInterviewService; 
-            _prompService = prompService;   
+            _llmInterviewService = llmInterviewService;
+            _prompService = prompService;
         }
 
         #region Interview State Tracking
-        private List<string> CoveredTopics { get; set; } = new (); // This list will keep track of the topics that have
-                                                                   // already been covered in the interview,
-                                                                   // to help the Agent avoid repeating questions on the same topic.
+        private List<string> CoveredTopics { get; set; } = new(); // This list will keep track of the topics that have
+                                                                  // already been covered in the interview,
+                                                                  // to help the Agent avoid repeating questions on the same topic.
         private List<string> WeakAreas { get; set; } = new(); // This list will keep track of the candidate's weak areas identified during the interview,
                                                               // which can be used to drive adaptive questioning by asking follow-up questions
                                                               // to probe deeper into those areas.
@@ -58,7 +58,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
         [SupplyParameterFromQuery]
         public int JobPostId { get; set; }
-        public string InterviewAgentQuestion { get; set; } = string.Empty;  
+        public string InterviewAgentQuestion { get; set; } = string.Empty;
 
         [SupplyParameterFromForm]
         public string? InterviewAnswer { get; set; }
@@ -88,13 +88,13 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             get
             {
                 if (IsInterviewCompleted)
-            {
+                {
                     InterviewAgentQuestion = string.Empty;
                     return $"{QuestionMax}/{QuestionMax} Interview is complete - Score " +
                         $"{Evaluations.Sum(e => e.Score * e.Weight).ToString("0.00")} of {Evaluations.Sum(e => e.Weight).ToString("0.00")}";
-            }
+                }
                 return $"{QuestionCount}/{QuestionMax}";
-        }
+            }
         }
 
         #endregion View Model Properties
@@ -109,7 +109,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         private async Task AnswerProcessingAsync(string message)
         {
             if (string.IsNullOrWhiteSpace(InterviewAnswer) || IsInterviewCompleted) return;
-            
+
             History.Add(new ChatMessage(InterviewRole.Interviewer.ToString(), InterviewAgentQuestion, DateTime.Now));
             History.Add(new ChatMessage(InterviewRole.User.ToString(), InterviewAnswer, DateTime.Now));
 
@@ -142,7 +142,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                     return;
                 }
 
-                InterviewAgentQuestion = llmRresponse.AgentQuestion;               
+                InterviewAgentQuestion = llmRresponse.AgentQuestion;
                 QuestionCount++;
 
                 await SaveToBrowserInterviewStateAsync();
@@ -175,7 +175,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             if (state is null) return;
 
             if (state.JobPostId != JobPostId) return;
-            
+
             JobPostId = state.JobPostId;
             History = state.History;
             JobDescription = state.JobDescription;
@@ -193,7 +193,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         private async Task<InterviewState?> LoadFromBrowserInterviewStateAsync(int jobPostId)
         {
             return await _interviewStateStore.LoadAsync(jobPostId);
-            }
+        }
 
         private async Task SaveToBrowserInterviewStateAsync()
         {
@@ -216,7 +216,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         #region Component Initialization
 
         public async Task InitializeAsync()
-        {            
+        {
             if (JobPostId <= 0) return;
 
             try
@@ -263,7 +263,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             {
                 IsProcessing = false;
                 OnRequestUIUpdate?.Invoke();
-            }            
+            }
         }
 
         public void Reset()

@@ -5,5 +5,6 @@
   "LLMModel": "gpt-4o-mini",
   "SkillGap": "You are analyzing skill gaps between a job description and a candidate's skill set. Return ONLY a valid JSON object with this exact structure: { \"AnalysisResult\": \"string\" } Do NOT include any other properties. Do NOT include markdown. Do NOT wrap in code fences.",
   "LLMEnabled": true,
-  "APIKeyEncryptionKayName": "D:\\AProgramData\\WorksCommons\\Keys\\master.key"
+  "APIKeyEncryptionKayName": "D:\\AProgramData\\WorksCommons\\Keys\\master.key",
+  "DisableBrowserStorage": false
 }

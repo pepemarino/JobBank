@@ -1,9 +1,11 @@
-﻿using JobBank.Extensions;
+﻿using JobBank.Management.Abstraction;
+using JobBank.Management.Interview;
 using JobBank.Services.Abstraction;
+using JobBank.StartUpServices;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
-using static JobBank.Components.Pages.Interviewer.ViewModels.IInterviewerViewModel;
+using static JobBank.Management.Abstraction.IInterviewService;
 
 namespace JobBank.Components.Pages.Interviewer.ViewModels
 {
@@ -12,18 +14,45 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         private readonly IJobPostService _jobPostService;
         private readonly IJSRuntime _jsRuntime;
         private readonly IAnalysisCacheService _analysisCacheService;
-        
-        public InterviewerViewModel(IJobPostService jobPostService, IJSRuntime js, IAnalysisCacheService analysisCacheService)
+        private readonly IInterviewStateStore _interviewStateStore;
+        private readonly IInterviewService _llmInterviewService;
+
+        private readonly PrompService _prompService;
+
+        public InterviewerViewModel(
+            IJobPostService jobPostService, 
+            IJSRuntime js, 
+            IAnalysisCacheService analysisCacheService,
+            IInterviewStateStore interviewStateStore,
+            IInterviewService llmInterviewService,
+            PrompService prompService)
         {
             _jobPostService = jobPostService;
             _jsRuntime = js;
             _analysisCacheService = analysisCacheService;
+            _interviewStateStore = interviewStateStore;
+            _llmInterviewService = llmInterviewService; 
+            _prompService = prompService;   
         }
+
+        #region Interview State Tracking
+        private List<string> CoveredTopics { get; set; } = new (); // This list will keep track of the topics that have
+                                                                   // already been covered in the interview,
+                                                                   // to help the Agent avoid repeating questions on the same topic.
+        private List<string> WeakAreas { get; set; } = new(); // This list will keep track of the candidate's weak areas identified during the interview,
+                                                              // which can be used to drive adaptive questioning by asking follow-up questions
+                                                              // to probe deeper into those areas.
+                                                              // The trainer will use this.
+        private List<EvaluationResult> Evaluations { get; set; } = new();
+
+        #endregion Interview State Tracking
+
+        #region View Model Properties
 
         /// <summary>
         /// List of all messages in the conversation, including both user answers and interviewer questions.
         /// </summary>
-        public List<ChatMessage> History { get; set; } = new ();
+        public List<ChatMessage> History { get; set; } = new();
 
         public string Title { get; set; } = interviewAgentName;
 
@@ -42,64 +71,80 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         public string CompanyName { get; set; } = string.Empty;
 
         public string JobTitle { get; set; } = string.Empty;
-        public string JobDescription { get; set; } = string.Empty;
+        public string JobDescription { get; set; } = string.Empty;        
 
         public event Action? OnRequestUIUpdate;
+
+        public int QuestionCount { get; set; } = 1;
+
+        public int QuestionMax => maxQuestions;
+
+        public string QuestionTopic { get; set; } = string.Empty;
+
+        public bool IsInterviewCompleted => QuestionCount > maxQuestions;
+
+        public string QuestionProgressCounter
+        {
+            get
+            {
+                if (IsInterviewCompleted)
+                {
+                    InterviewAgentQuestion = string.Empty;
+                    return $"{QuestionMax}/{QuestionMax} Interview is complete - Score " +
+                        $"{Evaluations.Sum(e => e.Score * e.Weight).ToString("0.00")} of {Evaluations.Sum(e => e.Weight).ToString("0.00")}";
+                }
+                return $"{QuestionCount}/{QuestionMax}";
+            }
+        }
+
+        #endregion View Model Properties
+
+        #region Answer Processing
 
         public async Task ProcessAnswerAsync(MouseEventArgs args)
         {
             await AnswerProcessingAsync($"Answer submitted (button cliecked) : {InterviewAnswer}");
         }
 
-        public bool ShouldPreventDefault { get; set; } = false;
-        public int QuestionCount { get; set; } = 1;
-
-        public int QuestionMax => maxQuestions;
-
-        /// <summary>
-        /// This is not working. Need to see if this is because S-SSR, but the intention is to allow the user to hit 
-        /// enter to submit the answer, but it is not working
-        /// </summary>
-        /// <param name="e"></param>
-        /// <returns></returns>
-        public async Task SendAnswerAsync(KeyboardEventArgs e)
-        {
-            if (e.Key == "Enter" || e.Code == "NumpadEnter")
-            {
-                // ShouldPreventDefault = true; // Tell Blazor to stop the new line trying to
-                                                // hit enter to submit the answer, but not working,
-                                                // so leaving it off for now and just using the button
-                                                // click to submit the answer
-
-                await AnswerProcessingAsync($"Processing: {InterviewAnswer}");
-            }
-            else
-            {
-                //ShouldPreventDefault = false;
-            }
-        }
-
         private async Task AnswerProcessingAsync(string message)
         {
-            if (string.IsNullOrWhiteSpace(InterviewAnswer)) return;
-            
-            History.Add(new ChatMessage("User", InterviewAnswer, DateTime.Now));
+            if (string.IsNullOrWhiteSpace(InterviewAnswer) || IsInterviewCompleted) return;
 
-            var currentAnswer = InterviewAnswer;
+            History.Add(new ChatMessage(InterviewRole.Interviewer.ToString(), InterviewAgentQuestion, DateTime.Now));
+            History.Add(new ChatMessage(InterviewRole.User.ToString(), InterviewAnswer, DateTime.Now));
+
+            var userResponse = new UserJobApplicantDTO
+            {
+                JobDescription = JobDescription,
+                UserAnswer = InterviewAnswer,
+                QuestionTopic = QuestionTopic,
+                History = History,
+                WeakAreas = WeakAreas,
+                CoveredTopics = CoveredTopics,
+                Evaluations = Evaluations
+            };
+
             InterviewAnswer = string.Empty;
-
             IsProcessing = true;
-            OnRequestUIUpdate?.Invoke();
 
             try
             {
-                
-                // Pass the 'History' list so the AI has the full context
-                var response = "// await _interviewService.GetNextQuestionAsync(History)";
+                var llmRresponse = await _llmInterviewService.GetInterviewerAnalysisAsync(userResponse, systemPrompt);
+                if (IsInterviewCompleted)
+                {
+                    QuestionCount = maxQuestions;
+                    ResponseMessage = "Interview completed. Thank you for your time!";
 
-                // 4. Add AI's response to History
-                History.Add(new ChatMessage("Interviewer", response, DateTime.Now));
+                    // need to do management and cleanup here, like clearing the browser state,
+                    // and maybe saving the final interview result to the server for future reference by the user and for training the model.
+
+                    return;
+                }
+
+                InterviewAgentQuestion = llmRresponse.AgentQuestion;               
                 QuestionCount++;
+
+                await SaveToBrowserInterviewStateAsync();
             }
             finally
             {
@@ -110,8 +155,67 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             }
         }
 
+        #endregion Answer Processing
+
+        #region Initialization and State Management
+
+        /// <summary>
+        /// Note: Do not call this method in the constructor or from InitializeAsync, 
+        /// because it needs to be called after the component has rendered at least once.
+        /// It sounds nuts but it's because we need to ensure that the JS interop is ready
+        /// </summary>
+        /// <returns></returns>
+        public async Task RestoreFromBrowserAsync()
+        {
+            var state = await _interviewStateStore.LoadAsync(JobPostId);
+            if (state != null && _prompService.DisableBrowserStorage)
+                await _interviewStateStore.ClearAsync(JobPostId);
+
+            if (state is null) return;
+
+            if (state.JobPostId != JobPostId) return;
+            
+            JobPostId = state.JobPostId;
+            History = state.History;
+            JobDescription = state.JobDescription;
+            QuestionCount = state.QuestionCount;
+            CoveredTopics = state.CoveredTopics;
+            WeakAreas = state.WeakAreas;
+            Evaluations = state.Evaluations;
+
+            InterviewAgentQuestion = History.LastOrDefault(m => m.Role == "Interviewer")?.Content
+                ?? InterviewAgentQuestion;
+
+            IsJobDescriptionAvailable = !string.IsNullOrEmpty(JobDescription);
+        }
+
+        private async Task<InterviewState?> LoadFromBrowserInterviewStateAsync(int jobPostId)
+        {
+            return await _interviewStateStore.LoadAsync(jobPostId);
+        }
+
+        private async Task SaveToBrowserInterviewStateAsync()
+        {
+            var state = new InterviewState
+            {
+                JobPostId = JobPostId,
+                JobDescription = JobDescription,
+                History = History,
+                CoveredTopics = CoveredTopics,
+                WeakAreas = WeakAreas,
+                Evaluations = Evaluations,
+                QuestionCount = QuestionCount,
+                IsFinished = QuestionCount > maxQuestions
+            };
+            await _interviewStateStore.SaveAsync(JobPostId, state);
+        }
+
+        #endregion Initialization and State Management
+
+        #region Component Initialization
+
         public async Task InitializeAsync()
-        {            
+        {
             if (JobPostId <= 0) return;
 
             try
@@ -133,16 +237,21 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                     // this is shown in the view if the job description is not available,
                     // so we want to set it to a message instead of leaving it blank
                     JobDescription = jobPost.Description ?? "No job description provided. Interview not available.";
-                                        
+
                     IsJobDescriptionAvailable = !string.IsNullOrEmpty(jobPost.Description);
-                    if(!IsJobDescriptionAvailable) return;
-                    
-                    var jobDescriptionHash = jobPost.Description!.ToCanonicalHash();
+                    if (!IsJobDescriptionAvailable) return;
 
+                    var response = await _llmInterviewService.GetInterviewerAnalysisAsync(
+                        new UserJobApplicantDTO
+                        {
+                            JobDescription = JobDescription,
+                            UserAnswer = string.Empty,
+                            QuestionTopic = string.Empty,
+                            History = History,
+                            IsInterviewComplated = false,
+                        }, systemPrompt);
 
-
-                    InterviewAgentQuestion = $"As an interviewer for {CompanyName}, what are the top 3 " +
-                        $"qualities you look for in a candidate for the {JobTitle} position?";
+                    InterviewAgentQuestion = response.AgentQuestion;
                 }
             }
             catch (Exception ex)
@@ -153,7 +262,23 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             {
                 IsProcessing = false;
                 OnRequestUIUpdate?.Invoke();
-            }            
+            }
         }
+
+        public void Reset()
+        {
+            History = new();
+            CoveredTopics = new();
+            WeakAreas = new();
+            Evaluations = new();
+            QuestionCount = 1;
+            InterviewAgentQuestion = string.Empty;
+            ResponseMessage = string.Empty;
+            IsProcessing = false;
+            IsJobDescriptionAvailable = false;
+            JobDescription = string.Empty;
+        }
+
+        #endregion Component Initialization
     }
 }

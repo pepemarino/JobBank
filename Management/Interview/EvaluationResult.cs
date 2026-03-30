@@ -7,9 +7,15 @@
     /// </summary>
     public class EvaluationResult
     {
-        public double Score { get; set; }
-        public bool Passed { get; set; }    
+        public string Question { get; set; } = string.Empty;
+
+        public double Score { get; set; }           // 0 - 1
+        public int Weight { get; set; }             // 1 - 10
+        public bool Passed { get; set; }   
+        
         public List<string> Strengths { get; set; } = new();
         public List<string> Gaps { get; set; } = new();
+
+        public string Topic { get; set; } = string.Empty;
     }
 }

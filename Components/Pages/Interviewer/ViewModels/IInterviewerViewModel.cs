@@ -1,12 +1,11 @@
 ﻿using JobBank.Components.Pages.Init;
+using JobBank.Management.Interview;
 using Microsoft.AspNetCore.Components.Web;
 
 namespace JobBank.Components.Pages.Interviewer.ViewModels
 {
     public interface IInterviewerViewModel : IAsyncInitialization
     {
-        public record ChatMessage(string Role, string Content, DateTime Timestamp);
-
         List<ChatMessage> History { get; set; }
 
         string Title { get; set; }
@@ -20,14 +19,15 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
         int QuestionMax { get; }
 
-        string QuestionProgressCounter => $"{QuestionCount}/{QuestionMax}";
+        bool IsInterviewCompleted { get; }
+
+        string QuestionProgressCounter { get; }
 
         string JobDescription { get; set; }
 
         string InterviewAgentQuestion { get; set; }
         string? InterviewAnswer { get; set; }
-
-        bool ShouldPreventDefault { get; set; }
+        string QuestionTopic { get; set; }
 
         bool IsJobDescriptionAvailable { get; set; }
 
@@ -36,6 +36,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
         Task ProcessAnswerAsync(MouseEventArgs args);
 
-        Task SendAnswerAsync(KeyboardEventArgs e);
+        Task RestoreFromBrowserAsync();
+
+        void Reset();
     }
 }

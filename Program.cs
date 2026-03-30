@@ -1,3 +1,4 @@
+using Blazor.Extensions.Storage;
 using JobBank.Components;
 using JobBank.Components.Account;
 using JobBank.Components.Pages.Home.ViewModels;
@@ -55,6 +56,7 @@ builder.Services.AddDbContext<JobBankIdentityDbContext>(options =>
 
 #region Identity + Passkeys
 
+builder.Services.AddStorage();
 builder.Services.AddIdentity<JobBankUser, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -88,6 +90,22 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
+builder.Services.Configure<InterviewOptions>(
+    builder.Configuration.GetSection("Interview"));
+
+var interviewOptions = builder.Configuration
+    .GetSection("Interview")
+    .Get<InterviewOptions>();
+
+if (interviewOptions.UseMockService)
+{
+    builder.Services.AddScoped<IInterviewService, MockLLMInterviewService>();
+}
+else
+{
+    builder.Services.AddScoped<IInterviewService, LLMInterviewService>();
+}
+
 builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddTransient<ILLMAdvisorViewModel, LLMAdvisorViewModel>()
     .AddTransient<IHomeViewModel, HomeViewModel>()
@@ -98,8 +116,9 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddScoped<IJobPostService, JobPostService>()
     .AddScoped<ISkillsService, SkillsService>()
     .AddScoped<IAnalysisCacheService, AnalysisCacheService>()
+    .AddScoped<IInterviewStateStore, BrowserInterviewStateStore>()  // Transient would not work here. The state is hold in the browser.
     .AddScoped<CareerAssistant>()
-    .AddScoped<IIdentityService, IdentityService>()
+    .AddScoped<IIdentityService, IdentityService>()    
     .AddHostedService<RejectionAnalysisWorker>()
     .AddSingleton<ILLMProvider, LLMProvider>()
     .AddScoped<ILLMManager, LLMManager>()

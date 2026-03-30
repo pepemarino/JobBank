@@ -71,7 +71,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         public string CompanyName { get; set; } = string.Empty;
 
         public string JobTitle { get; set; } = string.Empty;
-        public string JobDescription { get; set; } = string.Empty;        
+        public string JobDescription { get; set; } = string.Empty;
 
         public event Action? OnRequestUIUpdate;
 
@@ -88,13 +88,13 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             get
             {
                 if (IsInterviewCompleted)
-                {
+            {
                     InterviewAgentQuestion = string.Empty;
                     return $"{QuestionMax}/{QuestionMax} Interview is complete - Score " +
                         $"{Evaluations.Sum(e => e.Score * e.Weight).ToString("0.00")} of {Evaluations.Sum(e => e.Weight).ToString("0.00")}";
-                }
-                return $"{QuestionCount}/{QuestionMax}";
             }
+                return $"{QuestionCount}/{QuestionMax}";
+        }
         }
 
         #endregion View Model Properties
@@ -109,7 +109,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         private async Task AnswerProcessingAsync(string message)
         {
             if (string.IsNullOrWhiteSpace(InterviewAnswer) || IsInterviewCompleted) return;
-
+            
             History.Add(new ChatMessage(InterviewRole.Interviewer.ToString(), InterviewAgentQuestion, DateTime.Now));
             History.Add(new ChatMessage(InterviewRole.User.ToString(), InterviewAnswer, DateTime.Now));
 
@@ -126,6 +126,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
             InterviewAnswer = string.Empty;
             IsProcessing = true;
+            OnRequestUIUpdate?.Invoke();
 
             try
             {
@@ -192,7 +193,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         private async Task<InterviewState?> LoadFromBrowserInterviewStateAsync(int jobPostId)
         {
             return await _interviewStateStore.LoadAsync(jobPostId);
-        }
+            }
 
         private async Task SaveToBrowserInterviewStateAsync()
         {
@@ -215,7 +216,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         #region Component Initialization
 
         public async Task InitializeAsync()
-        {
+        {            
             if (JobPostId <= 0) return;
 
             try
@@ -262,7 +263,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             {
                 IsProcessing = false;
                 OnRequestUIUpdate?.Invoke();
-            }
+            }            
         }
 
         public void Reset()

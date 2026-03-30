@@ -6,6 +6,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 {
     public interface IInterviewerViewModel : IAsyncInitialization
     {
+        public record ChatMessage(string Role, string Content, DateTime Timestamp);
+
         List<ChatMessage> History { get; set; }
 
         string Title { get; set; }
@@ -36,8 +38,5 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
         Task ProcessAnswerAsync(MouseEventArgs args);
 
-        Task RestoreFromBrowserAsync();
-
-        void Reset();
     }
 }

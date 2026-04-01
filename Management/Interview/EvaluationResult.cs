@@ -17,5 +17,18 @@
         public List<string> Gaps { get; set; } = new();
 
         public string Topic { get; set; } = string.Empty;
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is not EvaluationResult other)
+                return false;
+            return Question == other.Question &&
+                   Score == other.Score &&
+                   Weight == other.Weight &&
+                   Passed == other.Passed &&
+                   Topic == other.Topic &&
+                   Strengths.SequenceEqual(other.Strengths) &&
+                   Gaps.SequenceEqual(other.Gaps);
+        }
     }
 }

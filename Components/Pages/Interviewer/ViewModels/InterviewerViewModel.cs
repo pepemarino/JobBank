@@ -16,6 +16,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         private readonly IAnalysisCacheService _analysisCacheService;
         private readonly IInterviewStateStore _interviewStateStore;
         private readonly IInterviewService _llmInterviewService;
+        private readonly IConfiguration _appsettings;
 
         private readonly PrompService _prompService;
 
@@ -25,13 +26,17 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             IAnalysisCacheService analysisCacheService,
             IInterviewStateStore interviewStateStore,
             IInterviewService llmInterviewService,
-            PrompService prompService)
+            PrompService prompService,
+            IConfiguration appsettings)
         {
             _jobPostService = jobPostService;
             _jsRuntime = js;
             _analysisCacheService = analysisCacheService;
             _interviewStateStore = interviewStateStore;
             _llmInterviewService = llmInterviewService;
+            _appsettings = appsettings;
+            maxQuestions = _appsettings.GetValue<int>("Interview:InterviewMaxQuestion", 3);
+
             _prompService = prompService;
         }
 
@@ -65,6 +70,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         public bool IsProcessing { get; set; }
 
         public bool IsJobDescriptionAvailable { get; set; } = false;
+
+        public bool IsHydrated { get; set; } = false;
 
         public string? ResponseMessage { get; set; }
 
@@ -131,6 +138,12 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             try
             {
                 var llmRresponse = await _llmInterviewService.GetInterviewerAnalysisAsync(userResponse, systemPrompt);
+                if(llmRresponse == null)
+                {
+                    ResponseMessage = "Sorry, something went wrong with processing your answer. Please try again.";
+                    return;
+                }
+
                 if (IsInterviewCompleted)
                 {
                     QuestionCount = maxQuestions;
@@ -143,6 +156,14 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                 }
 
                 InterviewAgentQuestion = llmRresponse.AgentQuestion;
+                QuestionTopic = llmRresponse.QuestionTopic;
+                CoveredTopics = llmRresponse.CoveredTopics;
+                WeakAreas = llmRresponse.WeakAreas;
+
+                if (llmRresponse.Evaluation != null 
+                    && !Evaluations.Any(e => e.Equals(llmRresponse.Evaluation)))
+                    Evaluations.Add(llmRresponse.Evaluation!);
+
                 QuestionCount++;
 
                 await SaveToBrowserInterviewStateAsync();
@@ -183,10 +204,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             CoveredTopics = state.CoveredTopics;
             WeakAreas = state.WeakAreas;
             Evaluations = state.Evaluations;
-
-            InterviewAgentQuestion = History.LastOrDefault(m => m.Role == "Interviewer")?.Content
-                ?? InterviewAgentQuestion;
-
+            
             IsJobDescriptionAvailable = !string.IsNullOrEmpty(JobDescription);
         }
 
@@ -250,9 +268,13 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                             QuestionTopic = string.Empty,
                             History = History,
                             IsInterviewComplated = false,
+                            WeakAreas = WeakAreas,
+                            CoveredTopics = CoveredTopics,
                         }, systemPrompt);
 
                     InterviewAgentQuestion = response.AgentQuestion;
+                    QuestionTopic = response.QuestionTopic;
+                    CoveredTopics = response.CoveredTopics;
                 }
             }
             catch (Exception ex)

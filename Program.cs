@@ -124,7 +124,8 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddScoped<ILLMManager, LLMManager>()
     .AddSingleton<JobDescriptionParser>()
     .AddSingleton<RankingEngine>()
-    .AddSingleton<AnalysisChannel>();
+    .AddSingleton<AnalysisChannel>()
+    .AddSingleton(builder.Configuration);
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

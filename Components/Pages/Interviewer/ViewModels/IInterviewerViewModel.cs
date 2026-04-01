@@ -21,6 +21,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
         bool IsInterviewCompleted { get; }
 
+        bool IsHydrated { get; set; }   
+
         string QuestionProgressCounter { get; }
 
         string JobDescription { get; set; }

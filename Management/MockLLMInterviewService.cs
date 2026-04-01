@@ -1,5 +1,6 @@
 ﻿using JobBank.Management.Abstraction;
 using JobBank.Management.Interview;
+using static JobBank.Management.Abstraction.IInterviewService;
 
 namespace JobBank.Management
 {
@@ -29,13 +30,16 @@ namespace JobBank.Management
             if (!string.IsNullOrWhiteSpace(userDTO.UserAnswer))
             {
                 evaluation = EvaluateAnswer(
-                    userDTO.History.LastOrDefault(m => m.Role == "Interviewer")?.Content ?? "",
+                    userDTO.History.LastOrDefault(m => m.Role == InterviewRole.Interviewer.ToString())?.Content ?? "",
                     userDTO.QuestionTopic,
                     userDTO.UserAnswer
                 );
 
-                userDTO.Evaluations.Add(evaluation);
-
+                if(!userDTO.Evaluations.Any(e => e.Equals(evaluation)))
+                {
+                    userDTO.Evaluations.Add(evaluation);
+                }
+                
                 // Update WeakAreas
                 foreach (var gap in evaluation.Gaps)
                 {
@@ -75,7 +79,7 @@ namespace JobBank.Management
             {
                 var match = questions
                     .FirstOrDefault(q => q.Topic == weakTopic &&
-                                         !user.CoveredTopics.Contains(q.Topic));
+                                         user.History.All(m => m.Content != q.Question));
 
                 if (match != default)
                     return match;
@@ -83,7 +87,8 @@ namespace JobBank.Management
 
             // Otherwise pick uncovered topic
             var next = questions
-                .FirstOrDefault(q => !user.CoveredTopics.Contains(q.Topic));
+                .FirstOrDefault(q => !user.CoveredTopics.Contains(q.Topic) &&
+                                      user.History.All(m => m.Content != q.Question));
 
             if (next != default)
                 return next;
@@ -103,6 +108,8 @@ namespace JobBank.Management
         {
             var lengthScore = Math.Min(answer.Length / 200.0, 1.0); // crude signal
             var randomFactor = Random.Shared.NextDouble() * 0.3;
+
+            var weight = questions.FirstOrDefault(q => q.Question == question).Weight;
 
             var score = Math.Min(lengthScore + randomFactor, 1.0);
             var passed = score >= 0.6;
@@ -126,6 +133,7 @@ namespace JobBank.Management
                 Question = question,
                 Topic = topic,
                 Score = score,
+                Weight = weight,
                 Passed = passed,
                 Strengths = strengths,
                 Gaps = gaps

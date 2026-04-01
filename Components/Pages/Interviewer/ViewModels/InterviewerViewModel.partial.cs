@@ -2,7 +2,7 @@
 {
     public partial class InterviewerViewModel
     {
-        private const int maxQuestions = 3;  // Maximum number of questions to ask in the interview.
+        private readonly int maxQuestions = 6;   // Maximum number of questions to ask in the interview.
                                              // What would be the criteria to end the interview earlier? For now we will just stop after a fixed number of questions,
                                              // but in the future we could consider other criteria
         private const string interviewAgentName = "Interviewer";

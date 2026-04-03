@@ -1,10 +1,10 @@
 ﻿using JobBank.Management.Abstraction;
 using JobBank.Management.Interview;
-using static JobBank.Management.Abstraction.IInterviewService;
+using static JobBank.Management.Abstraction.IInterviewLLMService;
 
 namespace JobBank.Management
 {
-    public class MockLLMInterviewService : IInterviewService
+    public class MockLLMInterviewService : IInterviewLLMService
     {
         private readonly List<(string Question, string Topic, int Weight)> questions = new()
         {
@@ -20,7 +20,7 @@ namespace JobBank.Management
             ("Describe a challenging team project.", "Collaboration",5),
         };
 
-        public async Task<InterviewerDTO> GetInterviewerAnalysisAsync(
+        public async Task<InterviewerLLMDTO> GetInterviewerAnalysisAsync(
             UserJobApplicantDTO userDTO,
             string prompt)
         {
@@ -55,7 +55,7 @@ namespace JobBank.Management
             if (!userDTO.CoveredTopics.Contains(topic))
                 userDTO.CoveredTopics.Add(topic);
 
-            return new InterviewerDTO
+            return new InterviewerLLMDTO
             {
                 AgentQuestion = question,
                 QuestionTopic = topic,

@@ -1,6 +1,6 @@
 ﻿namespace JobBank.Management.Interview
 {
-    public class InterviewerDTO
+    public class InterviewerLLMDTO
     {
         public string AgentQuestion { get; set; } = string.Empty;
         public string QuestionTopic { get; set; } = string.Empty;

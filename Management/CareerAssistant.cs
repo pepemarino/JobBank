@@ -99,5 +99,8 @@
 
         [JsonPropertyName("StudySubjects")]
         public List<string> StudySubjects { get; set; } = new();
+
+        [JsonPropertyName("EmployerQuestions")]
+        public List<string> EmployerQuestions { get; set; } = new();
     }
 }

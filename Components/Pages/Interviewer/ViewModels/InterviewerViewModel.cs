@@ -5,7 +5,7 @@ using JobBank.StartUpServices;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
-using static JobBank.Management.Abstraction.IInterviewService;
+using static JobBank.Management.Abstraction.IInterviewLLMService;
 
 namespace JobBank.Components.Pages.Interviewer.ViewModels
 {
@@ -15,7 +15,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         private readonly IJSRuntime _jsRuntime;
         private readonly IAnalysisCacheService _analysisCacheService;
         private readonly IInterviewStateStore _interviewStateStore;
-        private readonly IInterviewService _llmInterviewService;
+        private readonly IInterviewLLMService _llmInterviewService;
+        private readonly IInterviewService _interviewService;
         private readonly IConfiguration _appsettings;
 
         private readonly PrompService _prompService;
@@ -25,19 +26,21 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             IJSRuntime js,
             IAnalysisCacheService analysisCacheService,
             IInterviewStateStore interviewStateStore,
-            IInterviewService llmInterviewService,
+            IInterviewLLMService llmInterviewService,
             PrompService prompService,
-            IConfiguration appsettings)
+            IConfiguration appsettings,
+            IInterviewService interviewService)
         {
             _jobPostService = jobPostService;
             _jsRuntime = js;
             _analysisCacheService = analysisCacheService;
             _interviewStateStore = interviewStateStore;
-            _llmInterviewService = llmInterviewService;
+            _llmInterviewService = llmInterviewService; // This is the service that will call the LLM to get the next question and analyze the user's answer, etc.
             _appsettings = appsettings;
             maxQuestions = _appsettings.GetValue<int>("Interview:InterviewMaxQuestion", 3);
 
             _prompService = prompService;
+            _interviewService = interviewService;  // DAO for managing interview data, like saving final results to the database, etc.
         }
 
         #region Interview State Tracking
@@ -174,6 +177,24 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                 OnRequestUIUpdate?.Invoke();
                 await _jsRuntime.InvokeVoidAsync("scrollToBottom", "chat-container");  // fire the scrollong, on who?
                                                                                        // the chat container div, to scroll to the bottom after adding the new message
+            }
+        }
+
+        private TimeSpan Duration
+        {
+            get
+            {
+                if (History.Any())
+                {
+                    var first = History.Min(m => m.Timestamp);
+                    var last = History.Max(m => m.Timestamp);
+
+                    return last >= first ? last - first : TimeSpan.Zero;
+                }
+                else
+                {
+                    return TimeSpan.Zero;
+                }
             }
         }
 

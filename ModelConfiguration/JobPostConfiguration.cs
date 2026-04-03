@@ -25,6 +25,11 @@ namespace JobBank.ModelConfiguration
             builder
                 .Property(b => b.Timestamp)
                 .HasDefaultValueSql("GETUTCDATE()");
+            builder
+                .HasMany(b => b.Interviews)
+                .WithOne(i => i.JobPost)
+                .HasForeignKey(i => i.JobPostId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

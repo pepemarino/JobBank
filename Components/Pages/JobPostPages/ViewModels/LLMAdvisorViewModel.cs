@@ -43,6 +43,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
         public string[] StudySubjects { get; set; } = Array.Empty<string>();
 
+        public string[] EmployerQuestions { get; set; } = Array.Empty<string>();
+
         public async Task InitializeAsync()
         {
             // If called by ViewModelBase before JobPostId is set, do nothing
@@ -119,7 +121,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
                 var analysis = JsonSerializer.Deserialize<Management.AnalysisResult>(analysisCache.Result!);
                 InterviewQuestions = analysis?.InterviewQuestions.ToArray() ?? Array.Empty<string>();
-                StudySubjects = analysis?.StudySubjects.ToArray() ?? Array.Empty<string>();   
+                StudySubjects = analysis?.StudySubjects.ToArray() ?? Array.Empty<string>();
+                EmployerQuestions = analysis?.EmployerQuestions.ToArray() ?? Array.Empty<string>();
             }
 
             /// <summary>

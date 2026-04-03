@@ -2,7 +2,7 @@
 
 namespace JobBank.Management.Abstraction
 {
-    public interface IInterviewService
+    public interface IInterviewLLMService
     {
         public enum InterviewRole
         {
@@ -10,6 +10,6 @@ namespace JobBank.Management.Abstraction
             User
         }
 
-        Task<InterviewerDTO> GetInterviewerAnalysisAsync(UserJobApplicantDTO userDTO, string prompt);
+        Task<InterviewerLLMDTO> GetInterviewerAnalysisAsync(UserJobApplicantDTO userDTO, string prompt);
     }
 }

@@ -99,11 +99,11 @@ var interviewOptions = builder.Configuration
 
 if (interviewOptions.UseMockService)
 {
-    builder.Services.AddScoped<IInterviewService, MockLLMInterviewService>();
+    builder.Services.AddScoped<IInterviewLLMService, MockLLMInterviewService>();
 }
 else
 {
-    builder.Services.AddScoped<IInterviewService, LLMInterviewService>();
+    builder.Services.AddScoped<IInterviewLLMService, LLMInterviewService>();
 }
 
 builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
@@ -122,6 +122,7 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddHostedService<RejectionAnalysisWorker>()
     .AddSingleton<ILLMProvider, LLMProvider>()
     .AddScoped<ILLMManager, LLMManager>()
+    .AddScoped<IInterviewService, InterviewService>()
     .AddSingleton<JobDescriptionParser>()
     .AddSingleton<RankingEngine>()
     .AddSingleton<AnalysisChannel>()

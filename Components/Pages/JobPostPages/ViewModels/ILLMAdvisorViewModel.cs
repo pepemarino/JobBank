@@ -13,5 +13,6 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         string ErrorDescription { get; set; }
         string[] InterviewQuestions { get; set; }
         string[] StudySubjects { get; set; }
+        string[] EmployerQuestions { get; set; }
     }
 }

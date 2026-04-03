@@ -93,6 +93,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
         public bool IsInterviewCompleted => QuestionCount > maxQuestions;
 
+        public bool RequestScrollToBottom { get; set; }
+
         public string QuestionProgressCounter
         {
             get
@@ -100,8 +102,9 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                 if (IsInterviewCompleted)
                 {
                     InterviewAgentQuestion = string.Empty;
-                    return $"{QuestionMax}/{QuestionMax} Interview is complete - Score " +
-                        $"{Evaluations.Sum(e => e.Score * e.Weight).ToString("0.00")} of {Evaluations.Sum(e => e.Weight).ToString("0.00")}";
+                    return $"{QuestionMax}/{QuestionMax} Interview is complete — Score " +
+                        $"{Evaluations.Sum(e => e.Score * e.Weight).ToString("0.00")} of {Evaluations.Sum(e => e.Weight).ToString("0.00")}" +
+                        $" — Duration (hh:mm:ss) {Duration.ToString(@"hh\:mm\:ss")}";
                 }
                 return $"{QuestionCount}/{QuestionMax}";
             }
@@ -123,6 +126,9 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             History.Add(new ChatMessage(InterviewRole.Interviewer.ToString(), InterviewAgentQuestion, DateTime.Now));
             History.Add(new ChatMessage(InterviewRole.User.ToString(), InterviewAnswer, DateTime.Now));
 
+            // Set this flag to true to indicate that the UI should scroll to the bottom to show the latest question and answer.
+            RequestScrollToBottom = true;
+
             var userResponse = new UserJobApplicantDTO
             {
                 JobDescription = JobDescription,
@@ -135,8 +141,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             };
 
             InterviewAnswer = string.Empty;
-            IsProcessing = true;
-            OnRequestUIUpdate?.Invoke();
+            IsProcessing = true;            
 
             try
             {
@@ -174,9 +179,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             finally
             {
                 IsProcessing = false;
-                OnRequestUIUpdate?.Invoke();
-                await _jsRuntime.InvokeVoidAsync("scrollToBottom", "chat-container");  // fire the scrollong, on who?
-                                                                                       // the chat container div, to scroll to the bottom after adding the new message
+                OnRequestUIUpdate?.Invoke();                
             }
         }
 

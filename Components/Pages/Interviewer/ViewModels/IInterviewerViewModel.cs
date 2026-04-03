@@ -42,5 +42,6 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
         void Reset();
 
+        bool RequestScrollToBottom { get; set; }
     }
 }

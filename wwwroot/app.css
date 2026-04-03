@@ -91,3 +91,8 @@ button.btn-secondary:disabled {
     font-size: 14px !important;
     color: #232425 !important;
 }
+
+/* Custom scrollbar for better aesthetics After fixing #27 this needs to be moved into the component CSS */
+#chat-container {
+    background-color: #f8f9fa;
+}

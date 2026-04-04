@@ -116,7 +116,7 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddScoped<IJobPostService, JobPostService>()
     .AddScoped<ISkillsService, SkillsService>()
     .AddScoped<IAnalysisCacheService, AnalysisCacheService>()
-    .AddScoped<IInterviewStateStore, BrowserInterviewStateStore>()  // Transient would not work here. The state is hold in the browser.
+    .AddScoped(typeof(IProtectedLocalStoreService<>), typeof(BrowserProtectedLocalStoreService<>))    
     .AddScoped<CareerAssistant>()
     .AddScoped<IIdentityService, IdentityService>()    
     .AddHostedService<RejectionAnalysisWorker>()

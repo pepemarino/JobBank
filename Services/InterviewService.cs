@@ -75,8 +75,9 @@ namespace JobBank.Services
             try
             {
                 var interview = _mapper.Map<Interview>(interviewDto);
-                _context.Interviews.Add(interview);
+                _context.Interviews.Add(interview);                
                 await _context.SaveChangesAsync();
+                interviewDto.Id = interview.Id; // update the DTO with the generated ID
             }
             catch (InvalidOperationException ex)
             {

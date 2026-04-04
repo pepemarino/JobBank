@@ -1,14 +1,13 @@
-﻿using JobBank.Management.Interview;
-using JobBank.Services.Abstraction;
+﻿using JobBank.Services.Abstraction;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 namespace JobBank.Services
 {
-    public class BrowserInterviewStateStore : IInterviewStateStore
+    public class BrowserProtectedLocalStoreService<T> : IProtectedLocalStoreService<T> where T : class
     {
         private readonly ProtectedLocalStorage _storage;
 
-        public BrowserInterviewStateStore(ProtectedLocalStorage storage)
+        public BrowserProtectedLocalStoreService(ProtectedLocalStorage storage)
         {
             _storage = storage;
         }
@@ -20,10 +19,10 @@ namespace JobBank.Services
         /// </summary>
         /// <param name="jobPostId"></param>
         /// <returns></returns>
-        public async Task<InterviewState?> LoadAsync(int jobPostId)
+        public async Task<T?> LoadAsync(string key)
         {
-            var key = $"interview-state-{jobPostId}";
-            var result = await _storage.GetAsync<InterviewState>(key);
+            //var key = $"interview-state-{jobPostId}";
+            var result = await _storage.GetAsync<T>(key);
             return result.Success ? result.Value : null;
         }
 
@@ -36,15 +35,15 @@ namespace JobBank.Services
         /// <param name="jobPostId"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        public async Task SaveAsync(int jobPostId, InterviewState state)
+        public async Task SaveAsync(string key, T state)
         {
-            var key = $"interview-state-{jobPostId}";
+            //var key = $"interview-state-{jobPostId}";
             await _storage.SetAsync(key, state);
         }
 
-        public async Task ClearAsync(int jobPostId)
+        public async Task ClearAsync(string key)
         {
-            var key = $"interview-state-{jobPostId}";
+            //var key = $"interview-state-{jobPostId}";
             await _storage.DeleteAsync(key);
         }
     }

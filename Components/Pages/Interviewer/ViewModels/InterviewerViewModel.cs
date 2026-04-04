@@ -1,10 +1,12 @@
 ﻿using JobBank.Management.Abstraction;
 using JobBank.Management.Interview;
+using JobBank.ModelsDTO;
 using JobBank.Services.Abstraction;
 using JobBank.StartUpServices;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using System.Text.Json;
 using static JobBank.Management.Abstraction.IInterviewLLMService;
 
 namespace JobBank.Components.Pages.Interviewer.ViewModels
@@ -12,45 +14,44 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
     public partial class InterviewerViewModel : IInterviewerViewModel
     {
         private readonly IJobPostService _jobPostService;
-        private readonly IJSRuntime _jsRuntime;
-        private readonly IAnalysisCacheService _analysisCacheService;
-        private readonly IInterviewStateStore _interviewStateStore;
+        private readonly IProtectedLocalStoreService<InterviewState> _interviewStateStore;
+        private readonly IProtectedLocalStoreService<List<ChatMessage>> _interviewMessagesStore;
         private readonly IInterviewLLMService _llmInterviewService;
         private readonly IInterviewService _interviewService;
         private readonly IConfiguration _appsettings;
+        private readonly IIdentityService _identityService;
+        private readonly ILogger<InterviewerViewModel> _logger;
 
         private readonly PrompService _prompService;
 
         public InterviewerViewModel(
             IJobPostService jobPostService,
             IJSRuntime js,
-            IAnalysisCacheService analysisCacheService,
-            IInterviewStateStore interviewStateStore,
+            IProtectedLocalStoreService<InterviewState> interviewStateStore,
             IInterviewLLMService llmInterviewService,
             PrompService prompService,
             IConfiguration appsettings,
-            IInterviewService interviewService)
+            IInterviewService interviewService,
+            IIdentityService identityService,
+            IProtectedLocalStoreService<List<ChatMessage>> interviewMessagesStore,
+            ILogger<InterviewerViewModel> logger)
         {
             _jobPostService = jobPostService;
-            _jsRuntime = js;
-            _analysisCacheService = analysisCacheService;
             _interviewStateStore = interviewStateStore;
-            _llmInterviewService = llmInterviewService; // This is the service that will call the LLM to get the next question and analyze the user's answer, etc.
+            _llmInterviewService = llmInterviewService;
             _appsettings = appsettings;
             maxQuestions = _appsettings.GetValue<int>("Interview:InterviewMaxQuestion", 3);
 
             _prompService = prompService;
-            _interviewService = interviewService;  // DAO for managing interview data, like saving final results to the database, etc.
+            _interviewService = interviewService;
+            _identityService = identityService;
+            _interviewMessagesStore = interviewMessagesStore;
+            _logger = logger;
         }
 
         #region Interview State Tracking
-        private List<string> CoveredTopics { get; set; } = new(); // This list will keep track of the topics that have
-                                                                  // already been covered in the interview,
-                                                                  // to help the Agent avoid repeating questions on the same topic.
-        private List<string> WeakAreas { get; set; } = new(); // This list will keep track of the candidate's weak areas identified during the interview,
-                                                              // which can be used to drive adaptive questioning by asking follow-up questions
-                                                              // to probe deeper into those areas.
-                                                              // The trainer will use this.
+        private List<string> CoveredTopics { get; set; } = new();
+        private List<string> WeakAreas { get; set; } = new();
         private List<EvaluationResult> Evaluations { get; set; } = new();
 
         #endregion Interview State Tracking
@@ -116,7 +117,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
         public async Task ProcessAnswerAsync(MouseEventArgs args)
         {
-            await AnswerProcessingAsync($"Answer submitted (button cliecked) : {InterviewAnswer}");
+            await AnswerProcessingAsync($"Answer submitted (button clicked) : {InterviewAnswer}");
         }
 
         private async Task AnswerProcessingAsync(string message)
@@ -126,7 +127,6 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             History.Add(new ChatMessage(InterviewRole.Interviewer.ToString(), InterviewAgentQuestion, DateTime.Now));
             History.Add(new ChatMessage(InterviewRole.User.ToString(), InterviewAnswer, DateTime.Now));
 
-            // Set this flag to true to indicate that the UI should scroll to the bottom to show the latest question and answer.
             RequestScrollToBottom = true;
 
             var userResponse = new UserJobApplicantDTO
@@ -141,40 +141,73 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             };
 
             InterviewAnswer = string.Empty;
-            IsProcessing = true;            
+            IsProcessing = true;
+            QuestionCount++;
 
             try
             {
-                var llmRresponse = await _llmInterviewService.GetInterviewerAnalysisAsync(userResponse, systemPrompt);
-                if(llmRresponse == null)
+                var llmResponse = await _llmInterviewService.GetInterviewerAnalysisAsync(userResponse, systemPrompt);
+                if(llmResponse == null)
                 {
+                    _logger.LogWarning("LLM service returned null response for JobPostId: {JobPostId}", JobPostId);
                     ResponseMessage = "Sorry, something went wrong with processing your answer. Please try again.";
                     return;
                 }
 
                 if (IsInterviewCompleted)
-                {
-                    QuestionCount = maxQuestions;
+                {                    
                     ResponseMessage = "Interview completed. Thank you for your time!";
 
-                    // need to do management and cleanup here, like clearing the browser state,
-                    // and maybe saving the final interview result to the server for future reference by the user and for training the model.
+                    var userId = await _identityService.GetUserIdAsync();
+                    var metadata = new InterviewMetadata
+                    {
+                        CoveredTopics = CoveredTopics,
+                        WeakAreas = WeakAreas,
+                        Evaluations = Evaluations
+                    };
+
+                    var interviewDto = new InterviewDTO
+                    {
+                        JobPostId = JobPostId,
+                        UserId = userId,
+                        Prompt = systemPrompt,
+                        CreatedDateUtc = DateTime.UtcNow,
+                        StartedAtUtc = History.Min(m => m.Timestamp),
+                        CompletedAtUtc = History.Max(m => m.Timestamp),
+                        ScoreMax = Evaluations.Sum(e => e.Weight),
+                        ScoreTotal = (decimal)Evaluations.Sum(e => e.Score * e.Weight),
+                        NumberOfQuestions = maxQuestions,
+                        IsCompleted = IsInterviewCompleted,
+                        Result = JsonSerializer.Serialize(metadata)
+                    };
+
+                    await _interviewService.AddInterviewAsync(interviewDto);
+
+                    await _interviewStateStore.ClearAsync($"interview-state-{JobPostId}");
+                    await _interviewMessagesStore.SaveAsync($"interview-messages-{interviewDto.Id}-{JobPostId}", History);
+
+                    _logger.LogInformation("Interview completed for JobPostId: {JobPostId}, UserId: {UserId}, Score: {Score}/{MaxScore}",
+                        JobPostId, userId, Evaluations.Sum(e => e.Score * e.Weight), Evaluations.Sum(e => e.Weight));
 
                     return;
                 }
 
-                InterviewAgentQuestion = llmRresponse.AgentQuestion;
-                QuestionTopic = llmRresponse.QuestionTopic;
-                CoveredTopics = llmRresponse.CoveredTopics;
-                WeakAreas = llmRresponse.WeakAreas;
+                InterviewAgentQuestion = llmResponse.AgentQuestion;
+                QuestionTopic = llmResponse.QuestionTopic;
+                CoveredTopics = llmResponse.CoveredTopics;
+                WeakAreas = llmResponse.WeakAreas;
 
-                if (llmRresponse.Evaluation != null 
-                    && !Evaluations.Any(e => e.Equals(llmRresponse.Evaluation)))
-                    Evaluations.Add(llmRresponse.Evaluation!);
-
-                QuestionCount++;
-
+                if (llmResponse.Evaluation != null 
+                    && !Evaluations.Any(e => e.Equals(llmResponse.Evaluation)))
+                    Evaluations.Add(llmResponse.Evaluation!);
+                
                 await SaveToBrowserInterviewStateAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing answer for JobPostId: {JobPostId}, QuestionCount: {QuestionCount}", 
+                    JobPostId, QuestionCount);
+                ResponseMessage = "An unexpected error occurred. Please try again.";
             }
             finally
             {
@@ -213,13 +246,24 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         /// <returns></returns>
         public async Task RestoreFromBrowserAsync()
         {
-            var state = await _interviewStateStore.LoadAsync(JobPostId);
-            if (state != null && _prompService.DisableBrowserStorage)
-                await _interviewStateStore.ClearAsync(JobPostId);
+            var state = await _interviewStateStore.LoadAsync($"interview-state-{JobPostId}");
+            if (state != null && !_prompService.DisableBrowserStorage)
+            {
+                await _interviewStateStore.ClearAsync($"interview-state-{JobPostId}");
+                _logger.LogInformation("Cleared browser storage for JobPostId: {JobPostId} (DisableBrowserStorage is true)", JobPostId);
+            }
 
-            if (state is null) return;
+            if (state is null) 
+            {
+                _logger.LogDebug("No persisted interview state found for JobPostId: {JobPostId}", JobPostId);
+                return;
+            }
 
-            if (state.JobPostId != JobPostId) return;
+            if (state.JobPostId != JobPostId) 
+            {
+                _logger.LogWarning("JobPostId mismatch in persisted state. Expected: {Expected}, Found: {Found}", JobPostId, state.JobPostId);
+                return;
+            }
 
             JobPostId = state.JobPostId;
             History = state.History;
@@ -230,11 +274,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             Evaluations = state.Evaluations;
             
             IsJobDescriptionAvailable = !string.IsNullOrEmpty(JobDescription);
-        }
-
-        private async Task<InterviewState?> LoadFromBrowserInterviewStateAsync(int jobPostId)
-        {
-            return await _interviewStateStore.LoadAsync(jobPostId);
+            _logger.LogInformation("Restored interview state from browser storage for JobPostId: {JobPostId}, Question: {QuestionCount}/{MaxQuestions}",
+                JobPostId, QuestionCount, maxQuestions);
         }
 
         private async Task SaveToBrowserInterviewStateAsync()
@@ -250,7 +291,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                 QuestionCount = QuestionCount,
                 IsFinished = QuestionCount > maxQuestions
             };
-            await _interviewStateStore.SaveAsync(JobPostId, state);
+            await _interviewStateStore.SaveAsync($"interview-state-{JobPostId}", state);
         }
 
         #endregion Initialization and State Management
@@ -259,7 +300,11 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
         public async Task InitializeAsync()
         {
-            if (JobPostId <= 0) return;
+            if (JobPostId <= 0) 
+            {
+                _logger.LogWarning("InitializeAsync called with invalid JobPostId: {JobPostId}", JobPostId);
+                return;
+            }
 
             try
             {
@@ -268,42 +313,46 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                 var jobPost = await _jobPostService.GetJobPostByIdAsync(JobPostId);
                 if (jobPost == null)
                 {
+                    _logger.LogWarning("Job post not found for JobPostId: {JobPostId}", JobPostId);
                     ResponseMessage = "Job post not found.";
                     return;
                 }
 
-                if (jobPost != null)
+                CompanyName = jobPost.Company ?? string.Empty;
+                JobTitle = jobPost.Title ?? string.Empty;
+
+                JobDescription = jobPost.Description ?? "No job description provided. Interview not available.";
+
+                IsJobDescriptionAvailable = !string.IsNullOrEmpty(jobPost.Description);
+                if (!IsJobDescriptionAvailable) 
                 {
-                    CompanyName = jobPost.Company ?? string.Empty;
-                    JobTitle = jobPost.Title ?? string.Empty;
-
-                    // this is shown in the view if the job description is not available,
-                    // so we want to set it to a message instead of leaving it blank
-                    JobDescription = jobPost.Description ?? "No job description provided. Interview not available.";
-
-                    IsJobDescriptionAvailable = !string.IsNullOrEmpty(jobPost.Description);
-                    if (!IsJobDescriptionAvailable) return;
-
-                    var response = await _llmInterviewService.GetInterviewerAnalysisAsync(
-                        new UserJobApplicantDTO
-                        {
-                            JobDescription = JobDescription,
-                            UserAnswer = string.Empty,
-                            QuestionTopic = string.Empty,
-                            History = History,
-                            IsInterviewComplated = false,
-                            WeakAreas = WeakAreas,
-                            CoveredTopics = CoveredTopics,
-                        }, systemPrompt);
-
-                    InterviewAgentQuestion = response.AgentQuestion;
-                    QuestionTopic = response.QuestionTopic;
-                    CoveredTopics = response.CoveredTopics;
+                    _logger.LogWarning("Job post has no description for JobPostId: {JobPostId}", JobPostId);
+                    return;
                 }
+
+                var response = await _llmInterviewService.GetInterviewerAnalysisAsync(
+                    new UserJobApplicantDTO
+                    {
+                        JobDescription = JobDescription,
+                        UserAnswer = string.Empty,
+                        QuestionTopic = string.Empty,
+                        History = History,
+                        IsInterviewComplated = false,
+                        WeakAreas = WeakAreas,
+                        CoveredTopics = CoveredTopics,
+                    }, systemPrompt);
+
+                InterviewAgentQuestion = response.AgentQuestion;
+                QuestionTopic = response.QuestionTopic;
+                CoveredTopics = response.CoveredTopics;
+
+                _logger.LogInformation("Interview initialized for JobPostId: {JobPostId}, Company: {CompanyName}, Title: {JobTitle}",
+                    JobPostId, CompanyName, JobTitle);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);  // need to log this properly
+                _logger.LogError(ex, "Error initializing interview for JobPostId: {JobPostId}", JobPostId);
+                ResponseMessage = "An error occurred while loading the job post. Please try again.";
             }
             finally
             {
@@ -324,6 +373,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             IsProcessing = false;
             IsJobDescriptionAvailable = false;
             JobDescription = string.Empty;
+
+            _logger.LogInformation("Interview state reset for JobPostId: {JobPostId}", JobPostId);
         }
 
         #endregion Component Initialization

@@ -5,7 +5,6 @@ namespace JobBank.StartUpServices
 {
     public class PrompService
     {
-        public string InterviewQuestions { get; set; } = string.Empty;
         public string SkillLLMMatchPercentage { get; set; } = string.Empty;
 
         /// <summary>
@@ -29,5 +28,10 @@ namespace JobBank.StartUpServices
         // this is is only the name of the key. The actual key is generated
         // this value is used to encrypt the Model API key before saving it to the database
         public string APIKeyEncryptionKayName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// During certain stages of dev enable/disable for testing.  Will remove this later
+        /// </summary>
+        public bool DisableBrowserStorage { get; set; }
     }
 }

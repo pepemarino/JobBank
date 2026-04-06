@@ -73,6 +73,9 @@
                             <button type="button" @onclick="() => HandleSkillAnalysis(JobPost.Id)" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-bullseye"></i> Skill Analysis
                             </button>
+                            <button type="button" @onclick="() => HandleInterview(JobPost.Id)" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-bullseye"></i> Interview Practice
+                            </button>
                         </div>
 
                         <ValidationMessage For="() => JobPost.Description" class="text-danger" />
@@ -236,6 +239,12 @@
     {
         JobPostId = jobpostId;
         IsShowingSkillSetAnalysis = true;
+    }
+
+    public void HandleInterview(int jobpostId)
+    {
+        JobPostId = jobpostId;
+        NavigationManager.NavigateTo($"/Interviewer?JobPostId={JobPostId}");
     }
 
     private void CloseModal()

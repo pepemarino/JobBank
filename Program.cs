@@ -1,6 +1,8 @@
+using Blazor.Extensions.Storage;
 using JobBank.Components;
 using JobBank.Components.Account;
 using JobBank.Components.Pages.Home.ViewModels;
+using JobBank.Components.Pages.Interviewer.ViewModels;
 using JobBank.Components.Pages.JobPostPages.ViewModels;
 using JobBank.Components.Pages.SkillPages.ViewModels;
 using JobBank.Data;
@@ -54,6 +56,7 @@ builder.Services.AddDbContext<JobBankIdentityDbContext>(options =>
 
 #region Identity + Passkeys
 
+builder.Services.AddStorage();
 builder.Services.AddIdentity<JobBankUser, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -87,22 +90,43 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
+builder.Services.Configure<InterviewOptions>(
+    builder.Configuration.GetSection("Interview"));
+
+var interviewOptions = builder.Configuration
+    .GetSection("Interview")
+    .Get<InterviewOptions>();
+
+if (interviewOptions.UseMockService)
+{
+    builder.Services.AddScoped<IInterviewLLMService, MockLLMInterviewService>();
+}
+else
+{
+    builder.Services.AddScoped<IInterviewLLMService, LLMInterviewService>();
+}
+
 builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddTransient<ILLMAdvisorViewModel, LLMAdvisorViewModel>()
     .AddTransient<IHomeViewModel, HomeViewModel>()
     .AddScoped<ISkillViewModel, SkillViewModel>()
+    .AddScoped<IInterviewerViewModel, InterviewerViewModel>()
     .AddScoped<ISkillMacthAnalysisViewModel, SkillMacthAnalysisViewModel>()
     .AddScoped<FilteredStateService>()
     .AddScoped<IJobPostService, JobPostService>()
     .AddScoped<ISkillsService, SkillsService>()
+    .AddScoped<IAnalysisCacheService, AnalysisCacheService>()
+    .AddScoped(typeof(IProtectedLocalStoreService<>), typeof(BrowserProtectedLocalStoreService<>))    
     .AddScoped<CareerAssistant>()
-    .AddScoped<IIdentityService, IdentityService>()
+    .AddScoped<IIdentityService, IdentityService>()    
     .AddHostedService<RejectionAnalysisWorker>()
     .AddSingleton<ILLMProvider, LLMProvider>()
     .AddScoped<ILLMManager, LLMManager>()
+    .AddScoped<IInterviewService, InterviewService>()
     .AddSingleton<JobDescriptionParser>()
     .AddSingleton<RankingEngine>()
-    .AddSingleton<AnalysisChannel>();
+    .AddSingleton<AnalysisChannel>()
+    .AddSingleton(builder.Configuration);
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

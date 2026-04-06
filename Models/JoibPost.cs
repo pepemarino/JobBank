@@ -41,5 +41,7 @@ namespace JobBank.Models
 
         public virtual UserSkillMatchReport? UserSkillMatchReport { get; set; }
         public virtual JobRejectionAnalysis? JobRejectionAnalysis { get; set; }
+
+        public virtual ICollection<Interview> Interviews { get; set; } = new List<Interview>();
     }
 }

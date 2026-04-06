@@ -109,5 +109,9 @@ namespace JobBank.Services
             await _context.SaveChangesAsync();
         }
 
+        public async ValueTask DisposeAsync()
+        {
+            await _context.DisposeAsync();
+        }
     }
 }

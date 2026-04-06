@@ -22,8 +22,8 @@
             return new(Analysis: ExtractJson(completion.Content[0].Text), Version: _version, Model: _llmModel);
         }
 
-        private async Task<AgentAnalysisDTO> Analyze(
-            AgentAnalysisDTO analysisDTO,
+        private async Task<JobApplicationAnalysisDTO> Analyze(
+            JobApplicationAnalysisDTO analysisDTO,
             string prompt,
             string? userId,
             CancellationToken token)

@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 namespace JobBank.Services.Abstraction
 {
-    public interface IJobPostService
+    public interface IJobPostService : IAsyncDisposable
     {
         /// <summary>
         /// This is leaky but flexibe and I do not drink and drive anymore, so let me at least be dangerous here!

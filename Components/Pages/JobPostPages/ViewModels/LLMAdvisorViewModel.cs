@@ -1,37 +1,35 @@
-﻿using JobBank.Data;
-using JobBank.Extensions;
+﻿using JobBank.Extensions;
 using JobBank.Management;
-using JobBank.Models;
+using JobBank.ModelsDTO;
 using JobBank.Services.Abstraction;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
 
 namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
-    public class LLMAdvisorViewModel : ILLMAdvisorViewModel
+    public partial class LLMAdvisorViewModel : ILLMAdvisorViewModel
     {        
         private readonly CareerAssistant _careerAssistant;
         private readonly IIdentityService _identityService;
+        private readonly IJobPostService _jobPostService;
+        private readonly IAnalysisCacheService _analysisCacheService;
 
-        public LLMAdvisorViewModel(
-            IDbContextFactory<EmploymentBankContext> DbFactory, 
+        public LLMAdvisorViewModel(            
             CareerAssistant careerAssistant,
-            IIdentityService identityService)
+            IIdentityService identityService,
+            IJobPostService jobPostService,
+            IAnalysisCacheService analysisCacheService)
         {            
-            Context = DbFactory.CreateDbContext();
             _careerAssistant = careerAssistant;
-            _identityService = identityService; 
+            _identityService = identityService;
+            _jobPostService = jobPostService;
+            _analysisCacheService = analysisCacheService;   
         }
 
-        public EmploymentBankContext Context { get; }
         public int JobPostId { get; set; }
 
         public string Title { get; set; } = "LLM Advisor";
 
         public event Action? OnRequestUIUpdate;
-
-        public async ValueTask DisposeAsync() => await Context.DisposeAsync();
 
         public bool IsLoading { get; set; } = true;
 
@@ -45,6 +43,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
         public string[] StudySubjects { get; set; } = Array.Empty<string>();
 
+        public string[] EmployerQuestions { get; set; } = Array.Empty<string>();
+
         public async Task InitializeAsync()
         {
             // If called by ViewModelBase before JobPostId is set, do nothing
@@ -55,9 +55,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             try
             {                
                 // Get JobPost 
-                var jobPost = await Context
-                    .JobPost.AsNoTracking()
-                    .FirstOrDefaultAsync(jp => jp.Id == JobPostId);
+                var jobPost = await _jobPostService.GetJobPostByIdAsync(JobPostId);
 
                 if (jobPost == null)
                 {
@@ -75,20 +73,28 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 JobTitle = jobPost!.Title!;
 
                 // get the JobAnalysisCache for the JobPost
-                var analysisCache = await Context
-                    .JobAnalysisCache
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(jac => jac.Hash == jobDescriptionHash);
+                var analysisCache = await _analysisCacheService
+                    .GetJobAnalysisCacheAsync(jobDescriptionHash);
                 
                 if (analysisCache == null)
                 {
                     var userId = await _identityService.GetUserIdAsync();
-                    LLMAnalysisResult analysisResult = await _careerAssistant.RunLLMAnalysis(jobPost.Description!, userId); 
+                    LLMAnalysisResult analysisResult = await _careerAssistant.RunLLMAnalysis(jobPost.Description!, interviewPreparationQuestions, userId); 
                     if (!string.IsNullOrEmpty(analysisResult.ErrorMessage))
                     {
                         throw new InvalidOperationException($"LLM analysis failed: {analysisResult.ErrorMessage}");
                     }
-                    analysisCache = await SaveAnalysisToCacheAsync(jobPost.Description!, jobDescriptionHash, analysisResult.Model, analysisResult.Version, analysisResult.Analysis);
+
+                    analysisCache = new JobAnalysisCacheDTO
+                    {
+                        Hash = jobDescriptionHash,
+                        JobPostDescription = jobPost.Description,
+                        ModelUsed = analysisResult.Model,
+                        PromptVersion = analysisResult.Version,
+                        Result = analysisResult.Analysis
+                    };
+                        
+                    await _analysisCacheService.AddJobAnalysisCacheAsync(analysisCache);
                 }
 
                 UILoadCachedAnalysis(analysisCache);
@@ -105,29 +111,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 IsLoading = false;                
                 OnRequestUIUpdate?.Invoke();
             }
-
-            async Task<JobAnalysisCache> SaveAnalysisToCacheAsync(
-                string jobDescription, 
-                string jobDescriptionHash, 
-                string modelUsed, 
-                string promptVersion, 
-                string analysisResult)
-            {
-                var newCacheEntry = new JobAnalysisCache
-                {
-                    Hash = jobDescriptionHash,
-                    JobPostDescription = jobDescription,
-                    CreatedDate = DateTime.UtcNow,
-                    ModelUsed = modelUsed,
-                    PromptVersion = promptVersion,
-                    Result = analysisResult
-                };
-                Context.JobAnalysisCache.Add(newCacheEntry);
-                await Context.SaveChangesAsync();
-                return newCacheEntry;
-            }
-
-            void UILoadCachedAnalysis(JobAnalysisCache analysisCache)
+            
+            void UILoadCachedAnalysis(JobAnalysisCacheDTO analysisCache)
             {
                 if (analysisCache == null) return;
 
@@ -136,7 +121,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
                 var analysis = JsonSerializer.Deserialize<Management.AnalysisResult>(analysisCache.Result!);
                 InterviewQuestions = analysis?.InterviewQuestions.ToArray() ?? Array.Empty<string>();
-                StudySubjects = analysis?.StudySubjects.ToArray() ?? Array.Empty<string>();   
+                StudySubjects = analysis?.StudySubjects.ToArray() ?? Array.Empty<string>();
+                EmployerQuestions = analysis?.EmployerQuestions.ToArray() ?? Array.Empty<string>();
             }
 
             /// <summary>

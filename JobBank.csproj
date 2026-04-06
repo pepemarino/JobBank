@@ -7,8 +7,6 @@
   </PropertyGroup>
 
 	<PropertyGroup>
-		<!--GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-		<GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute-->
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
 		<GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
 		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
@@ -27,20 +25,23 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<SupportedPlatform Include="browser" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+		<PackageReference Include="Blazor.Extensions.Storage" Version="1.0.0" />
 		<PackageReference Include="ChartJs.Blazor" Version="1.1.0" />
 		<PackageReference Include="ChartJs.Blazor.Fork" Version="2.0.2" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="LinqKit.Microsoft.EntityFrameworkCore" Version="10.0.10" />
-		<PackageReference Include="Microsoft.Agents.AI" Version="1.0.0-preview.260212.1" />
+		<PackageReference Include="Microsoft.Agents.AI" Version="1.0.0-rc4" />
+		<PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.0.0-rc4" />
 
-		<!-- Fix 1: Bump QuickGrid to 10.0.2 to match the Adapter -->
 		<PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="10.0.2" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="10.0.2" />
 
-
 		<PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.3" />
-
 
 		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.3" />
 
@@ -53,20 +54,19 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 
-		<!-- Fix 3: Bump CodeAnalysis.Common to 5.0.0 (required by EF 10.0.x design tools) -->
 		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="5.0.0" />
 
 		<PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.3.0" />
+
+		<PackageReference Include="Newtonsoft.Json.Schema" Version="4.0.1" />
 		<PackageReference Include="OpenAI" Version="2.8.0" />
 	</ItemGroup>
-
 
 	<ItemGroup>
     <Content Update="wwwroot\app.css">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
 
 	<ItemGroup>
 	  <Folder Include="Components\Account\" />

@@ -1,0 +1,151 @@
+﻿@page "/Interviewer"
+@inherits ViewModelBase<IInterviewerViewModel>
+@rendermode InteractiveServer
+@attribute [Authorize]
+
+@attribute [Authorize]
+@if (!ViewModel.IsHydrated)
+{
+    <div class="loading-shell">
+        Loading interview…
+    </div>
+}
+else
+{
+    @if (ViewModel.IsProcessing)
+    {
+        <div class="d-flex justify-content-start mb-2">
+            <div class="p-2 bg-light border rounded-3">
+                <em>Interviewer is typing...</em>
+            </div>
+        </div>
+    }
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <div class="d-flex justify-content-between align-items-center my-4">
+                    <div>
+                        <h1 class="display-5 mb-0">@ViewModel.JobTitle</h1>
+                        <p class="text-muted fs-4">@ViewModel.CompanyName</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="@($"/jobposts/edit?id={JobPostId}")" class="btn btn-primary">
+                            <i class="bi bi-pencil"></i> Back to Edit
+                        </a>
+                        <a href="/jobposts" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-4 px-4 align-items-stretch">
+            <div class="col-md-6 d-flex">
+                <div class="d-flex flex-column flex-fill">
+                    <div class="card-header">
+                        <div>Job Description</div>
+                    </div>
+                    <div class="card-body" style="overflow-y: auto; max-height: 70vh;">
+                        <div><p style="white-space: pre-wrap;">@ViewModel.JobDescription</p></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 d-flex">
+                <div class="d-flex flex-column flex-fill">
+                    <div class="card-header">
+                        <h5 class="card-title">Interview</h5>
+                    </div>
+                    <div class="text-body">
+                        @if (!string.IsNullOrEmpty(ViewModel.ResponseMessage))
+                        {
+                            <div class="alert alert-success" role="alert">
+                                @ViewModel.ResponseMessage
+                            </div>
+                        }
+                        @if (ViewModel.IsJobDescriptionAvailable)
+                        {
+                            <div class="card-body d-flex flex-column">
+                                <div id="chat-container" style="overflow-y: auto; max-height: 57vh;">
+                                    @foreach (var chat in ViewModel.History)
+                                    {
+                                        <div class="d-flex @(chat.Role == "User" ? "justify-content-end" : "justify-content-start") mb-2">
+                                            <div class="p-3 rounded-3 @(chat.Role == "User" ? "bg-primary text-white" : "bg-light border")"
+                                                 style="max-width: 65%;">                                                
+                                                <div>@chat.Content</div>
+                                                <small class="opacity-50">@chat.Timestamp.ToString("t")</small>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="mb-3">
+                                    <strong>@ViewModel.QuestionProgressCounter</strong> @ViewModel.InterviewAgentQuestion
+                                </div>
+                                <input type="hidden" id="JobPostId" value="@ViewModel.JobPostId" />
+                                <div class="border-top pt-3 mt-2">
+                                    <div class="d-flex gap-2 align-items-end">
+
+                                        <InputTextArea id="interviewUserAnswer"
+                                                       @bind-Value="ViewModel.InterviewAnswer"
+                                                       class="form-control"
+                                                       rows="2"
+                                                       placeholder="Type your answer..."
+                                                       disabled="@(ViewModel.IsInterviewCompleted)" />
+
+                                        <button class="btn btn-primary"
+                                                @onclick="ViewModel.ProcessAnswerAsync"
+                                                disabled="@(ViewModel.IsInterviewCompleted)">
+                                            <i class="bi bi-send"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // Capture the query parameter JobPostId and pass it to the ViewModel
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int JobPostId { get; set; }
+
+    [Inject]
+    private IJSRuntime JS { get; set; }
+
+    protected override Task OnInitializedAsync() => Task.CompletedTask;
+
+    private bool _restored = false;
+
+    /// <summary>
+    /// For S-SSR JavaScript interop is not avalable the first time it renders,
+    /// so we need to wait until the first render to restore the state from the browser.
+    /// This is by design, hence need to wait until the VM is hydrated.
+    /// </summary>
+    /// <param name="firstRender"></param>
+    /// <returns></returns>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (ViewModel.RequestScrollToBottom)
+        {
+            ViewModel.RequestScrollToBottom = false;
+            await JS.InvokeVoidAsync("scrollToBottom", "chat-container");
+        }
+
+        if (firstRender)
+        {
+            ViewModel.IsHydrated = true;             // this is the second time around
+            ViewModel.Reset();
+
+            ViewModel.JobPostId = JobPostId;
+
+            await ViewModel.RestoreFromBrowserAsync();
+            await ViewModel.InitializeAsync();
+
+            StateHasChanged();
+        }
+    }
+}

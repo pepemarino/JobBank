@@ -1,6 +1,6 @@
 ﻿namespace JobBank.ModelsDTO
 {
-    public class AgentAnalysisDTO
+    public class JobApplicationAnalysisDTO
     {
         public int JobPostId { get; set; }
         public string AnalysisResult { get; set; } = string.Empty;

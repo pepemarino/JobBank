@@ -27,8 +27,8 @@
                 }
                 else
                 {
-                    <p>Analyzing Job Post Title: @ViewModel.JobTitle</p>
-                    <p>Interview Questions:</p>
+                    <p><b>Analyzing Job Post Title:</b> @ViewModel.JobTitle</p>
+                    <p><b>Interview Questions:</b></p>
                     <ul>
                         @foreach (var question in ViewModel.InterviewQuestions)
                         {
@@ -36,13 +36,21 @@
                         }
                     </ul>
 
-                    <p>Study Subjects</p>
+                    <p><b>Employer Questions</b></p>
+                    <ul>
+                        @foreach (var empQuestion in ViewModel.EmployerQuestions)
+                        {
+                            <li>@empQuestion</li>
+                        }
+                    </ul>
+
+                    <p><b>Study Subjects</b></p>
                     <ul>
                         @foreach (var subject in ViewModel.StudySubjects)   
                         {
                             <li>@subject</li>
                         }
-                    </ul>   
+                    </ul>                                         
                 }
             </div>
             <div class="modal-footer">

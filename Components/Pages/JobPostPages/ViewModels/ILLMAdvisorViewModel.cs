@@ -3,7 +3,7 @@ using JobBank.Data;
 
 namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
-    public interface ILLMAdvisorViewModel : IAsyncInitialization, IAsyncDisposable
+    public interface ILLMAdvisorViewModel : IAsyncInitialization
     {
         int JobPostId { get; set; }
         string Title { get; set; }
@@ -13,7 +13,6 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         string ErrorDescription { get; set; }
         string[] InterviewQuestions { get; set; }
         string[] StudySubjects { get; set; }
-
-        EmploymentBankContext Context { get; }
+        string[] EmployerQuestions { get; set; }
     }
 }

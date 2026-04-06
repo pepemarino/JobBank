@@ -17,7 +17,7 @@ namespace JobBank.ModelMapping
                 });
 
             // Mapping for AgentAnalysisDTO - this is the DTO that the agent will use to perform its analysis.
-            CreateMap<JobPost, AgentAnalysisDTO>()
+            CreateMap<JobPost, JobApplicationAnalysisDTO>()
                 .ForMember(dest => dest.JobPostId, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
                 .ForMember(dest => dest.AnalysisResult, opt => opt.Ignore()) // This will be set by the agent, so we ignore it in the mapping

@@ -7,7 +7,7 @@ namespace JobBank.Management
     public class RejectionAnalysisWorker : BackgroundService
     {
         private readonly AnalysisChannel _analysisChannel;
-        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IServiceScopeFactory _scopeFactory;       
 
         public RejectionAnalysisWorker(
             AnalysisChannel channel,
@@ -51,7 +51,7 @@ namespace JobBank.Management
 
                     // the query is showing the Rejection Guard pattern
                     var jobApplications = await jobPostService
-                        .GetJobPostsByQueryAsync<AgentAnalysisDTO>(jp => jp.ApplicationDeclined &&
+                        .GetJobPostsByQueryAsync<JobApplicationAnalysisDTO>(jp => jp.ApplicationDeclined &&
                                                        jp.JobRejectionAnalysis == null &&
                                                        jp.Id == jobId);
 

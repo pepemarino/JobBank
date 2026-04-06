@@ -128,6 +128,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             History.Add(new ChatMessage(InterviewRole.User.ToString(), InterviewAnswer, DateTime.Now));
 
             RequestScrollToBottom = true;
+            var userId = await _identityService.GetUserIdAsync();
 
             var userResponse = new UserJobApplicantDTO
             {
@@ -137,7 +138,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                 History = History,
                 WeakAreas = WeakAreas,
                 CoveredTopics = CoveredTopics,
-                Evaluations = Evaluations
+                Evaluations = Evaluations,
+                UserId = userId
             };
 
             InterviewAnswer = string.Empty;
@@ -153,12 +155,11 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                     ResponseMessage = "Sorry, something went wrong with processing your answer. Please try again.";
                     return;
                 }
-
+                
                 if (IsInterviewCompleted)
                 {                    
                     ResponseMessage = "Interview completed. Thank you for your time!";
-
-                    var userId = await _identityService.GetUserIdAsync();
+                    
                     var metadata = new InterviewMetadata
                     {
                         CoveredTopics = CoveredTopics,
@@ -340,6 +341,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                         IsInterviewComplated = false,
                         WeakAreas = WeakAreas,
                         CoveredTopics = CoveredTopics,
+                        UserId = await _identityService.GetUserIdAsync()
                     }, systemPrompt);
 
                 InterviewAgentQuestion = response.AgentQuestion;

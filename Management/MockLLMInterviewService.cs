@@ -130,8 +130,8 @@ namespace JobBank.Management
 
             return new EvaluationResult
             {
-                Question = question,
-                Topic = topic,
+                PreviousQuestion = question,
+                PreviousTopic = topic,
                 Score = score,
                 Weight = weight,
                 Passed = passed,

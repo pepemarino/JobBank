@@ -96,3 +96,7 @@ button.btn-secondary:disabled {
 #chat-container {
     background-color: #f8f9fa;
 }
+
+.spinning {
+    animation: spinner-border .75s linear infinite;
+}

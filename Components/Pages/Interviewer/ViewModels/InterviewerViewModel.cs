@@ -26,7 +26,6 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
         public InterviewerViewModel(
             IJobPostService jobPostService,
-            IJSRuntime js,
             IProtectedLocalStoreService<InterviewState> interviewStateStore,
             IInterviewLLMService llmInterviewService,
             PrompService prompService,
@@ -63,7 +62,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         /// </summary>
         public List<ChatMessage> History { get; set; } = new();
 
-        public string Title { get; set; } = interviewAgentName;
+        public string Title { get; set; } = InterviewRole.Interviewer.ToString();
 
         [SupplyParameterFromQuery]
         public int JobPostId { get; set; }
@@ -86,13 +85,13 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
         public event Action? OnRequestUIUpdate;
 
-        public int QuestionCount { get; set; } = 1;
+        public int QuestionCount { get; set; } = 0;
 
         public int QuestionMax => maxQuestions;
 
         public string QuestionTopic { get; set; } = string.Empty;
 
-        public bool IsInterviewCompleted => QuestionCount > maxQuestions;
+        public bool IsInterviewCompleted => QuestionCount >= maxQuestions;
 
         public bool RequestScrollToBottom { get; set; }
 
@@ -107,7 +106,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                         $"{Evaluations.Sum(e => e.Score * e.Weight).ToString("0.00")} of {Evaluations.Sum(e => e.Weight).ToString("0.00")}" +
                         $" — Duration (hh:mm:ss) {Duration.ToString(@"hh\:mm\:ss")}";
                 }
-                return $"{QuestionCount}/{QuestionMax}";
+                return $"{QuestionCount + 1}/{QuestionMax} ";
             }
         }
 
@@ -143,8 +142,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             };
 
             InterviewAnswer = string.Empty;
-            IsProcessing = true;
-            QuestionCount++;
+            IsProcessing = true;            
 
             try
             {
@@ -155,7 +153,18 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                     ResponseMessage = "Sorry, something went wrong with processing your answer. Please try again.";
                     return;
                 }
-                
+
+                InterviewAgentQuestion = llmResponse.AgentQuestion;
+                QuestionTopic = llmResponse.QuestionTopic;
+                CoveredTopics = llmResponse.CoveredTopics;
+                WeakAreas = llmResponse.WeakAreas;
+
+                if (llmResponse.Evaluation != null
+                    && !Evaluations.Any(e => e.Equals(llmResponse.Evaluation)))
+                    Evaluations.Add(llmResponse.Evaluation!);
+
+                QuestionCount++;
+
                 if (IsInterviewCompleted)
                 {                    
                     ResponseMessage = "Interview completed. Thank you for your time!";
@@ -192,16 +201,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
                     return;
                 }
-
-                InterviewAgentQuestion = llmResponse.AgentQuestion;
-                QuestionTopic = llmResponse.QuestionTopic;
-                CoveredTopics = llmResponse.CoveredTopics;
-                WeakAreas = llmResponse.WeakAreas;
-
-                if (llmResponse.Evaluation != null 
-                    && !Evaluations.Any(e => e.Equals(llmResponse.Evaluation)))
-                    Evaluations.Add(llmResponse.Evaluation!);
-                
+                                                
                 await SaveToBrowserInterviewStateAsync();
             }
             catch (Exception ex)
@@ -248,10 +248,11 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         public async Task RestoreFromBrowserAsync()
         {
             var state = await _interviewStateStore.LoadAsync($"interview-state-{JobPostId}");
-            if (state != null && !_prompService.DisableBrowserStorage)
+            if (state != null && _prompService.DisableBrowserStorage)
             {
                 await _interviewStateStore.ClearAsync($"interview-state-{JobPostId}");
                 _logger.LogInformation("Cleared browser storage for JobPostId: {JobPostId} (DisableBrowserStorage is true)", JobPostId);
+                return;
             }
 
             if (state is null) 
@@ -338,11 +339,17 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                         UserAnswer = string.Empty,
                         QuestionTopic = string.Empty,
                         History = History,
-                        IsInterviewComplated = false,
+                        IsInterviewCompleted = false,
                         WeakAreas = WeakAreas,
                         CoveredTopics = CoveredTopics,
                         UserId = await _identityService.GetUserIdAsync()
                     }, systemPrompt);
+
+                if (response?.AgentQuestion == null)
+                {
+                    _logger.LogError("LLM response missing AgentQuestion for JobPostId: {JobPostId}", JobPostId);
+                    throw new InvalidOperationException("LLM response missing AgentQuestion");
+                }
 
                 InterviewAgentQuestion = response.AgentQuestion;
                 QuestionTopic = response.QuestionTopic;
@@ -358,8 +365,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             }
             finally
             {
-                IsProcessing = false;
                 OnRequestUIUpdate?.Invoke();
+                IsProcessing = false;
             }
         }
 
@@ -369,7 +376,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             CoveredTopics = new();
             WeakAreas = new();
             Evaluations = new();
-            QuestionCount = 1;
+            QuestionCount = 0;
             InterviewAgentQuestion = string.Empty;
             ResponseMessage = string.Empty;
             IsProcessing = false;

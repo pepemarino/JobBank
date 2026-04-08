@@ -1,9 +1,9 @@
 ﻿@page "/Interviewer"
+@using static JobBank.Management.Abstraction.IInterviewLLMService
 @inherits ViewModelBase<IInterviewerViewModel>
 @rendermode InteractiveServer
 @attribute [Authorize]
 
-@attribute [Authorize]
 @if (!ViewModel.IsHydrated)
 {
     <div class="loading-shell">
@@ -11,15 +11,7 @@
     </div>
 }
 else
-{
-    @if (ViewModel.IsProcessing)
-    {
-        <div class="d-flex justify-content-start mb-2">
-            <div class="p-2 bg-light border rounded-3">
-                <em>Interviewer is typing...</em>
-            </div>
-        </div>
-    }
+{    
     <div class="container">
         <div class="row">
             <div class="col">
@@ -68,8 +60,8 @@ else
                                 <div id="chat-container" style="overflow-y: auto; max-height: 57vh;">
                                     @foreach (var chat in ViewModel.History)
                                     {
-                                        <div class="d-flex @(chat.Role == "User" ? "justify-content-end" : "justify-content-start") mb-2">
-                                            <div class="p-3 rounded-3 @(chat.Role == "User" ? "bg-primary text-white" : "bg-light border")"
+                                        <div class="d-flex @(chat.Role == InterviewRole.User.ToString() ? "justify-content-end" : "justify-content-start") mb-2">
+                                            <div class="p-3 rounded-3 @(chat.Role == InterviewRole.User.ToString() ? "bg-primary text-white" : "bg-light border")"
                                                  style="max-width: 65%;">                                                
                                                 <div>@chat.Content</div>
                                                 <small class="opacity-50">@chat.Timestamp.ToString("t")</small>
@@ -78,9 +70,17 @@ else
                                     }
                                 </div>
                                 <div class="mb-3">
-                                    <strong>@ViewModel.QuestionProgressCounter</strong> @ViewModel.InterviewAgentQuestion
+                                    @if (ViewModel.IsProcessing)
+                                    {
+                                        <div class="loading-shell">
+                                            <i class="bi bi-arrow-repeat spinning">Interviewer is typing...</i>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <strong>@ViewModel.QuestionProgressCounter</strong> @ViewModel.InterviewAgentQuestion
+                                    }
                                 </div>
-                                <input type="hidden" id="JobPostId" value="@ViewModel.JobPostId" />
                                 <div class="border-top pt-3 mt-2">
                                     <div class="d-flex gap-2 align-items-end">
 
@@ -89,11 +89,11 @@ else
                                                        class="form-control"
                                                        rows="2"
                                                        placeholder="Type your answer..."
-                                                       disabled="@(ViewModel.IsInterviewCompleted)" />
+                                                       disabled="@(ViewModel.IsInterviewCompleted || ViewModel.IsProcessing)" />
 
                                         <button class="btn btn-primary"
                                                 @onclick="ViewModel.ProcessAnswerAsync"
-                                                disabled="@(ViewModel.IsInterviewCompleted)">
+                                                disabled="@(ViewModel.IsInterviewCompleted || ViewModel.IsProcessing)">
                                             <i class="bi bi-send"></i>
                                         </button>
                                     </div>

@@ -22,6 +22,6 @@
         public List<string> CoveredTopics { get; set; } = new();
         public List<string> WeakAreas { get; set; } = new();
         public List<EvaluationResult> Evaluations { get; set; } = new();
-        public bool IsInterviewComplated { get; set; }
+        public bool IsInterviewCompleted { get; set; }
     }
 }

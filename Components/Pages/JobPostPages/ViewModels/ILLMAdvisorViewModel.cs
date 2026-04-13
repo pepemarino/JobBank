@@ -10,6 +10,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         string JobTitle { get; set; }
         bool IsLoading { get; set; }
         bool IsError { get; set; }
+        bool Donate { get; set; }
+        bool CanDonate { get; set; }
         string ErrorDescription { get; set; }
         string[] InterviewQuestions { get; set; }
         string[] StudySubjects { get; set; }

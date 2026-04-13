@@ -67,6 +67,18 @@ namespace JobBank.Management
 
         public async Task<bool> IsAvailableAsync(string? userId = null)
         {
+            var isPrivateKeyAvailable = await UserHasValidPrivateKeyAsync(userId);
+            if (isPrivateKeyAvailable)
+            {
+                return true;
+            }
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            var llmProvider = scope.ServiceProvider.GetRequiredService<ILLMProvider>();
+            return llmProvider.IsAvailable;
+        }
+
+        public async Task<bool> UserHasValidPrivateKeyAsync(string? userId)
+        {
             await using var scope = _scopeFactory.CreateAsyncScope();
 
             JobBankUser? user = null;
@@ -97,8 +109,7 @@ namespace JobBank.Management
                 return true;
             }
 
-            var llmProvider = scope.ServiceProvider.GetRequiredService<ILLMProvider>();
-            return llmProvider.IsAvailable;
+            return false;
         }
     }
 }

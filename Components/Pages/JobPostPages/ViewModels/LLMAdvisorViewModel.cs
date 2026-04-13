@@ -1,5 +1,6 @@
 ﻿using JobBank.Extensions;
 using JobBank.Management;
+using JobBank.Management.Abstraction;
 using JobBank.ModelsDTO;
 using JobBank.Services.Abstraction;
 using System.Text.Json;
@@ -12,22 +13,31 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         private readonly IIdentityService _identityService;
         private readonly IJobPostService _jobPostService;
         private readonly IAnalysisCacheService _analysisCacheService;
+        private readonly ILogger<LLMAdvisorViewModel> _logger;
+        private readonly ILLMManager _llmManager;
 
         public LLMAdvisorViewModel(            
             CareerAssistant careerAssistant,
             IIdentityService identityService,
             IJobPostService jobPostService,
-            IAnalysisCacheService analysisCacheService)
+            IAnalysisCacheService analysisCacheService,
+            ILogger<LLMAdvisorViewModel> logger,
+            ILLMManager llmManager)
         {            
             _careerAssistant = careerAssistant;
             _identityService = identityService;
             _jobPostService = jobPostService;
-            _analysisCacheService = analysisCacheService;   
+            _analysisCacheService = analysisCacheService;
+            _logger = logger;
+            _llmManager = llmManager;
         }
 
         public int JobPostId { get; set; }
 
         public string Title { get; set; } = "LLM Advisor";
+
+        public bool Donate { get; set; }
+        public bool CanDonate { get; set; }
 
         public event Action? OnRequestUIUpdate;
 
@@ -53,15 +63,29 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             IsLoading = true;
 
             try
-            {                
+            {
+                var currentUser = await _identityService.GetCurrentUserDetailsAsync();
+                if (currentUser == null)
+                {
+                    throw new InvalidOperationException("User is not authenticated. LLM analysis cannot be performed.");
+                }
+
+                var userId = currentUser.Id;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    throw new InvalidOperationException("User is not authenticated. LLM analysis cannot be performed.");
+                }
+
+                CanDonate = await _llmManager.UserHasValidPrivateKeyAsync(userId);
+
                 // Get JobPost 
                 var jobPost = await _jobPostService.GetJobPostByIdAsync(JobPostId);
 
                 if (jobPost == null)
                 {
-                    // It should never happen because the page is only navigated to with a valid JobPostId,
-                    // but we should still handle it just in case - Should we add loging here?
-                    throw new InvalidOperationException($"Job Application with Id {JobPostId} not found.");
+                    var msg = $"Job Application with Id {JobPostId} not found.";
+                    _logger.LogWarning("{msg} (This should not happen if navigation guards are working correctly.)", msg);
+                    throw new InvalidOperationException(msg);
                 }
 
                 if (string.IsNullOrEmpty(jobPost.Description))
@@ -70,39 +94,46 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 }
 
                 var jobDescriptionHash = jobPost.Description!.ToCanonicalHash();
-                JobTitle = jobPost!.Title!;
+                JobTitle = jobPost?.Title ?? "Unknown Job Title"; // this should never be null because of database constraints,
 
-                // get the JobAnalysisCache for the JobPost
-                var analysisCache = await _analysisCacheService
-                    .GetJobAnalysisCacheAsync(jobDescriptionHash);
-                
+                JobAnalysisCacheDTO? analysisCache = await _analysisCacheService
+                    .GetAnalysisCache(currentUser, userId, jobDescriptionHash);
+
                 if (analysisCache == null)
                 {
-                    var userId = await _identityService.GetUserIdAsync();
-                    LLMAnalysisResult analysisResult = await _careerAssistant.RunLLMAnalysis(jobPost.Description!, interviewPreparationQuestions, userId); 
+                    LLMAnalysisResult analysisResult = await _careerAssistant.RunLLMAnalysis(jobPost.Description!, interviewPreparationQuestions, userId);
                     if (!string.IsNullOrEmpty(analysisResult.ErrorMessage))
                     {
                         throw new InvalidOperationException($"LLM analysis failed: {analysisResult.ErrorMessage}");
                     }
 
+                    // Defaut for IsValid is false for doated.
                     analysisCache = new JobAnalysisCacheDTO
                     {
                         Hash = jobDescriptionHash,
+                        UserId = userId,
+                        IsLegacy = false,
+                        IsPublic = !CanDonate,
+                        SourceModelTier = CanDonate && currentUser.ForceMyKeyy 
+                            ? TearModel.Paid.ToString() 
+                            : TearModel.Free.ToString(),  // this is still in the works
                         JobPostDescription = jobPost.Description,
                         ModelUsed = analysisResult.Model,
                         PromptVersion = analysisResult.Version,
                         Result = analysisResult.Analysis
                     };
-                        
+
                     await _analysisCacheService.AddJobAnalysisCacheAsync(analysisCache);
                 }
+
+                CanTearDonate(analysisCache);
 
                 UILoadCachedAnalysis(analysisCache);
             }
             catch (Exception ex)
             {
-                // Handle exceptions (e.g., log the error, show a message to the user, etc.)
-                Console.Error.WriteLine($"Error initializing LLMAdvisorViewModel: {ex.Message}");
+                _logger.LogError(ex, "Error loading LLMAdvisorViewModel for JobPostId: {JobPostId}", JobPostId);
+
                 IsError = true;
                 UILoadError("API Error", ex.Message);
             }
@@ -137,6 +168,12 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 Title = $"LLM Advisor - {errorType}";
                 ErrorDescription = errorMessage;
             }
+        }
+
+        private void CanTearDonate(JobAnalysisCacheDTO analysisCache)
+        {
+            var tearUsed = (TearModel)Enum.Parse(typeof(TearModel), analysisCache.SourceModelTier, true);
+            CanDonate = tearUsed == TearModel.Paid;
         }
     }
 }

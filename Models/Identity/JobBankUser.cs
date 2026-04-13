@@ -33,5 +33,11 @@ namespace JobBank.Models.Identity
         /// will fall back to using a system API key if available and its own model selection logic.
         /// </summary>
         public string? LLModel { get; set; }
+
+        /// <summary>
+        /// Gets or sets the flag indicating to never accept shared cache results for this user, 
+        /// even if they are available.
+        /// </summary>
+        public bool ForceMyKeyy { get; set; } = false;
     }
 }

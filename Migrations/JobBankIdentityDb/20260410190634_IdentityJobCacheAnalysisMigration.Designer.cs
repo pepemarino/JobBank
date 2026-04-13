@@ -4,6 +4,7 @@ using JobBank.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JobBank.Migrations.JobBankIdentityDb
 {
     [DbContext(typeof(JobBankIdentityDbContext))]
-    partial class JobBankIdentityDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260410190634_IdentityJobCacheAnalysisMigration")]
+    partial class IdentityJobCacheAnalysisMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

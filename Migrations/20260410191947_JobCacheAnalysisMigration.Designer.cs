@@ -4,6 +4,7 @@ using JobBank.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JobBank.Migrations
 {
     [DbContext(typeof(EmploymentBankContext))]
-    partial class JobBankContextModelSnapshot : ModelSnapshot
+    [Migration("20260410191947_JobCacheAnalysisMigration")]
+    partial class JobCacheAnalysisMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -105,9 +108,6 @@ namespace JobBank.Migrations
                     b.Property<bool>("IsPublic")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsValid")
-                        .HasColumnType("bit");
-
                     b.Property<string>("JobPostDescription")
                         .HasColumnType("nvarchar(max)");
 
@@ -120,14 +120,8 @@ namespace JobBank.Migrations
                     b.Property<string>("Result")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Richness")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("SourceModelTier")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("State")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
@@ -135,7 +129,9 @@ namespace JobBank.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Hash");
+                    b.HasIndex("Hash")
+                        .IsUnique()
+                        .HasFilter("[Hash] IS NOT NULL");
 
                     b.ToTable("JobAnalysisCache");
                 });

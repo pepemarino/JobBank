@@ -55,17 +55,28 @@
                 <label for="Input.LLModel">AI Model</label>
                 <ValidationMessage For="@(() => Input.LLModel)" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary" disabled="@isSaving">
-                @if (isSaving)
-                {
-                    <span class="spinner-border spinner-border-sm me-2"></span>
-                    <text>Saving...</text>
-                }
-                else
-                {
-                    <text>Save</text>
-                }
-            </button>
+
+            <div class="mb-3"
+                 title="If enabled, your API key will be used for analyzing job descriptions instead of the system's default key. This ensures that your personal key is utilized for all analyses, providing consistent results based on your API usage and limits.">
+                <InputCheckbox @bind-Value="Input.ForceKeyForJobAnalysis"
+                               id="Input.ForceKeyForJobAnalysis"
+                               disabled="@string.IsNullOrEmpty(Input.AIKey)" />
+                <label for="Input.ForceKeyForJobAnalysis">Force My Key for Job Description Analysis</label>
+
+            </div>
+            <div class="form-floating mb-3">
+                <button type="submit" class="w-100 btn btn-lg btn-primary" disabled="@isSaving">
+                    @if (isSaving)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        <text>Saving...</text>
+                    }
+                    else
+                    {
+                        <text>Save</text>
+                    }
+                </button>
+            </div>
         </EditForm>
     </div>
 </div>
@@ -75,6 +86,7 @@
     private string? username;
     private string? phoneNumber;
     private string? apiKey;
+    private bool forceKeyForJobAnalysis = false;
     private string? statusMessage;
     private bool isSaving = false;
 
@@ -109,8 +121,8 @@
 
         Input.PhoneNumber ??= phoneNumber;
 
-        HasKey = !string.IsNullOrEmpty(user.CipherText) && 
-                 !string.IsNullOrEmpty(user.Nonce) && 
+        HasKey = !string.IsNullOrEmpty(user.CipherText) &&
+                 !string.IsNullOrEmpty(user.Nonce) &&
                  !string.IsNullOrEmpty(user.Tag);
 
         if (HasKey && !string.IsNullOrEmpty(user.LLModel))
@@ -169,6 +181,7 @@
                 user.Tag = encryptedResult.Tag;
 
                 user.LLModel = Input.LLModel;
+                user.ForceMyKeyy = Input.ForceKeyForJobAnalysis;
             }
             else
             {
@@ -176,6 +189,7 @@
                 user.Nonce = string.Empty;
                 user.Tag = string.Empty;
                 user.LLModel = string.Empty;
+                user.ForceMyKeyy = false;
             }
 
             var updateResult = await UserManager.UpdateAsync(user);
@@ -187,9 +201,9 @@
             }
 
             statusMessage = "Your profile has been updated.";
-            
-            HasKey = !string.IsNullOrEmpty(user.CipherText) && 
-                     !string.IsNullOrEmpty(user.Nonce) && 
+
+            HasKey = !string.IsNullOrEmpty(user.CipherText) &&
+                     !string.IsNullOrEmpty(user.Nonce) &&
                      !string.IsNullOrEmpty(user.Tag);
 
             isSaving = false;
@@ -205,6 +219,7 @@
     {
         Input.AIKey = string.Empty;
         Input.LLModel = string.Empty;
+        Input.ForceKeyForJobAnalysis = false;
         statusMessage = null;
     }
 
@@ -223,5 +238,31 @@
         [DataType(DataType.Text)]
         [Display(Name = "AI Model")]
         public string LLModel { get; set; } = "";
+
+        private bool forceKeyForJobAnalysis = false;
+
+        [Display(Name = "Force My Key For Job Description Analysis")]
+        public bool ForceKeyForJobAnalysis 
+        { 
+            get
+            {
+                if (string.IsNullOrEmpty(AIKey))
+                {
+                    return false;
+                }
+                return forceKeyForJobAnalysis;
+            }
+            set
+            {
+                if (string.IsNullOrEmpty(AIKey))
+                {
+                    forceKeyForJobAnalysis = false;
+                }
+                else
+                {
+                    forceKeyForJobAnalysis = value;
+                }
+            }
+        }
     }
 }

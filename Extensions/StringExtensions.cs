@@ -74,6 +74,21 @@ namespace JobBank.Extensions
                 .OrderBy(s => s).ToList();                         // Sort alphabetically                            
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static string StringNormalize(this string text)
+        {
+            return text
+                .Replace("\r\n", "\n")
+                .Replace("•", "-")
+                .Replace("–", "-")
+                .Replace("—", "-")
+                .Trim();
+        }
+
         public static bool IsAnyOf<T>(this T value, params T[] options)
         {
             if (value == null || options == null) return false;

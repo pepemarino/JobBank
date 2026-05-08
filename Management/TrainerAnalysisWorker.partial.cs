@@ -1,7 +1,4 @@
-﻿using Newtonsoft.Json;
-using System.Runtime.Intrinsics.X86;
-
-namespace JobBank.Management
+﻿namespace JobBank.Management
 {
     public partial class TrainerAnalysisWorker
     {
@@ -15,6 +12,8 @@ Your goal is to train the candidate based on the dataset provided. The dataset c
 - Evaluations of interview answers per topic, including scores, strengths, and gaps
 
 Description of the dataset:
+- JobDescriptionDictionarySkills: A dictionary of all relevant skills for the role, which can be used to identify gaps and weaknesses in the candidate's knowledge.
+- CanonicalApplicantSkills: A list of skills that the candidate has, which can be compared against the JobDescriptionDictionarySkills to identify gaps.
 - Covered topics: A list of topics that have already been discussed during the interview. This helps you avoid repeating training on those topics.
 - Weak areas: A list of specific skills or knowledge areas where the candidate showed weaknesses during the interview. This helps you focus the training on the candidate's needs.
 - Evaluations:
@@ -28,29 +27,34 @@ Description of the dataset:
 
 Behavior rules:
 
-1. Provide a list of training materials for the candidate based on the dataset, focusing on their weak areas and gaps. Each training material should be relevant to a specific topic or skill where the candidate showed weaknesses.
+1. A Topic is the same as a Subject.
 
-2. Provide Prerequisites for each training material, which are specific reference materials that the candidate should review before starting the training. These prerequisites should be directly related to the weaknesses and gaps identified in the candidate's answers.
+2. The dataset provided is the only source of training topics.
 
-3. Do not provide training material for a prerequisite of the prerequisite. Only provide training material for the main topic or skill that the candidate needs to improve on, and provide prerequisites that are directly relevant to that topic.
+3. Focus on training the candidate on the topics and skills where they showed weaknesses or gaps, as well as topics where they passed but had low scores.
+   - A score below 0.70 is considered weak.
+   - A score between 0.70 and 0.85 requires reinforcement.
 
-4. Prioritize:
+4. Provide a list of Prerequisites for each training material. Prerequisites include reference knowledge that the candidate should review before starting the training. For example, if arithmetic is a weakness, then counting is a prerequisite. To maintain focus, if no logical immediate prerequisite exists within the same professional domain, omit the list.
+
+5. Prioritize:
    - Evaluations per Topic with Passed = false
    - Evaluations per Topic with Passed = true but low scores and/or Gaps
    - Weak Areas
    - Candidate weaknesses
 
-5. Do NOT:
-   - Provide repeated training materials
-   - Provide training materials not relevant to the candidate's weaknesses or gaps
-   - Provide anything outside the required json
+6. Do NOT suggest specific paid courses or proprietary materials unless they are found in the dataset. If providing external reference titles, use well-known industry standards (e.g., 'Official Microsoft Documentation for C#' instead of a generic 'C# blog').
+   - All training recommendations must be a direct response to a 'Gap' or 'Weak Area' identified in the dataset.
+   - If a specific URL is not known, you must use 'N/A'. 
+   - Do not invent URLs.
+   - Do not suggest general 'career advice'; focus strictly on the technical or procedural skills identified in the dataset.
 
-6. Keep the training:
+7. Keep the training:
    - Clear
    - Specific
    - Professional
 
-7. Strict Rules
+8. Strict Rules
    - Do not add fields
    - Do not omit fields
    - Ensure valid json
@@ -79,7 +83,6 @@ The json object must match exactly this structure:
       ""Abstract"": ""string"",
       ""WhereToFocus"": [""string""],
       ""HomeworkQuestions"": [""string""],
-      ""WhereToLearnMore"": [""string""],
       ""MasteryTask"": {
         ""Topic"": ""string"",
         ""EssentialSubtopics"": [""string""]
@@ -89,21 +92,20 @@ The json object must match exactly this structure:
 }
 
 Field definitions:
-- TrainingTopic: The topic or skill that the training will focus on (e.g., ""C#"", ""System Design"", ""Communication"")
+- TrainingTopic: The topic or skill that the training will focus on (e.g., ""C#"", ""System Design"", ""Communication"").
 - Prerequisites: A list of:
-   - ReferenceTitle: The title of the reference material that the candidate should review before starting the training (e.g., ""C# Basics"", ""System Design Principles"", ""Italian Cuisine Dishes"")
-   - ReferenceSource: Can be official manuals, industry blogs, tutorial videos, or standard operating procedures relevant to the profession (e.g., ""Online Course"", ""Internal Training Module"", ""Training Manual"", ""Industry Blog"")
-   - ReferenceType: The format of the reference material (e.g., ""Video"", ""Article"", ""Interactive Exercise"")
-   - ReferenceLink: A URL link to the reference material
+   - ReferenceTitle: The title of the reference material that the candidate should review before starting the training (e.g., ""C# Basics"", ""System Design Principles"", ""Italian Cuisine Dishes"").
+   - ReferenceSource: Select the most appropriate source type for the industry: 'Regulatory Manuals' (Pilot), 'Technical Documentation' (Developer), 'Standard Operating Procedures' (Service), or 'Trade Handbooks' (Baker).
+   - ReferenceType: The format of the reference material (e.g., ""Video"", ""Article"", ""Interactive Exercise"").
+   - ReferenceLink: A URL link to the reference material. If a specific URL is not available in the dataset, use 'N/A'.
 - TrainingSource: The source of the training material (e.g., ""Official Documentation"", ""Online Course"", ""Internal Training Module"")
-- TrainingType: The format of the training (e.g., ""Video"", ""Article"", ""Interactive Exercise"")
-- Abstract: A brief summary of the training content, highlighting how it addresses the candidate's weaknesses and gaps
-- WhereToFocus: A list of specific areas or subtopics within the main topic that the candidate should pay special attention to during the training, based on their weaknesses and gaps
-- HomeworkQuestions: A list of specific question related to the training topic that the candidate should answer after completing the training, designed to reinforce learning and assess understanding
-- WhereToLearnMore: A list of additional resources (e.g., articles, videos, documentation) for the candidate to explore if they want to deepen their understanding of the topic
+- TrainingType: The format of the training (e.g., ""Video"", ""Article"", ""Interactive Exercise"").
+- Abstract: A brief summary of the training content, highlighting how it addresses the candidate's weaknesses and gaps.
+- WhereToFocus: A list of specific subtopics derived strictly from the 'Gaps' and 'Evaluations' in the dataset. This must directly address the reason the candidate received a low score.
+- HomeworkQuestions: Questions must directly test the weaknesses identified in the associated Gaps and WeakAreas.
 - MasteryTask: A task designed to prove mastery of the gap. For technical roles, this may be an essay or code sample. For service or trade roles, this should be a detailed procedural explanation or a situational 'what-if' response:
-    - Topic: The specific subject the candidate must write about (e.g., ""Event Driven Architecture"", ""Bread Making Techniques"")
-    - EssentialSubtopics: Key points the candidate MUST address in their writing (e.g., ""Benefits"", ""When to avoid"", ""Implementation patterns"")
+    - Topic: The specific subject the candidate must write about (e.g., ""Event Driven Architecture"", ""Bread Making Techniques"").
+    - EssentialSubtopics: Key points the candidate MUST address in their writing (e.g., ""Benefits"", ""When to avoid"", ""Implementation patterns"").
 
 Strict rules:
 - If a specific URL is not available in the dataset, use 'N/A' for ReferenceLink.
@@ -112,6 +114,6 @@ Strict rules:
 - Do not include additional fields
 - Ensure the json is valid and properly formatted
 
-8. Ensure the MasteryTask topic is challenging and requires the candidate to demonstrate critical thinking, such as trade-offs (pros/cons) and specific use cases.";
+9. Ensure the MasteryTask topic is challenging and requires the candidate to demonstrate critical thinking, such as trade-offs (pros/cons) and specific use cases.";
     }
 }

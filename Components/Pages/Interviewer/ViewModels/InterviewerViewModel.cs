@@ -1,11 +1,11 @@
-﻿using JobBank.Management.Abstraction;
+﻿using JobBank.Management;
+using JobBank.Management.Abstraction;
 using JobBank.Management.Interview;
 using JobBank.ModelsDTO;
 using JobBank.Services.Abstraction;
 using JobBank.StartUpServices;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using System.Text.Json;
 using static JobBank.Management.Abstraction.IInterviewLLMService;
 
@@ -21,6 +21,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         private readonly IConfiguration _appsettings;
         private readonly IIdentityService _identityService;
         private readonly ILogger<InterviewerViewModel> _logger;
+        private readonly TrainerChannel Channel;
 
         private readonly PrompService _prompService;
 
@@ -33,6 +34,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             IInterviewService interviewService,
             IIdentityService identityService,
             IProtectedLocalStoreService<List<ChatMessage>> interviewMessagesStore,
+            TrainerChannel channel,
             ILogger<InterviewerViewModel> logger)
         {
             _jobPostService = jobPostService;
@@ -45,6 +47,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             _interviewService = interviewService;
             _identityService = identityService;
             _interviewMessagesStore = interviewMessagesStore;
+            Channel = channel;
             _logger = logger;
         }
 
@@ -146,7 +149,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
             try
             {
-                var llmResponse = await _llmInterviewService.GetInterviewerAnalysisAsync(userResponse, systemPrompt);
+                var llmResponse = await _llmInterviewService.GetInterviewerAnalysisAsync(userResponse, InterviewPrompt);
                 if(llmResponse == null)
                 {
                     _logger.LogWarning("LLM service returned null response for JobPostId: {JobPostId}", JobPostId);
@@ -180,7 +183,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                     {
                         JobPostId = JobPostId,
                         UserId = userId,
-                        Prompt = systemPrompt,
+                        Prompt = InterviewPrompt,
                         CreatedDateUtc = DateTime.UtcNow,
                         StartedAtUtc = History.Min(m => m.Timestamp),
                         CompletedAtUtc = History.Max(m => m.Timestamp),
@@ -192,6 +195,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                     };
 
                     await _interviewService.AddInterviewAsync(interviewDto);
+
+                    await Channel.Writer.WriteAsync(new TrainerRequest(interviewDto.Id, userId));
 
                     await _interviewStateStore.ClearAsync($"interview-state-{JobPostId}");
                     await _interviewMessagesStore.SaveAsync($"interview-messages-{interviewDto.Id}-{JobPostId}", History);
@@ -343,7 +348,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                         WeakAreas = WeakAreas,
                         CoveredTopics = CoveredTopics,
                         UserId = await _identityService.GetUserIdAsync()
-                    }, systemPrompt);
+                    }, InterviewPrompt);
 
                 if (response?.AgentQuestion == null)
                 {

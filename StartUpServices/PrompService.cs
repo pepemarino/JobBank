@@ -33,5 +33,7 @@ namespace JobBank.StartUpServices
         /// During certain stages of dev enable/disable for testing.  Will remove this later
         /// </summary>
         public bool DisableBrowserStorage { get; set; }
+
+        public string InterviewPrompt { get; set; }
     }
 }

@@ -4,7 +4,7 @@
     {
         private readonly int maxQuestions;
 
-        private const string systemPrompt = @"
+        private const string InterviewPrompt = @"
 You are an AI interviewer conducting a structured job interview.
 
 Your goal is to evaluate the candidate's skills and suitability for the role based on:

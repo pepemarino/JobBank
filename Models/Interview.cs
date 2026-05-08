@@ -32,5 +32,7 @@ namespace JobBank.Models
 
         public int NumberOfQuestions { get; set; }
         public bool IsCompleted { get; set; }
+
+        public virtual Training? Training { get; set; }
     }
 }

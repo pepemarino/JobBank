@@ -26,5 +26,7 @@ namespace JobBank.Data
         public DbSet<JobRejectionAnalysis> JobRejectionAnalyses { get; set; } = default!;
 
         public DbSet<Interview> Interviews { get; set; } = default!;
+
+        public DbSet<Training> Trainings { get; set; } = default!;
     }
 }

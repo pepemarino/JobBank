@@ -119,5 +119,27 @@ namespace JobBank.Extensions
 
             return keywords.Any(k => self.Contains(k, StringComparison.OrdinalIgnoreCase));
         }
+
+        public static string ExtractJson(this string rawResponse)
+        {
+            if (string.IsNullOrWhiteSpace(rawResponse))
+                return rawResponse;
+
+            // Remove leading ```json or ``` if present
+            rawResponse = rawResponse.Trim();
+
+            if (rawResponse.StartsWith("```"))
+            {
+                int firstNewLine = rawResponse.IndexOf('\n');
+                int lastFence = rawResponse.LastIndexOf("```");
+
+                if (firstNewLine >= 0 && lastFence > firstNewLine)
+                {
+                    rawResponse = rawResponse.Substring(firstNewLine + 1, lastFence - firstNewLine - 1);
+                }
+            }
+
+            return rawResponse.Trim();
+        }
     }
 }

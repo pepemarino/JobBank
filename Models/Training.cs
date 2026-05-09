@@ -19,5 +19,7 @@ namespace JobBank.Models
 
         public int InterviewId { get; set; }
         public virtual Interview Interview { get; set; }
+
+        public bool IsDeleted { get; set; }
     }
 }

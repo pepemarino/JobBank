@@ -27,5 +27,7 @@
 
         public int NumberOfQuestions { get; set; }
         public bool IsCompleted { get; set; }
+
+        public bool IsDeleted { get; set; }
     }
 }

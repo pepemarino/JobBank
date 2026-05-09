@@ -20,6 +20,9 @@ namespace JobBank.ModelConfiguration
             builder.Property(b => b.Prompt)
                 .IsRequired();
 
+            builder.Property(b => b.IsDeleted)
+                .HasDefaultValue(false);
+
             builder
                 .Property(b => b.CreatedDateUtc)
                 .HasDefaultValueSql("GETUTCDATE()")

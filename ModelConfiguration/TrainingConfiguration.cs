@@ -27,6 +27,9 @@ namespace JobBank.ModelConfiguration
             builder.Property(b => b.Prompt)
                 .IsRequired();
 
+            builder.Property(b => b.IsDeleted)
+                .HasDefaultValue(false);
+
             builder.HasOne(b => b.Interview)
                 .WithOne(i => i.Training)
                 .HasForeignKey<Training>(b => b.InterviewId)

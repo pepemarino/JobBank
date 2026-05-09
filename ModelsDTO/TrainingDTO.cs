@@ -9,5 +9,7 @@
         public string Model { get; set; } = string.Empty;
         public string Prompt { get; set; } = string.Empty;
         public int InterviewId { get; set; }
+
+        public bool IsDeleted { get; set; }
     }
 }

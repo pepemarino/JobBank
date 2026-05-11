@@ -1,6 +1,5 @@
 ﻿@page "/jobposts"
 
-@using Microsoft.AspNetCore.Components.QuickGrid
 @inject JobBank.Components.Pages.JobPostPages.ViewModels.IIndexViewModel IndexViewModel
 @rendermode InteractiveServer
 @attribute [Authorize]
@@ -61,7 +60,7 @@
 
     <div class="table-responsive rounded shadow-sm">
         <QuickGrid Class="table table-hover align-middle mb-0" 
-                   TGridItem="JobPostViewModel" 
+                   TGridItem="JobPostDataModel" 
                    ItemsProvider="IndexViewModel.GetJobPosts" 
                    Pagination="IndexViewModel.Pagination"
                    RowClass="@IndexViewModel.GetRowCssClass"
@@ -84,7 +83,7 @@
 
             <TemplateColumn Title="Outcome"
                             Sortable="true"
-                            SortBy="@(GridSort<JobPostViewModel>.ByAscending(x => x.InterviewOutcome))">
+                            SortBy="@(GridSort<JobPostDataModel>.ByAscending(x => x.InterviewOutcome))">
                 <span class="badge @(context.InterviewOutcome?.Contains("Reject") == true ? "bg-danger" : "bg-success")">
                     @context.InterviewOutcome
                 </span>

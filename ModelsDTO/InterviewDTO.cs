@@ -29,5 +29,11 @@
         public bool IsCompleted { get; set; }
 
         public bool IsDeleted { get; set; }
+
+        public string JobTitle { get; set; } = string.Empty;
+
+        public string Company { get; set; } = string.Empty;
+
+        public int TrainingId { get; set; }
     }
 }

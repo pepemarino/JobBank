@@ -1,14 +1,11 @@
-﻿using JobBank.Data;
-using JobBank.Models;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.QuickGrid;
-using System.Linq.Expressions;
 
 namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
     public interface IIndexViewModel
     {
-        ValueTask<GridItemsProviderResult<JobPostViewModel>> GetJobPosts(GridItemsProviderRequest<JobPostViewModel> request);
+        ValueTask<GridItemsProviderResult<JobPostDataModel>> GetJobPosts(GridItemsProviderRequest<JobPostDataModel> request);
         PaginationState Pagination { get; }
 
         string JobTypeSearch { get; set; }
@@ -40,6 +37,6 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
         void LoadPendingApplication(ChangeEventArgs ev);
 
-        string GetRowCssClass(JobPostViewModel jobPost);
+        string GetRowCssClass(JobPostDataModel jobPost);
     }
 }

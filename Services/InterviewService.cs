@@ -11,23 +11,28 @@ namespace JobBank.Services
 {
     public class InterviewService : IInterviewService
     {
-        private readonly EmploymentBankContext _context;
+        private readonly IDbContextFactory<EmploymentBankContext> _dbFactory;
         private readonly IMapper _mapper;
 
         public InterviewService(IDbContextFactory<EmploymentBankContext> dbFactory, IMapper mapper)
         {
             _mapper = mapper;
-            _context = dbFactory.CreateDbContext();
+            _dbFactory = dbFactory;
         }
 
-        public async ValueTask DisposeAsync() => await _context.DisposeAsync();
+        public async ValueTask DisposeAsync()
+        {
+            await ValueTask.CompletedTask;
+        }
 
         public async Task<InterviewDTO> GetInterviewByIdAsync(int interviewId)
         {
             try
             {
-                return await _context.Interviews
+                await using var context = _dbFactory.CreateDbContext();
+                return await context.Interviews
                     .Where(i => i.Id == interviewId)
+                    .Include(i => i.JobPost)
                     .ProjectTo<InterviewDTO>(_mapper.ConfigurationProvider)
                     .FirstOrDefaultAsync();
             }
@@ -41,8 +46,10 @@ namespace JobBank.Services
         {
             try
             {
-                return await _context.Interviews
+                await using var context = _dbFactory.CreateDbContext();
+                return await context.Interviews
                     .Where(i => i.JobPostId == jobPostId)
+                    .Include(i => i.JobPost)
                     .ProjectTo<InterviewDTO>(_mapper.ConfigurationProvider)
                     .ToListAsync();
             }
@@ -52,12 +59,14 @@ namespace JobBank.Services
             }
         }
 
-        public async Task<IEnumerable<InterviewDTO>> GetInterviewsByUserIdAsync(string userId)
+        public async Task<IEnumerable<InterviewDTO>> GetInterviewsByUserIdAsync(string userId, bool isDeleted = false)
         {
             try
             {
-                return await _context.Interviews
-                    .Where(i => i.UserId == userId)
+                await using var context = _dbFactory.CreateDbContext();
+                return await context.Interviews
+                    .Where(i => i.UserId == userId && i.IsDeleted == isDeleted)
+                    .Include(i => i.JobPost)
                     .ProjectTo<InterviewDTO>(_mapper.ConfigurationProvider)
                     .ToListAsync();
             }
@@ -67,22 +76,66 @@ namespace JobBank.Services
             }
         }
 
+        public async Task<PaginationResult<InterviewDTO>> GetInterviewsByUserIdWithPaginationAsync(
+            string userId,
+            string companyName,
+            int startIndex,
+            int take,
+            bool isDeleted = false)
+        {
+            try
+            {
+                await using var context = _dbFactory.CreateDbContext();
+                IQueryable<Interview> query = context.Interviews
+                    .Where(i => i.UserId == userId && i.IsDeleted == isDeleted)
+                    .Include(i => i.JobPost);
+
+                if (!string.IsNullOrWhiteSpace(companyName))
+                {
+                    query = query.Where(i => EF.Functions.Like(i.JobPost.Company, $"%{companyName}%"));
+                }
+
+                var orderedQuery = query.OrderByDescending(i => i.CompletedAtUtc);
+                
+                var totalCount = await orderedQuery.CountAsync();
+                var interviews = await orderedQuery
+                    .Skip(startIndex)
+                    .Take(take)
+                    .ProjectTo<InterviewDTO>(_mapper.ConfigurationProvider)
+                    .ToListAsync();
+
+                return new PaginationResult<InterviewDTO>
+                {
+                    Items = interviews,
+                    TotalCount = totalCount
+                };
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new DataIntegrityException("GetInterviewsByUserIdWithPaginationAsync: A system error occurred. Please contact support.", ex);
+            }
+        }
+
         public async Task AddInterviewAsync(InterviewDTO interviewDto)
         {
-            if (interviewDto.Id != 0) // there will never be the case of an update
+            if (interviewDto == null)
+                throw new ArgumentNullException(nameof(interviewDto), "Interview DTO cannot be null.");
+
+            if (interviewDto.Id != 0)
                 throw new ArgumentException("Interview ID must be zero when adding a new interview.");
 
             try
             {
+                await using var context = _dbFactory.CreateDbContext();
                 var interview = _mapper.Map<Interview>(interviewDto);
-                _context.Interviews.Add(interview);                
-                await _context.SaveChangesAsync();
-                interviewDto.Id = interview.Id; // update the DTO with the generated ID
+                context.Interviews.Add(interview);
+                await context.SaveChangesAsync();
+                interviewDto.Id = interview.Id;
             }
             catch (InvalidOperationException ex)
             {
                 throw new DataIntegrityException("AddInterviewAsync: A system error occurred. Please contact support.", ex);
-            }            
+            }
         }
     }
 }

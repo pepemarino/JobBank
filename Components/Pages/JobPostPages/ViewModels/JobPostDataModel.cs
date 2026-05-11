@@ -3,14 +3,14 @@ using System.ComponentModel.DataAnnotations;
 
 namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
-    public class JobPostViewModel
+    public class JobPostDataModel
     {
-        public JobPostViewModel()
+        public JobPostDataModel()
         {
                 
         }
 
-        public JobPostViewModel(JobPost post)
+        public JobPostDataModel(JobPost post)
         {
             Id = post.Id;
             Title = post.Title;
@@ -52,9 +52,9 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         /// 
         /// </summary>
         /// <param name="jobPost"></param>
-        public static implicit operator JobPostViewModel(JobPost jobPost)
+        public static implicit operator JobPostDataModel(JobPost jobPost)
         {
-            return new JobPostViewModel
+            return new JobPostDataModel
             {
                 Id = jobPost.Id,
                 Title = jobPost.Title,

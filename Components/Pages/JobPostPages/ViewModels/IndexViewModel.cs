@@ -128,8 +128,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async ValueTask<GridItemsProviderResult<JobPostViewModel>> GetJobPosts(
-        GridItemsProviderRequest<JobPostViewModel> request)
+        public async ValueTask<GridItemsProviderResult<JobPostDataModel>> GetJobPosts(
+        GridItemsProviderRequest<JobPostDataModel> request)
         {
             try
             {
@@ -147,7 +147,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 var totalCount = await baseQuery.CountAsync(request.CancellationToken);
 
                 // Now project
-                var projectedQuery = baseQuery.Select(jp => new JobPostViewModel
+                var projectedQuery = baseQuery.Select(jp => new JobPostDataModel
                 {
                     Id = jp.Id,
                     Title = jp.Title,
@@ -214,7 +214,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         /// </summary>
         /// <param name="jobPost"></param>
         /// <returns></returns>
-        public string GetRowCssClass(JobPostViewModel jobPost)
+        public string GetRowCssClass(JobPostDataModel jobPost)
         {
             if (jobPost.ApplicationDeclined)
             {

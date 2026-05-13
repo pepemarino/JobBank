@@ -68,6 +68,11 @@ h1:focus {
     color: #842029;
 }
 
+.selected-row {
+    background-color: #b5e2eb !important;
+    font-weight: bold !important;
+}
+
 .modal-backdrop {
    background-color: rgba(0, 0, 0, 0.5) !important;
 }

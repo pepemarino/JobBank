@@ -1,0 +1,8 @@
+﻿body {
+}
+
+::deep .selected-row {
+    background-color: #b5e2eb !important;
+    font-weight: bold !important;
+}
+

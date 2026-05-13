@@ -1,6 +1,6 @@
 ﻿namespace JobBank.ModelsDTO
 {
-    public class InterviewDTO
+    public class InterviewDTO : IEquatable<InterviewDTO>
     {
         public int Id { get; set; }
 
@@ -35,5 +35,51 @@
         public string Company { get; set; } = string.Empty;
 
         public int TrainingId { get; set; }
+
+        public override bool Equals(object? obj)
+        {
+            return Equals(obj as InterviewDTO);
+        }
+
+        public bool Equals(InterviewDTO? other)
+            => other is not null &&
+               Id == other.Id &&
+               JobPostId == other.JobPostId &&
+               UserId == other.UserId &&
+               Result == other.Result &&
+               CreatedDateUtc == other.CreatedDateUtc &&
+               StartedAtUtc == other.StartedAtUtc &&
+               CompletedAtUtc == other.CompletedAtUtc &&
+               Model == other.Model &&
+               Prompt == other.Prompt &&
+               ScoreTotal == other.ScoreTotal &&
+               ScoreMax == other.ScoreMax &&
+               Passed == other.Passed &&
+               NumberOfQuestions == other.NumberOfQuestions &&
+               IsCompleted == other.IsCompleted &&
+               IsDeleted == other.IsDeleted &&
+               JobTitle == other.JobTitle &&
+               Company == other.Company &&
+               TrainingId == other.TrainingId;
+
+        public override int GetHashCode() => (
+            Id,
+            JobPostId,
+            UserId,
+            Result,
+            CreatedDateUtc,
+            StartedAtUtc,
+            CompletedAtUtc,
+            Model,
+            Prompt,
+            ScoreTotal,
+            ScoreMax,
+            Passed,
+            NumberOfQuestions,
+            IsCompleted,
+            IsDeleted,
+            JobTitle,
+            Company,
+            TrainingId).GetHashCode();
     }
 }

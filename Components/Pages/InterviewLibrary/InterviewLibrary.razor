@@ -1,6 +1,7 @@
 ﻿@page "/InterviewLibrary"
 
 @inject JobBank.Components.Pages.InterviewLibrary.ViewModels.IInterviewLibraryViewModel InterviewLibraryViewModel
+@inherits ViewModelBase<IInterviewLibraryViewModel>
 @rendermode InteractiveServer
 @attribute [Authorize]
 
@@ -27,7 +28,7 @@
                 </div>
                 <div class="card-body" style="overflow-y: auto; max-height: 70vh;">
 
-                    <QuickGrid Class="table table-hover align-middle mb-0"
+                    <QuickGrid @ref="grid" Class="table table-hover align-middle mb-0"                               
                                TGridItem="InterviewDTO"
                                ItemsProvider="InterviewLibraryViewModel.GetInterviews"
                                Pagination="InterviewLibraryViewModel.Pagination"
@@ -49,7 +50,7 @@
 
                         <TemplateColumn Context="interview" Title="Actions" Class="text-end">
                             <div class="btn-group btn-group-sm">
-
+                                <button class="btn btn-primary" @onclick="() => InterviewLibraryViewModel.SelectInterviewAsync(interview)">Transcript</button>
                             </div>
                         </TemplateColumn>
                     </QuickGrid>
@@ -92,5 +93,16 @@
 </div>
 
 @code {
+    private QuickGrid<InterviewDTO>? grid;
 
+    private async Task HandleSelectInterview(InterviewDTO interview)
+    {
+        await InterviewLibraryViewModel.SelectInterviewAsync(interview);
+        
+        // Force QuickGrid to re-render
+        if (grid is not null)
+        {
+            await grid.RefreshDataAsync();
+        }
+    }
 }

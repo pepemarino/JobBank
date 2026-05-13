@@ -28,7 +28,7 @@
                 </div>
                 <div class="card-body" style="overflow-y: auto; max-height: 70vh;">
 
-                    <QuickGrid @ref="grid" Class="table table-hover align-middle mb-0"                               
+                    <QuickGrid Class="table table-hover align-middle mb-0"                               
                                TGridItem="InterviewDTO"
                                ItemsProvider="InterviewLibraryViewModel.GetInterviews"
                                Pagination="InterviewLibraryViewModel.Pagination"
@@ -93,16 +93,5 @@
 </div>
 
 @code {
-    private QuickGrid<InterviewDTO>? grid;
-
-    private async Task HandleSelectInterview(InterviewDTO interview)
-    {
-        await InterviewLibraryViewModel.SelectInterviewAsync(interview);
-        
-        // Force QuickGrid to re-render
-        if (grid is not null)
-        {
-            await grid.RefreshDataAsync();
-        }
-    }
+    
 }

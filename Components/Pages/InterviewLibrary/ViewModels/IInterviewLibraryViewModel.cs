@@ -7,23 +7,59 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
 {
     public interface IInterviewLibraryViewModel : IAsyncInitialization
     {
+        /// <summary>
+        /// Retrieves paginated interviews for the current user with optional company filtering.
+        /// </summary>
         ValueTask<GridItemsProviderResult<InterviewDTO>> GetInterviews(GridItemsProviderRequest<InterviewDTO> request);
+        
+        /// <summary>
+        /// Company name filter for interview search.
+        /// </summary>
         string CompanySearch { get; set; }
+        
+        /// <summary>
+        /// Pagination state for the interview grid.
+        /// </summary>
         PaginationState Pagination { get; }
+        
+        /// <summary>
+        /// Returns the CSS class for a row based on selection state.
+        /// </summary>
         string? GetRowCssClass(InterviewDTO jobPost);
 
+        /// <summary>
+        /// Interview message history/transcript for the selected interview.
+        /// </summary>
         List<ChatMessage> History { get; set; }
 
-        InterviewTrainingAnalysisResultDTO TrainingAnalysys { get; set; }
+        /// <summary>
+        /// Training analysis content for the selected interview.
+        /// </summary>
+        InterviewTrainingAnalysisResultDTO? TrainingAnalysis { get; set; }
 
-        Task SelectInterviewAsync(InterviewDTO args);
-
+        /// <summary>
+        /// Indicates whether the interview view is currently active.
+        /// </summary>
         bool IsInterview { get; set; }
 
+        /// <summary>
+        /// Indicates whether the training view is currently active.
+        /// </summary>
         bool IsTraining { get; set; }
 
-        Task LoadTraining(InterviewDTO interview);
+        /// <summary>
+        /// Loads and displays an interview's transcript from cache or protected storage.
+        /// </summary>
+        Task SelectInterviewAsync(InterviewDTO? args);
 
-        public event Action? OnRequestUIUpdate;
+        /// <summary>
+        /// Loads and displays training content for an interview.
+        /// </summary>
+        Task LoadTraining(InterviewDTO? interview);
+
+        /// <summary>
+        /// Event fired when the ViewModel state changes and the UI should re-render.
+        /// </summary>
+        event Action? OnRequestUIUpdate;
     }
 }

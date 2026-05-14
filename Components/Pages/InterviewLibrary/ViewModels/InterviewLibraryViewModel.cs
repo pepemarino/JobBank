@@ -6,6 +6,10 @@ using System.Text.Json;
 
 namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
 {
+    /// <summary>
+    /// ViewModel for managing the Interview Library page, handling interview transcript display and training content.
+    /// Implements caching for both interview messages and training data to optimize performance.
+    /// </summary>
     public class InterviewLibraryViewModel : IInterviewLibraryViewModel
     {
         private readonly IProtectedLocalStoreService<List<ChatMessage>> _interviewMessagesStore;
@@ -13,8 +17,14 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
         private readonly IIdentityService _identityService;
         private readonly IInterviewService _interviewService;
         private readonly ITrainingService _trainingService;
-        private InterviewDTO selected;
-        private readonly Dictionary<string, List<ChatMessage>> _historyCache = new(); // cache transcripts
+        
+        private InterviewDTO? _selectedInterview;
+        private string _userId = string.Empty;
+        
+        // Cache configurations
+        private const int MaxCacheSize = 50; // Prevent unbounded memory growth
+        private readonly Dictionary<string, List<ChatMessage>> _historyCache = new();
+        private readonly Dictionary<int, InterviewTrainingAnalysisResultDTO> _trainingCache = new();
 
         public InterviewLibraryViewModel(
             ILogger<InterviewLibraryViewModel> logger,
@@ -36,10 +46,17 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
 
         public List<ChatMessage> History { get; set; } = new();
 
-        private string _userId = string.Empty;
+        public InterviewTrainingAnalysisResultDTO? TrainingAnalysis { get; set; }
+
+        public bool IsInterview { get; set; }
+
+        public bool IsTraining { get; set; }
 
         public event Action? OnRequestUIUpdate;
 
+        /// <summary>
+        /// Gets the current user ID, caching it after the first retrieval.
+        /// </summary>
         private async Task<string> GetUserIdAsync()
         {
             if (string.IsNullOrEmpty(_userId))
@@ -49,29 +66,52 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
             return _userId;
         }
 
+        /// <summary>
+        /// Retrieves paginated interviews for the current user with optional company filtering.
+        /// </summary>
         public async ValueTask<GridItemsProviderResult<InterviewDTO>> GetInterviews(GridItemsProviderRequest<InterviewDTO> request)
         {
-            var user = await GetUserIdAsync();
+            try
+            {
+                var user = await GetUserIdAsync();
 
-            var paginationResult = await _interviewService.GetInterviewsByUserIdWithPaginationAsync(
-                user,
-                CompanySearch,
-                request.StartIndex,
-                request.Count ?? 10);
+                var paginationResult = await _interviewService.GetInterviewsByUserIdWithPaginationAsync(
+                    user,
+                    CompanySearch,
+                    request.StartIndex,
+                    request.Count ?? 10);
 
-            return GridItemsProviderResult.From(paginationResult.Items.ToList(), paginationResult.TotalCount);
+                return GridItemsProviderResult.From(paginationResult.Items.ToList(), paginationResult.TotalCount);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving interviews for pagination");
+                return GridItemsProviderResult.From(new List<InterviewDTO>(), 0);
+            }
         }
 
+        /// <summary>
+        /// Gets the CSS class for a row based on selection state.
+        /// </summary>
         public string? GetRowCssClass(InterviewDTO interview)
         {
-            return selected != null && selected.Equals(interview) ? "selected-row" : null;
+            return _selectedInterview != null && _selectedInterview.Equals(interview) ? "selected-row" : null;
         }
 
-        public async Task SelectInterviewAsync(InterviewDTO args)
+        /// <summary>
+        /// Loads and displays an interview's transcript from cache or protected storage.
+        /// </summary>
+        public async Task SelectInterviewAsync(InterviewDTO? args)
         {
-            selected = args;
+            if (args == null)
+            {
+                _logger.LogWarning("SelectInterviewAsync called with null interview");
+                return;
+            }
+
+            _selectedInterview = args;
             IsInterview = true;
-            IsTraining = !IsInterview;
+            IsTraining = false;
 
             var historyKey = $"interview-messages-{args.Id}-{args.JobPostId}";
             
@@ -84,6 +124,13 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
                 else
                 {
                     var loadedHistory = await _interviewMessagesStore.LoadAsync(historyKey) ?? new List<ChatMessage>();
+                    
+                    // Manage cache size to prevent memory issues
+                    if (_historyCache.Count >= MaxCacheSize)
+                    {
+                        _historyCache.Remove(_historyCache.Keys.First());
+                    }
+                    
                     _historyCache[historyKey] = loadedHistory;
                     History = loadedHistory;
                 }
@@ -94,32 +141,80 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
             {
                 _logger.LogError(ex, "Failed to load interview messages for interview ID {InterviewId}", args.Id);
                 History = new List<ChatMessage>();
+                IsInterview = false;
             }
         }
 
+        /// <summary>
+        /// Loads and displays training content for an interview.
+        /// Training data is cached to avoid repeated database queries.
+        /// </summary>
+        public async Task LoadTraining(InterviewDTO? interview)
+        {
+            if (interview == null || interview.TrainingId <= 0)
+            {
+                _logger.LogWarning("LoadTraining called with null or invalid interview");
+                return;
+            }
+
+            _selectedInterview = interview;
+            IsTraining = true;
+            IsInterview = false;
+            
+            try
+            {
+                // Check cache first
+                if (_trainingCache.TryGetValue(interview.TrainingId, out var cachedTraining))
+                {
+                    TrainingAnalysis = cachedTraining;
+                }
+                else
+                {
+                    var training = await _trainingService.GetTrainingByIdAsync(interview.TrainingId);
+                    
+                    if (training != null && !string.IsNullOrEmpty(training.Result))
+                    {
+                        TrainingAnalysis = JsonSerializer.Deserialize<InterviewTrainingAnalysisResultDTO>(training.Result);
+                        
+                        // Manage cache size
+                        if (_trainingCache.Count >= MaxCacheSize)
+                        {
+                            _trainingCache.Remove(_trainingCache.Keys.First());
+                        }
+                        
+                        if (TrainingAnalysis != null)
+                        {
+                            _trainingCache[interview.TrainingId] = TrainingAnalysis;
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Training data not found for TrainingId {TrainingId}", interview.TrainingId);
+                        TrainingAnalysis = null;
+                    }
+                }
+
+                OnRequestUIUpdate?.Invoke();
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Failed to deserialize training data for TrainingId {TrainingId}", interview.TrainingId);
+                TrainingAnalysis = null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to load training for interview ID {InterviewId}", interview.Id);
+                TrainingAnalysis = null;
+            }
+        }
+
+        /// <summary>
+        /// Initializes the ViewModel. Called by the component on initialization.
+        /// </summary>
         public async Task InitializeAsync()
         {
-           OnRequestUIUpdate?.Invoke();            
-        }
-
-        public InterviewTrainingAnalysisResultDTO TrainingAnalysys { get; set; }
-
-        public async Task LoadTraining(InterviewDTO interview)
-        {
-            selected = interview;
-            IsTraining = true;
-            IsInterview = !IsTraining;
-            
-            var training = await _trainingService.GetTrainingByIdAsync(interview.TrainingId);
-            if (training != null && !string.IsNullOrEmpty(training.Result))
-            {
-                TrainingAnalysys = JsonSerializer.Deserialize<InterviewTrainingAnalysisResultDTO>(training!.Result);
-            }
-
             OnRequestUIUpdate?.Invoke();
+            await Task.CompletedTask;
         }
-
-        public bool IsInterview { get; set; }
-        public bool IsTraining { get; set; }
     }
 }

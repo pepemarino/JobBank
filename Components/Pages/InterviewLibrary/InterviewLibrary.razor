@@ -5,8 +5,8 @@
 @rendermode InteractiveServer
 @attribute [Authorize]
 
-<div class="container-fluid px-5">
-    <div class="row">
+<div class="container-fluid px-4">
+    <div class="row g-4 align-items-stretch">
         <div class="col">
             <div class="d-flex justify-content-between align-items-center my-4">
                 <div>
@@ -23,69 +23,201 @@
     <div class="row mb-4 align-items-stretch">
         <div class="col-md-7 d-flex">
             <div class="d-flex flex-column flex-fill">
-                <div class="card-header">
-                    <div>Interviews</div>
-                </div>
-                <div class="card-body" style="overflow-y: auto; max-height: 70vh;">
+                <div class="card h-100">
+                    <div class="card-header fw-semibold">Interviews</div>
+                    <div class="card-body p-0">
+                        <QuickGrid Class="table table-hover align-middle mb-0"
+                                   TGridItem="InterviewDTO"
+                                   ItemsProvider="InterviewLibraryViewModel.GetInterviews"
+                                   Pagination="InterviewLibraryViewModel.Pagination"
+                                   RowClass="@InterviewLibraryViewModel.GetRowCssClass"
+                                   Virtualize="true">
+                            <PropertyColumn Property="interview => interview.JobTitle" Title="Job Title" Sortable="true" />
 
-                    <QuickGrid Class="table table-hover align-middle mb-0"                               
-                               TGridItem="InterviewDTO"
-                               ItemsProvider="InterviewLibraryViewModel.GetInterviews"
-                               Pagination="InterviewLibraryViewModel.Pagination"
-                               RowClass="@InterviewLibraryViewModel.GetRowCssClass"
-                               Virtualize="true">
-                        <PropertyColumn Property="interview => interview.JobTitle" Title="Job Title" Sortable="true" />
+                            <PropertyColumn Property="interview => interview.Company" Sortable="true">
+                                <ColumnOptions>
+                                    <div class="p-2">
+                                        <input type="search" class="form-control form-control-lg"
+                                               @bind="InterviewLibraryViewModel.CompanySearch" @bind:event="oninput"
+                                               placeholder="Filter Employer..." autofocus />
+                                    </div>
+                                </ColumnOptions>
+                            </PropertyColumn>
 
-                        <PropertyColumn Property="interview => interview.Company" Sortable="true">
-                            <ColumnOptions>
-                                <div class="p-2">
-                                    <input type="search" class="form-control form-control-lg"
-                                           @bind="InterviewLibraryViewModel.CompanySearch" @bind:event="oninput"
-                                           placeholder="Filter Employer..." autofocus />
+                            <PropertyColumn Property="interview => interview.CompletedAtUtc" Format="MMM dd, yyyy" Title="Applied" Sortable="true" />
+
+                            <TemplateColumn Context="interview" Title="Actions" Class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" @onclick="() => InterviewLibraryViewModel.SelectInterviewAsync(interview)">Transcript</button>
+                                    <button class="btn btn-secondary" @onclick="() => InterviewLibraryViewModel.LoadTraining(interview)" disabled="@(interview.TrainingId == 0)">Training</button>
                                 </div>
-                            </ColumnOptions>
-                        </PropertyColumn>
-                        
-                        <PropertyColumn Property="interview => interview.CompletedAtUtc" Format="MMM dd, yyyy" Title="Applied" Sortable="true" />
-
-                        <TemplateColumn Context="interview" Title="Actions" Class="text-end">
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-primary" @onclick="() => InterviewLibraryViewModel.SelectInterviewAsync(interview)">Transcript</button>
-                            </div>
-                        </TemplateColumn>
-                    </QuickGrid>
-                </div>
-                <div class="mt-3">
-                    <Paginator State="@InterviewLibraryViewModel.Pagination" />
+                            </TemplateColumn>
+                        </QuickGrid>
+                    </div>
+                    <div class="mt-3">
+                        <Paginator State="@InterviewLibraryViewModel.Pagination" />
+                    </div>
                 </div>
             </div>
+
         </div>
+
         <div class="col-md-5 d-flex">
             <div class="d-flex flex-column flex-fill">
-                <div class="card-header">
-                    <h5 class="card-title">Interview</h5>
-                </div>
-                <div class="text-body">
-                    <div class="card-body d-flex flex-column">
-                        <div id="chat-container" style="overflow-y: auto; max-height: 57vh;">
-                            @if (!InterviewLibraryViewModel.History.Any())
+
+                <div class="card h-100">
+
+                    @if (InterviewLibraryViewModel.IsInterview)     
+                    {
+                    <div class="card-header"><h5>Interview</h5></div>
+                    <div class="card-body overflow-auto" style="max-height: 70vh;">
+                        @if (!InterviewLibraryViewModel.History.Any())
+                        {
+                            <div class="loading-shell">
+                                Transcript no longer available. WORKS Commons does not serialize conversations to ensure privacy.
+                            </div>
+                        }
+                        @foreach (var chat in InterviewLibraryViewModel.History)
+                        {
+                            <div class="d-flex @(chat.Role == InterviewRole.User.ToString() ? "justify-content-end" : "justify-content-start") mb-2">
+                                <div class="p-3 rounded-3 @(chat.Role == InterviewRole.User.ToString() ? "bg-primary text-white" : "bg-light border")"
+                                     style="max-width: 65%;">
+                                    <div>@chat.Content</div>
+                                    <small class="opacity-50">@chat.Timestamp.ToString("t")</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    }
+
+                    @if(InterviewLibraryViewModel.IsTraining)
+                    {
+                        <div class="card-header"><h5>Training</h5></div>
+                        <div class="card-body overflow-auto" style="max-height: 70vh;">
+
+                            @if (InterviewLibraryViewModel.TrainingAnalysys != null && InterviewLibraryViewModel.TrainingAnalysys.Training.Any())
+                            {
+                                @foreach (var content in InterviewLibraryViewModel.TrainingAnalysys.Training)
+                                {
+                                    <div class="mb-4 p-3 border rounded">
+                                        <!-- Training Topic -->
+                                        <h6 class="fw-bold text-primary mb-2">
+                                            <i class="bi bi-book"></i> @content.TrainingTopic
+                                        </h6>
+
+                                        <!-- Training Type & Source -->
+                                        <div class="mb-3 small text-muted">
+                                            <span class="badge bg-info">@content.TrainingType</span>
+                                            @if (!string.IsNullOrEmpty(content.TrainingSource))
+                                            {
+                                                <span class="ms-2">Source: <strong>@content.TrainingSource</strong></span>
+                                            }
+                                        </div>
+
+                                        <!-- Abstract -->
+                                        @if (!string.IsNullOrEmpty(content.Abstract))
+                                        {
+                                            <div class="mb-3">
+                                                <p class="text-break mb-0">@content.Abstract</p>
+                                            </div>
+                                        }
+
+                                        <!-- Prerequisites -->
+                                        @if (content.Prerequisites != null && content.Prerequisites.Any())
+                                        {
+                                            <div class="mb-3">
+                                                <h6 class="fw-semibold small mb-2">
+                                                    <i class="bi bi-list-check"></i> Prerequisites
+                                                </h6>
+                                                <ul class="small mb-0 ps-3">
+                                                    @foreach (var prereq in content.Prerequisites)
+                                                    {
+                                                        <li class="mb-2">
+                                                            <strong>@prereq.ReferenceTitle</strong>
+                                                            @if (!string.IsNullOrEmpty(prereq.ReferenceType))
+                                                            {
+                                                                <span class="badge bg-secondary ms-1">@prereq.ReferenceType</span>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(prereq.ReferenceSource))
+                                                            {
+                                                                <br />
+                                                                <small class="text-muted">@prereq.ReferenceSource</small>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(prereq.ReferenceLink))
+                                                            {
+                                                                <br />
+                                                                <a href="@prereq.ReferenceLink" target="_blank" class="small">
+                                                                    <i class="bi bi-link-45deg"></i> Learn more
+                                                                </a>
+                                                            }
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        }
+
+                                        <!-- Where to Focus -->
+                                        @if (content.WhereToFocus != null && content.WhereToFocus.Any())
+                                        {
+                                            <div class="mb-3">
+                                                <h6 class="fw-semibold small mb-2">
+                                                    <i class="bi bi-target"></i> Focus Areas
+                                                </h6>
+                                                <ul class="small mb-0 ps-3">
+                                                    @foreach (var focus in content.WhereToFocus)
+                                                    {
+                                                        <li>@focus</li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        }
+
+                                        <!-- Homework Questions -->
+                                        @if (content.HomeworkQuestions != null && content.HomeworkQuestions.Any())
+                                        {
+                                            <div class="mb-3">
+                                                <h6 class="fw-semibold small mb-2">
+                                                    <i class="bi bi-pencil-square"></i> Practice Questions
+                                                </h6>
+                                                <ul class="small mb-0 ps-3">
+                                                    @foreach (var question in content.HomeworkQuestions)
+                                                    {
+                                                        <li class="mb-2">@question</li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        }
+
+                                        <!-- Mastery Task -->
+                                        @if (content.MasteryTask != null)
+                                        {
+                                            <div class="p-2 bg-light border-start border-warning border-3">
+                                                <h6 class="fw-semibold small mb-2">
+                                                    <i class="bi bi-star-fill text-warning"></i> Mastery Task
+                                                </h6>
+                                                <p class="small mb-2 fw-bold">@content.MasteryTask.Topic</p>
+                                                @if (content.MasteryTask.EssentialSubtopics != null && content.MasteryTask.EssentialSubtopics.Any())
+                                                {
+                                                    <ul class="small mb-0 ps-3">
+                                                        @foreach (var subtopic in content.MasteryTask.EssentialSubtopics)
+                                                        {
+                                                            <li>@subtopic</li>
+                                                        }
+                                                    </ul>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                            else
                             {
                                 <div class="loading-shell">
-                                    Transcript no longer available. WORKS Commons does not serialize conversations to ensure privacy.
-                                </div>
-                            }
-                            @foreach (var chat in InterviewLibraryViewModel.History)
-                            {
-                                <div class="d-flex @(chat.Role == InterviewRole.User.ToString() ? "justify-content-end" : "justify-content-start") mb-2">
-                                    <div class="p-3 rounded-3 @(chat.Role == InterviewRole.User.ToString() ? "bg-primary text-white" : "bg-light border")"
-                                         style="max-width: 65%;">
-                                        <div>@chat.Content</div>
-                                        <small class="opacity-50">@chat.Timestamp.ToString("t")</small>
-                                    </div>
+                                    Training content not available.
                                 </div>
                             }
                         </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
@@ -93,5 +225,5 @@
 </div>
 
 @code {
-    
+
 }

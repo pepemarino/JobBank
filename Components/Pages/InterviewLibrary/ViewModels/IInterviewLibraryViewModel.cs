@@ -14,7 +14,15 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
 
         List<ChatMessage> History { get; set; }
 
+        InterviewTrainingAnalysisResultDTO TrainingAnalysys { get; set; }
+
         Task SelectInterviewAsync(InterviewDTO args);
+
+        bool IsInterview { get; set; }
+
+        bool IsTraining { get; set; }
+
+        Task LoadTraining(InterviewDTO interview);
 
         public event Action? OnRequestUIUpdate;
     }

@@ -105,3 +105,174 @@ button.btn-secondary:disabled {
 .spinning {
     animation: spinner-border .75s linear infinite;
 }
+
+/* ------------------------------
+   GLOBAL RESET + TYPOGRAPHY
+--------------------------------*/
+/*:root {
+    --brand-primary: #3A6EA5;
+    --brand-secondary: #E8EEF3;
+    --surface: #ffffff;
+    --surface-alt: #f7f9fb;
+    --text-main: #1f1f1f;
+    --text-muted: #6b7280;
+    --border: #d8dee4;
+    --radius: 8px;
+    --shadow: 0 2px 6px rgba(0,0,0,0.08);
+    --transition: 0.2s ease;
+    font-size: 16px;
+}*/
+
+/*body {
+    font-family: system-ui, Segoe UI, Roboto, sans-serif;
+    background: var(--surface-alt);
+    color: var(--text-main);
+    margin: 0;
+    line-height: 1.6;
+}*/
+
+/* ------------------------------
+   LAYOUT
+--------------------------------*/
+/*main, .page {
+    padding: 2rem;
+}*/
+
+/*.card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+}*/
+
+/* ------------------------------
+   HEADERS
+--------------------------------*/
+/*h1, h2, h3 {
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.75rem;
+}*/
+
+/*h1 {
+    font-size: 1.9rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+}*/
+
+/* ------------------------------
+   BUTTONS
+--------------------------------*/
+/*button, .btn {
+    background: var(--brand-primary);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 500;
+    transition: var(--transition);
+}*/
+
+    /*button:hover, .btn:hover {
+        background: #2f5a87;
+    }
+
+    button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }*/
+
+/* Secondary button */
+/*.btn-secondary {
+    background: var(--brand-secondary);
+    color: var(--text-main);
+}
+
+    .btn-secondary:hover {
+        background: #dce3ea;
+    }*/
+
+/* ------------------------------
+   INPUTS & FORMS
+--------------------------------*/
+/*input, select, textarea {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    transition: var(--transition);
+}
+
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--brand-primary);
+        box-shadow: 0 0 0 3px rgba(58,110,165,0.15);
+    }*/
+
+/* ------------------------------
+   TABLES
+--------------------------------*/
+/*table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+th {
+    background: var(--brand-secondary);
+    text-align: left;
+    padding: 0.75rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+td {
+    padding: 0.75rem;
+    border-top: 1px solid var(--border);
+}
+
+tr:hover td {
+    background: #f0f4f8;
+}*/
+
+/* ------------------------------
+   NAVIGATION (if using default Blazor nav)
+--------------------------------*/
+/*.navbar, .top-row {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+}
+
+    .navbar a, .top-row a {
+        color: var(--text-main);
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius);
+        transition: var(--transition);
+    }
+
+        .navbar a:hover, .top-row a:hover {
+            background: var(--brand-secondary);
+        }*/
+
+/* ------------------------------
+   LINKS
+--------------------------------*/
+/*a {
+    color: var(--brand-primary);
+    text-decoration: none;
+}
+
+    a:hover {
+        text-decoration: underline;
+    }*/

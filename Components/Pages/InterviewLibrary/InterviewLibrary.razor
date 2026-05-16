@@ -101,9 +101,9 @@
                                 {
                                     <div class="mb-4 p-3 border rounded">
                                         <!-- Training Topic -->
-                                        <h6 class="fw-bold text-primary mb-2">
+                                        <h3 class="fw-bold text-primary mb-2">
                                             <i class="bi bi-book"></i> @content.TrainingTopic
-                                        </h6>
+                                        </h3>
 
                                         <!-- Training Type & Source -->
                                         <div class="mb-3 small text-muted">
@@ -192,9 +192,9 @@
                                         @if (content.MasteryTask != null)
                                         {
                                             <div class="p-2 bg-light border-start border-warning border-3">
-                                                <h6 class="fw-semibold small mb-2">
+                                                <h4 class="fw-semibold small mb-2">
                                                     <i class="bi bi-star-fill text-warning"></i> Mastery Task
-                                                </h6>
+                                                </h4>
                                                 <p class="small mb-2 fw-bold">@content.MasteryTask.Topic</p>
                                                 @if (content.MasteryTask.EssentialSubtopics != null && content.MasteryTask.EssentialSubtopics.Any())
                                                 {

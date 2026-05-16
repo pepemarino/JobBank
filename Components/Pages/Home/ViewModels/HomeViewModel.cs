@@ -206,7 +206,9 @@ namespace JobBank.Components.Pages.Home.ViewModels
         private async Task<List<Models.JobPost>> DateFilteredJobPosts()
         {
             var userId = await _identityService.GetUserIdAsync();
-            var query = Context.JobPost.AsNoTracking().Where(jp => jp.UserId == userId);
+            var query = Context.JobPost.AsNoTracking().Where(jp => jp.UserId == userId && 
+                                                                   jp.Description != null && 
+                                                                   jp.Description != "");
 
             if (FromDate.HasValue)
                 query = query.Where(jp => jp.ApplicationDate >= FromDate.Value); // push date filter to the database

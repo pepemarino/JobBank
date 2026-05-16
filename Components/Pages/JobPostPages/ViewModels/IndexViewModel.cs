@@ -140,6 +140,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                     .AsNoTracking()
                     .AsExpandable()
                     .Where(BuildFilter(userId))
+                    .Where(jp => jp.Description != null && jp.Description != "")
                     .Where(jp => !FromDateTime.HasValue || jp.ApplicationDate >= FromDateTime.Value)
                     .Where(jp => !ToDateTime.HasValue || jp.ApplicationDate < ToDateTime.Value.Date.AddDays(1));
 

@@ -1,0 +1,32 @@
+﻿::deep .applied-row {
+    background-color: #f0f5f3 !important; /* Light green */
+}
+
+::deep .pending-row {
+    background-color: #fff3cd !important; /* Light yellow */
+}
+
+::deep .declined-row {
+    background-color: #f8d7da !important; /* Light red */
+    color: #842029;
+}
+
+
+::deep .applied-row {
+    background-color: #f0f5f3 !important;
+}
+
+::deep .stale-warn {
+    border-left: 5px solid #ffca2c !important;
+}
+
+::deep .stale-hey {
+    border-left: 5px solid #df4759 !important;
+    background-color: #fcf3f4 !important;
+}
+
+::deep .stale-critical {
+    border-left: 5px solid #b02a37 !important;
+    background-color: #f8d7da !important;
+    font-weight: 500;
+}

@@ -4,7 +4,13 @@
     using System.Collections.Generic;
 
     /// <summary>
-    /// 
+    /// This parser has become a bit of a Frankenstein's monster, and it is not pretty. 
+    /// It has tricks and traps. this is a problem; a true hack job.
+    /// It is designed to handle the wide variety of formats that job descriptions can come in, 
+    /// and to extract the relevant sections for analysis by the TrainerAssistant.
+    /// It a lexical tokenizer that looks for common section headers 
+    /// (like "Responsibilities", "Qualifications", etc.) and splits the job description into sections based on those headers.
+    /// It increases the need to implement #73
     /// </summary>
     public partial class JobDescriptionParser
     {

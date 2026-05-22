@@ -7,7 +7,7 @@
     /// 
     /// </summary>
     public partial class JobDescriptionParser
-    {       
+    {
         public Dictionary<string, string> GetSections(string jobText)
         {
             var sections = new Dictionary<string, List<string>>();
@@ -19,7 +19,7 @@
 
             string currentSection = "General";
 
-            foreach (string rawLine in normalized.Split(['\n',':'])) // this smells
+            foreach (string rawLine in normalized.Split('\n'))
             {
                 string line = rawLine.Trim();
 
@@ -44,12 +44,14 @@
                 sections[currentSection].Add(line);
             }
 
-            return sections.ToDictionary(
-                kvp => kvp.Key,
-                kvp => string.Join("\n", kvp.Value));
+            return sections
+                .Where(kvp => kvp.Value.Count > 0)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => string.Join("\n", kvp.Value));
         }
 
-        private string DetectSection(string line)
+        private string? DetectSection(string line)
         {
             string normalized = line
                 .Trim()
@@ -60,7 +62,7 @@
             {
                 foreach (var keyword in category.Value)
                 {
-                    if (normalized.Contains(keyword))
+                    if (normalized.Equals(keyword))
                         return category.Key;
                 }
             }

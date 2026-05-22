@@ -8,6 +8,7 @@
             {
                 "requirements",
                 "must have",
+                "you have",
                 "required",
                 "minimum qualifications",
                 "what you bring"
@@ -28,7 +29,8 @@
                 "responsibilities",
                 "what you'll do",
                 "duties",
-                "role"
+                "role",
+                "you will"
             },
 
             ["Technology"] = new[]

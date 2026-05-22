@@ -216,20 +216,36 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         /// <param name="jobPost"></param>
         /// <returns></returns>
         public string GetRowCssClass(JobPostDataModel jobPost)
-        {
+        {           
             if (jobPost.ApplicationDeclined)
             {
                 return "declined-row";
             }
-            else if (jobPost.InterviewDate.HasValue && !string.IsNullOrEmpty(jobPost.InterviewOutcome))
+
+            if (jobPost.InterviewDate.HasValue)
             {
-                return "table-success";
-            }
-            else if (jobPost.InterviewDate.HasValue && string.IsNullOrEmpty(jobPost.InterviewOutcome))
-            {
-                return "table-warning";
+                return !string.IsNullOrEmpty(jobPost.InterviewOutcome)
+                    ? "table-success"
+                    : "table-warning";
             }
 
+            var age = DateTime.UtcNow - jobPost.ApplicationDate!.Value; // Adjust property name if needed
+            var days = age.TotalDays;
+
+            if (days > 30)
+            {
+                return "applied-row stale-critical"; // Over a month old: Intense warning
+            }
+            if (days > 21)
+            {
+                return "applied-row stale-hey";      // 4 weeks out: "Hey, what's going on?"
+            }
+            if (days > 14)
+            {
+                return "applied-row stale-warn";     // 3 weeks out: A little warning
+            }
+
+            // Default: Fresh record within 2 weeks
             return "applied-row";
         }
     }

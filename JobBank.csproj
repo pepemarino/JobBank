@@ -4,7 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-	  <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+	<StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+	<AssemblyName>JobBank</AssemblyName>
   </PropertyGroup>
 
 	<PropertyGroup>

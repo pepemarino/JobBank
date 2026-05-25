@@ -2,7 +2,7 @@
 
 namespace JobBank.Services.Abstraction
 {
-    public interface ITrainingService : IAsyncDisposable
+    public interface ITrainingService
     {
         Task<TrainingDTO> GetTrainingByIdAsync(int id);
         Task<IEnumerable<TrainingDTO>> GetTrainingsByUserIdAsync(string userId);

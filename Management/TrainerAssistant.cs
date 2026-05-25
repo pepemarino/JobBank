@@ -7,7 +7,7 @@ using System.Text.Json;
 
 namespace JobBank.Management
 {
-    public class TrainerAssistant
+    public partial class TrainerAssistant
     {
         private readonly string _version = "v1";
         private readonly string _llmModel;          // ILLMManager nees to manage this
@@ -23,7 +23,7 @@ namespace JobBank.Management
             _llmManager = llmManager;
         }
 
-        public async Task<InterviewTrainingAnalysisResultDTO> RunLLMAnalysis(TrainerAnalysisMetadataDTO interviewMetadata, string prompt, string? userId = null)
+        public async Task<InterviewTrainingAnalysisResultDTO> RunLLMAnalysis(TrainerAnalysisMetadataDTO interviewMetadata, string? prompt = null, string? userId = null)
         {
             var canAnalyse = await _llmManager.IsAvailableAsync(userId);
             if (!canAnalyse)
@@ -31,14 +31,18 @@ namespace JobBank.Management
                 {
                     ErrorMessage = "LLM analysis is not enabled. API key is missing.", 
                     Version = _version, 
-                    Model = _llmModel
+                    Model = _llmModel,
+                    Prompt = string.IsNullOrEmpty(prompt) ? TrainerPrompt : prompt
                 };
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeout));
 
             try
             {
-                return await Analyze(interviewMetadata, prompt, userId, cts.Token);
+                return await Analyze(
+                    interviewMetadata, 
+                    string.IsNullOrEmpty(prompt) ? TrainerPrompt : prompt, 
+                    userId, cts.Token);
             }
             catch (OperationCanceledException)
             {
@@ -46,7 +50,8 @@ namespace JobBank.Management
                 {
                     ErrorMessage = "Operation was cancelled by the system due to timeout.", 
                     Version = _version, 
-                    Model = _llmModel
+                    Model = _llmModel,
+                    Prompt = string.IsNullOrEmpty(prompt) ? TrainerPrompt : prompt
                 };
             }
         }
@@ -103,6 +108,7 @@ namespace JobBank.Management
 
             result.Model = _llmModel;
             result.Version = _version;
+            result.Prompt = prompt;
 
             return result;
         }

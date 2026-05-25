@@ -1,4 +1,5 @@
-﻿using JobBank.Management.Interview;
+﻿using JobBank.Management.Abstraction;
+using JobBank.Management.Interview;
 using JobBank.ModelsDTO;
 using JobBank.Services.Abstraction;
 using Microsoft.AspNetCore.Components.QuickGrid;
@@ -17,7 +18,8 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
         private readonly IIdentityService _identityService;
         private readonly IInterviewService _interviewService;
         private readonly ITrainingService _trainingService;
-        
+        private readonly ITrainerAssistantManager _trainerAssistantManager;
+
         private InterviewDTO? _selectedInterview;
         private string _userId = string.Empty;
         
@@ -31,13 +33,15 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
             IIdentityService identityService,
             IInterviewService interviewService,
             IProtectedLocalStoreService<List<ChatMessage>> interviewMessagesStore,
-            ITrainingService trainingService)
+            ITrainingService trainingService,
+            ITrainerAssistantManager trainerAssistantManager)
         {
             _logger = logger;
             _identityService = identityService;
             _interviewService = interviewService;
             _interviewMessagesStore = interviewMessagesStore;
             _trainingService = trainingService;
+            _trainerAssistantManager = trainerAssistantManager;
         }
 
         public string CompanySearch { get; set; } = string.Empty;
@@ -51,6 +55,10 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
         public bool IsInterview { get; set; }
 
         public bool IsTraining { get; set; }
+        public bool IsLoading { get; set; }
+        public bool? HasWeaknesses { get; set; }
+
+        public List<EvaluationResult> Evaluations { get; set; } = new();
 
         public event Action? OnRequestUIUpdate;
 
@@ -151,16 +159,20 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
         /// </summary>
         public async Task LoadTraining(InterviewDTO? interview)
         {
-            if (interview == null || interview.TrainingId <= 0)
+            if (interview == null)
             {
                 _logger.LogWarning("LoadTraining called with null or invalid interview");
                 return;
             }
-
+            
             _selectedInterview = interview;
+            IsLoading = false;
             IsTraining = true;
             IsInterview = false;
-            
+
+            TrainingAnalysis = null;
+            Evaluations = new List<EvaluationResult>();
+
             try
             {
                 // Check cache first
@@ -170,31 +182,44 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
                 }
                 else
                 {
-                    var training = await _trainingService.GetTrainingByIdAsync(interview.TrainingId);
-                    
-                    if (training != null && !string.IsNullOrEmpty(training.Result))
+                    if (NeedsTraining(interview))
                     {
-                        TrainingAnalysis = JsonSerializer.Deserialize<InterviewTrainingAnalysisResultDTO>(training.Result);
-                        
-                        // Manage cache size
-                        if (_trainingCache.Count >= MaxCacheSize)
+                        if (interview.TrainingId <= 0)
                         {
-                            _trainingCache.Remove(_trainingCache.Keys.First());
+                            _logger.LogWarning("LoadTraining for interview ID {InterviewId} does not exist", interview.Id);
+                            IsLoading = true;
+                            interview.TrainingId = await _trainerAssistantManager.AnalyzeInterviewAsync(userId: await GetUserIdAsync(), interviewId: interview.Id);
+                            if (interview.TrainingId <= 0)
+                            {
+                                _logger.LogError("Failed to analyze interview ID {InterviewId} and get valid TrainingId", interview.Id);
+                                return;
+                            }
                         }
-                        
-                        if (TrainingAnalysis != null)
-                        {
-                            _trainingCache[interview.TrainingId] = TrainingAnalysis;
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Training data not found for TrainingId {TrainingId}", interview.TrainingId);
-                        TrainingAnalysis = null;
-                    }
-                }
 
-                OnRequestUIUpdate?.Invoke();
+                        var training = await _trainingService.GetTrainingByIdAsync(interview.TrainingId);
+
+                        if (training != null && !string.IsNullOrEmpty(training.Result))
+                        {
+                            TrainingAnalysis = JsonSerializer.Deserialize<InterviewTrainingAnalysisResultDTO>(training.Result);
+
+                            // Manage cache size
+                            if (_trainingCache.Count >= MaxCacheSize)
+                            {
+                                _trainingCache.Remove(_trainingCache.Keys.First());
+                            }
+
+                            if (TrainingAnalysis != null)
+                            {
+                                _trainingCache[interview.TrainingId] = TrainingAnalysis;
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Training data not found for TrainingId {TrainingId}", interview.TrainingId);
+                            TrainingAnalysis = null;
+                        }
+                    }                    
+                }                
             }
             catch (JsonException ex)
             {
@@ -206,6 +231,30 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
                 _logger.LogError(ex, "Failed to load training for interview ID {InterviewId}", interview.Id);
                 TrainingAnalysis = null;
             }
+            finally
+            {
+                IsLoading = false;
+                OnRequestUIUpdate?.Invoke();
+            }
+        }
+
+        private bool NeedsTraining(InterviewDTO interview)
+        {
+            if (string.IsNullOrEmpty(interview.Result))
+            {
+                _logger.LogWarning("NeedsTraining called with empty interview result for interview ID {InterviewId}", interview.Id);
+               throw new InvalidOperationException("Interview result is empty, cannot determine training needs.");
+            }
+
+            var interviewMetadata = JsonSerializer.Deserialize<InterviewMetadata>(interview.Result);
+            if (interviewMetadata == null)
+            {
+                _logger.LogError("Failed to deserialize interview metadata for interview ID {InterviewId}", interview.Id);
+                throw new InvalidOperationException("Failed to parse interview metadata, cannot determine training needs.");
+            }
+
+            Evaluations = interviewMetadata.Evaluations;
+            return !Evaluations.All(e => e.Passed);
         }
 
         /// <summary>

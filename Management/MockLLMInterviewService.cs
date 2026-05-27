@@ -136,7 +136,8 @@ namespace JobBank.Management
                 Weight = weight,
                 Passed = passed,
                 Strengths = strengths,
-                Gaps = gaps
+                Gaps = gaps,
+                Confidence = 0.7, // fixed confidence for mock
             };
         }
     }

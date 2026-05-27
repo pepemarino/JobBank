@@ -7,7 +7,7 @@ using System.Text.Json;
 
 namespace JobBank.Management
 {
-    public partial class TrainerAssistant
+    public partial class TrainerAssistant : ITrainerAssistant
     {
         private readonly string _version = "v1";
         private readonly string _llmModel;          // ILLMManager nees to manage this

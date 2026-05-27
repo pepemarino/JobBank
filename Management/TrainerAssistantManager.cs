@@ -3,6 +3,7 @@ using JobBank.Management.Abstraction;
 using JobBank.Management.Interview;
 using JobBank.ModelsDTO;
 using JobBank.Services.Abstraction;
+using JobBank.Util;
 using System.Text.Json;
 
 namespace JobBank.Management
@@ -10,8 +11,8 @@ namespace JobBank.Management
     public class TrainerAssistantManager : ITrainerAssistantManager
     {
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger<TrainerAssistantManager> _logger;
-        public TrainerAssistantManager(IServiceScopeFactory scopeFactory, ILogger<TrainerAssistantManager> logger)
+        private readonly ILogger<ITrainerAssistantManager> _logger;
+        public TrainerAssistantManager(IServiceScopeFactory scopeFactory, ILogger<ITrainerAssistantManager> logger)
         {
             _scopeFactory = scopeFactory;
             _logger = logger;
@@ -47,7 +48,7 @@ namespace JobBank.Management
             var interviewService = scope.ServiceProvider.GetRequiredService<IInterviewService>();
             var jobPostService = scope.ServiceProvider.GetRequiredService<IJobPostService>();
             var userSkillService = scope.ServiceProvider.GetRequiredService<ISkillsService>();
-            var trainerAssistant = scope.ServiceProvider.GetRequiredService<TrainerAssistant>();
+            var trainerAssistant = scope.ServiceProvider.GetRequiredService<ITrainerAssistant>();
             var trainerService = scope.ServiceProvider.GetRequiredService<ITrainingService>();
 
             #endregion
@@ -80,12 +81,16 @@ namespace JobBank.Management
                 throw new InvalidOperationException($"Interview with ID {interviewId} has empty result.");
             }
 
-            var interviewMetadata = JsonSerializer.Deserialize<InterviewMetadata>(interview.Result);
-            if (interviewMetadata == null || !interviewMetadata.Evaluations.Any())
+            var interviewResultIsValid = interview.Result.IsValidJson<InterviewMetadata>(Common.StrictValidationOptions, 
+                i => i.Evaluations.Any(e => e.Passed == false && 
+                                            e.Gaps.Any() == true));
+            if (!interviewResultIsValid)
             {
-                _logger.LogWarning("TrainerAnalysisWorker: Interview metadata for Interview ID {InterviewId} is null or has no evaluations. Skipping analysis.", interviewId);
-                throw new InvalidOperationException($"Interview metadata for Interview ID {interviewId} is null or has no evaluations.");
+                _logger.LogWarning("TrainerAnalysisWorker: Interview with ID {InterviewId} has invalid result format. Skipping analysis.", interviewId);
+                throw new InvalidOperationException($"Interview with ID {interviewId} has invalid result format.");
             }
+
+            var interviewMetadata = JsonSerializer.Deserialize<InterviewMetadata>(interview.Result);           
 
             var jobPost = await jobPostService.GetJobPostByIdAsync(interview.JobPostId);
             if (jobPost == null || string.IsNullOrEmpty(jobPost.Description))
@@ -114,7 +119,7 @@ namespace JobBank.Management
                 Evaluations = interviewMetadata.Evaluations
             };
 
-            var training = await trainerAssistant.RunLLMAnalysis(trainerAnalysisDTO, userId: userId);
+            var training = await trainerAssistant.RunLLMAnalysis(trainerAnalysisDTO, userId: userId, prompt: prompt);
 
             if (!string.IsNullOrEmpty(training.ErrorMessage))
             {

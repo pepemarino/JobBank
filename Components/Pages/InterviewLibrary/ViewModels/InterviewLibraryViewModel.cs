@@ -1,9 +1,12 @@
-﻿using JobBank.Management.Abstraction;
+﻿using JobBank.Extensions;
+using JobBank.Management.Abstraction;
 using JobBank.Management.Interview;
 using JobBank.ModelsDTO;
 using JobBank.Services.Abstraction;
+using JobBank.Util;
 using Microsoft.AspNetCore.Components.QuickGrid;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
 {
@@ -244,6 +247,12 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
             {
                 _logger.LogWarning("NeedsTraining called with empty interview result for interview ID {InterviewId}", interview.Id);
                throw new InvalidOperationException("Interview result is empty, cannot determine training needs.");
+            }
+
+            if (!interview.Result.IsValidJson<InterviewMetadata>(Common.StrictValidationOptions))
+            {
+                _logger.LogWarning("NeedsTraining called with invalid result for interview ID {InterviewId}", interview.Id);
+                throw new InvalidOperationException("Interview result is not valid, cannot determine training needs.");
             }
 
             var interviewMetadata = JsonSerializer.Deserialize<InterviewMetadata>(interview.Result);

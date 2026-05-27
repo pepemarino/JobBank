@@ -1,4 +1,6 @@
-﻿namespace JobBank.Management
+﻿using JobBank.Management.Abstraction;
+
+namespace JobBank.Management
 {
     public class TrainerAnalysisWorker : BackgroundService
     {
@@ -31,7 +33,7 @@
                     try
                     {                       
                         await using var scope = _scopeFactory.CreateAsyncScope();
-                        var trainerAssistantManager = scope.ServiceProvider.GetRequiredService<TrainerAssistantManager>();
+                        var trainerAssistantManager = scope.ServiceProvider.GetRequiredService<ITrainerAssistantManager>();
 
                         if (string.IsNullOrEmpty(request.UserId))
                         {

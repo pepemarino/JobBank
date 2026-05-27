@@ -2,8 +2,8 @@
 {
     public class InterviewMetadata
     {
-        public List<string> CoveredTopics { get; set; } = new();  
-        public List<string> WeakAreas { get; set; } = new();     
-        public List<EvaluationResult> Evaluations { get; set; } = new();
+        public required List<string> CoveredTopics { get; set; } = new();  
+        public required List<string> WeakAreas { get; set; } = new();     
+        public required List<EvaluationResult> Evaluations { get; set; } = new();
     }
 }

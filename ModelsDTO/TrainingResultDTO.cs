@@ -6,6 +6,7 @@
         public string ErrorMessage { get; set; } = string.Empty;
         public string Version { get; set; } = string.Empty;
         public string Model { get; set; } = string.Empty;
+        public string Prompt { get; set; } = string.Empty;
     }
 
     public class TrainingResultDTO

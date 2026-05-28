@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace JobBank.Extensions
 {
@@ -49,7 +50,7 @@ namespace JobBank.Extensions
             string[] stopWords = { "the", "and", "a", "of", "to", "in", "is" };
             words = words.Where(w => !stopWords.Contains(w)).ToArray();
 
-           return string.Join(" ", words);
+            return string.Join(" ", words);
         }
 
         /// <summary>
@@ -140,6 +141,34 @@ namespace JobBank.Extensions
             }
 
             return rawResponse.Trim();
+        }
+
+        /// <summary>
+        /// Use the callback for additional checks beyond just "is it valid JSON".  
+        /// For example, you might want to check that certain required properties are present, 
+        /// or that certain values meet specific criteria.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="json"></param>
+        /// <param name="options"></param>
+        /// <param name="additionalCheck"></param>
+        /// <returns></returns>
+        public static bool IsValidJson<T>(
+             this string json,
+             JsonSerializerOptions options,
+             Func<T, bool>? additionalCheck = null)
+        {
+            try
+            {
+                var obj = JsonSerializer.Deserialize<T>(json, options);
+                if (obj is null) return false;
+
+                return additionalCheck == null || additionalCheck(obj);
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

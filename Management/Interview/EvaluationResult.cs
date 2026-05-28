@@ -5,19 +5,19 @@
     /// </summary>
     public class EvaluationResult
     {
-        public string PreviousQuestion { get; set; } = string.Empty;
-        public string PreviousTopic { get; set; } = string.Empty;
+        public required string PreviousQuestion { get; set; } = string.Empty;
+        public required string PreviousTopic { get; set; } = string.Empty;
 
-        public double Score { get; set; }           // 0 - 1
-        public int Weight { get; set; }             // 1 - 10
-        public bool Passed { get; set; }   
+        public required double Score { get; set; }           // 0 - 1
+        public required int Weight { get; set; }             // 1 - 10
+        public required bool Passed { get; set; }   
         
-        public List<string> Strengths { get; set; } = new();
-        public List<string> Gaps { get; set; } = new();
+        public required List<string> Strengths { get; set; } = new();
+        public required List<string> Gaps { get; set; } = new();
         
         public string Evidence { get; set; } = string.Empty;
 
-        public double Confidence { get; set; }
+        public required double Confidence { get; set; }
 
         public override int GetHashCode()
         {

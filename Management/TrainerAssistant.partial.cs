@@ -1,6 +1,6 @@
 ﻿namespace JobBank.Management
 {
-    public partial class TrainerAnalysisWorker
+    public partial class TrainerAssistant
     {
         private const string TrainerPrompt = @"
 You are an AI Trainer conducting a structured training.

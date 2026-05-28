@@ -48,8 +48,8 @@
 
                             <TemplateColumn Context="interview" Title="Actions" Class="text-end">
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-primary" @onclick="() => InterviewLibraryViewModel.SelectInterviewAsync(interview)">Transcript</button>
-                                    <button class="btn btn-secondary" @onclick="() => InterviewLibraryViewModel.LoadTraining(interview)" disabled="@(interview.TrainingId == 0)">Training</button>
+                                    <button class="btn btn-outline-primary" @onclick="async () => await InterviewLibraryViewModel.SelectInterviewAsync(interview)">Transcript</button>
+                                    <button class="btn btn-secondary" @onclick="async () => await InterviewLibraryViewModel.LoadTraining(interview)">Training</button>
                                 </div>
                             </TemplateColumn>
                         </QuickGrid>
@@ -67,30 +67,30 @@
 
                 <div class="card h-100">
 
-                    @if (InterviewLibraryViewModel.IsInterview)     
+                    @if (InterviewLibraryViewModel.IsInterview)
                     {
-                    <div class="card-header"><h5>Interview</h5></div>
-                    <div class="card-body overflow-auto" style="max-height: 70vh;">
-                        @if (!InterviewLibraryViewModel.History.Any())
-                        {
-                            <div class="loading-shell">
-                                Transcript no longer available. WORKS Commons does not serialize conversations to ensure privacy.
-                            </div>
-                        }
-                        @foreach (var chat in InterviewLibraryViewModel.History)
-                        {
-                            <div class="d-flex @(chat.Role == InterviewRole.User.ToString() ? "justify-content-end" : "justify-content-start") mb-2">
-                                <div class="p-3 rounded-3 @(chat.Role == InterviewRole.User.ToString() ? "bg-primary text-white" : "bg-light border")"
-                                     style="max-width: 65%;">
-                                    <div>@chat.Content</div>
-                                    <small class="opacity-50">@chat.Timestamp.ToString("t")</small>
+                        <div class="card-header"><h5>Interview</h5></div>
+                        <div class="card-body overflow-auto" style="max-height: 70vh;">
+                            @if (!InterviewLibraryViewModel.History.Any())
+                            {
+                                <div class="loading-shell">
+                                    Transcript no longer available. WORKS Commons does not serialize conversations to ensure privacy.
                                 </div>
-                            </div>
-                        }
-                    </div>
+                            }
+                            @foreach (var chat in InterviewLibraryViewModel.History)
+                            {
+                                <div class="d-flex @(chat.Role == InterviewRole.User.ToString() ? "justify-content-end" : "justify-content-start") mb-2">
+                                    <div class="p-3 rounded-3 @(chat.Role == InterviewRole.User.ToString() ? "bg-primary text-white" : "bg-light border")"
+                                         style="max-width: 65%;">
+                                        <div>@chat.Content</div>
+                                        <small class="opacity-50">@chat.Timestamp.ToString("t")</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     }
 
-                    @if(InterviewLibraryViewModel.IsTraining)
+                    @if (InterviewLibraryViewModel.IsTraining)
                     {
                         <div class="card-header"><h5>Training</h5></div>
                         <div class="card-body overflow-auto" style="max-height: 70vh;">
@@ -212,9 +212,32 @@
                             }
                             else
                             {
-                                <div class="loading-shell">
-                                    Training content not available.
-                                </div>
+                                if (InterviewLibraryViewModel.IsLoading)
+                                {
+                                    <div class="text-center p-4">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                        <p>Loading Training...</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="loading-shell">
+                                        @if(InterviewLibraryViewModel.Evaluations != null && 
+                                                InterviewLibraryViewModel.Evaluations.Any() && 
+                                                InterviewLibraryViewModel.Evaluations.All(e => e.Passed))
+                                        {
+                                            <div class="text-center border rounded-end rounded-bottom-start p-4 bg-warning">
+                                                <p><strong>You passed the interview!</strong></p>
+                                            </div>
+                                        }            
+                                        else
+                                        {
+                                            <div class="text-center border rounded-end rounded-bottom-start p-4 bg-light">
+                                                <p>Training content not available.</p>
+                                            </div>
+                                        }
+                                    </div>
+                                }
                             }
                         </div>
                     }

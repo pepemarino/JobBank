@@ -5,6 +5,12 @@ using Microsoft.AspNetCore.Components.QuickGrid;
 
 namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
 {
+    /// <summary>
+    /// I can see that there are diffetent responsibilities in this ViewModel, 
+    /// such as managing interview data retrieval, caching, and UI state for both 
+    /// interview transcripts and training content.
+    /// this needs to be split into at least two different view models, one for the interview and one for the training,
+    /// </summary>
     public interface IInterviewLibraryViewModel : IAsyncInitialization
     {
         /// <summary>
@@ -61,5 +67,11 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
         /// Event fired when the ViewModel state changes and the UI should re-render.
         /// </summary>
         event Action? OnRequestUIUpdate;
+
+        bool IsLoading { get; set; }
+
+        bool? HasWeaknesses { get; set; }
+
+        List<EvaluationResult> Evaluations { get; set; }
     }
 }

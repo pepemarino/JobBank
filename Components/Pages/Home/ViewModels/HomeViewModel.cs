@@ -9,7 +9,6 @@ using ChartJs.Blazor.Util;
 using JobBank.Data;
 using JobBank.Services;
 using JobBank.Services.Abstraction;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Drawing;
 

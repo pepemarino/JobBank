@@ -48,8 +48,8 @@
 
                             <TemplateColumn Context="interview" Title="Actions" Class="text-end">
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-primary" @onclick="() => InterviewLibraryViewModel.SelectInterviewAsync(interview)">Transcript</button>
-                                    <button class="btn btn-secondary" @onclick="() => InterviewLibraryViewModel.LoadTraining(interview)">Training</button>
+                                    <button class="btn btn-outline-primary" @onclick="async () => await InterviewLibraryViewModel.SelectInterviewAsync(interview)">Transcript</button>
+                                    <button class="btn btn-secondary" @onclick="async () => await InterviewLibraryViewModel.LoadTraining(interview)">Training</button>
                                 </div>
                             </TemplateColumn>
                         </QuickGrid>

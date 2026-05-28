@@ -81,16 +81,18 @@ namespace JobBank.Management
                 throw new InvalidOperationException($"Interview with ID {interviewId} has empty result.");
             }
 
-            var interviewResultIsValid = interview.Result.IsValidJson<InterviewMetadata>(Common.StrictValidationOptions, 
-                i => i.Evaluations.Any(e => e.Passed == false && 
-                                            e.Gaps.Any() == true));
+            var interviewResultIsValid =
+                interview.Result.IsValidJson<InterviewMetadata>(
+                     Common.StrictValidationOptions,
+                     BusinessRules.InterviewTrainingRulesFunc());
+
             if (!interviewResultIsValid)
             {
                 _logger.LogWarning("TrainerAnalysisWorker: Interview with ID {InterviewId} has invalid result format. Skipping analysis.", interviewId);
                 throw new InvalidOperationException($"Interview with ID {interviewId} has invalid result format.");
             }
 
-            var interviewMetadata = JsonSerializer.Deserialize<InterviewMetadata>(interview.Result);           
+            var interviewMetadata = JsonSerializer.Deserialize<InterviewMetadata>(interview.Result);
 
             var jobPost = await jobPostService.GetJobPostByIdAsync(interview.JobPostId);
             if (jobPost == null || string.IsNullOrEmpty(jobPost.Description))
@@ -143,6 +145,6 @@ namespace JobBank.Management
                 interviewId, userId);
 
             return trainerDto.Id;
-        }
+        }        
     }
 }

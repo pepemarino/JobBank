@@ -191,6 +191,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                         ScoreTotal = (decimal)Evaluations.Sum(e => e.Score * e.Weight),
                         NumberOfQuestions = maxQuestions,
                         IsCompleted = IsInterviewCompleted,
+                        Passed = Evaluations.All(e => e.Passed),
                         Result = JsonSerializer.Serialize(metadata)
                     };
 

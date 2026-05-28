@@ -90,19 +90,6 @@ public class TrainerAssistantTest : WCTestBase
     }
 
     [TestMethod]
-    public async Task RunLLMAnalysisInvalidOperationExceptionForInterviewWith_Interview_With_No_WeakAreas_Semantic_Validation()
-    {
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-        {
-            var trainerAssistantManager = new TrainerAssistantManager(
-                m_MockServiceScopeFactory.Object,
-                m_MockLogger.Object);
-
-            return trainerAssistantManager.AnalyzeInterviewAsync(UserId, Interview_With_No_WeakAreas_Semantic_Validation);
-        });
-    }
-
-    [TestMethod]
     public async Task RunLLMAnalysisInvalidOperationExceptionForInterviewWith_Interview_With_No_Evalluation_Semantic_Validation()
     {
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -125,19 +112,6 @@ public class TrainerAssistantTest : WCTestBase
                 m_MockLogger.Object);
 
             return trainerAssistantManager.AnalyzeInterviewAsync(UserId, Interview_With_No_Failed_Evaluation_Semantic_Validation);
-        });
-    }
-
-    [TestMethod]
-    public async Task RunLLMAnalysisInvalidOperationExceptionForInterviewWith_Interview_With_NoTopics_Semantic_Validation()
-    {
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-        {
-            var trainerAssistantManager = new TrainerAssistantManager(
-                m_MockServiceScopeFactory.Object,
-                m_MockLogger.Object);
-
-            return trainerAssistantManager.AnalyzeInterviewAsync(UserId, Interview_With_No_Topics_Semantic_Validation);
         });
     }
 

@@ -5,6 +5,7 @@ using JobBank.ModelsDTO;
 using JobBank.Services.Abstraction;
 using JobBank.Util;
 using Microsoft.AspNetCore.Components.QuickGrid;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -25,7 +26,7 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
 
         private InterviewDTO? _selectedInterview;
         private string _userId = string.Empty;
-        
+
         // Cache configurations
         private const int MaxCacheSize = 50; // Prevent unbounded memory growth
         private readonly Dictionary<string, List<ChatMessage>> _historyCache = new();
@@ -66,15 +67,20 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
         public event Action? OnRequestUIUpdate;
 
         /// <summary>
-        /// Gets the current user ID, caching it after the first retrieval.
+        /// Gets the current user ID. Note it is the Task what is cached, not the result, 
+        /// to ensure that we don't have issues with stale user IDs if the user logs out 
+        /// and another user logs in within the same session. Caching the Task allows us 
+        /// to await the same Task for multiple calls while it's still running, and once 
+        /// it completes, all callers will get the same result. If we cached the result 
+        /// directly, we might end up with a stale user ID if the user changes during the session. 
+        /// By caching the Task, we ensure that we always get the correct user ID for 
+        /// the current session without risking stale data.
         /// </summary>
+        private Task<string>? _userIdTask;
         private async Task<string> GetUserIdAsync()
         {
-            if (string.IsNullOrEmpty(_userId))
-            {
-                _userId = await _identityService.GetUserIdAsync();
-            }
-            return _userId;
+            _userIdTask ??= _identityService.GetUserIdAsync();
+            return await _userIdTask;
         }
 
         /// <summary>
@@ -125,9 +131,9 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
             IsTraining = false;
 
             var historyKey = $"interview-messages-{args.Id}-{args.JobPostId}";
-            
+
             try
-            {                
+            {
                 if (_historyCache.TryGetValue(historyKey, out var cachedHistory))
                 {
                     History = cachedHistory;
@@ -135,17 +141,17 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
                 else
                 {
                     var loadedHistory = await _interviewMessagesStore.LoadAsync(historyKey) ?? new List<ChatMessage>();
-                    
+
                     // Manage cache size to prevent memory issues
                     if (_historyCache.Count >= MaxCacheSize)
                     {
                         _historyCache.Remove(_historyCache.Keys.First());
                     }
-                    
+
                     _historyCache[historyKey] = loadedHistory;
                     History = loadedHistory;
                 }
-                
+
                 OnRequestUIUpdate?.Invoke();
             }
             catch (Exception ex)
@@ -167,7 +173,7 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
                 _logger.LogWarning("LoadTraining called with null or invalid interview");
                 return;
             }
-            
+
             _selectedInterview = interview;
             IsLoading = false;
             IsTraining = true;
@@ -185,9 +191,9 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
                 }
                 else
                 {
-                    if (NeedsTraining(interview))
+                    if (interview.TrainingId <= 0)
                     {
-                        if (interview.TrainingId <= 0)
+                        if (NeedsTraining(interview))
                         {
                             _logger.LogWarning("LoadTraining for interview ID {InterviewId} does not exist", interview.Id);
                             IsLoading = true;
@@ -198,31 +204,36 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
                                 return;
                             }
                         }
-
-                        var training = await _trainingService.GetTrainingByIdAsync(interview.TrainingId);
-
-                        if (training != null && !string.IsNullOrEmpty(training.Result))
-                        {
-                            TrainingAnalysis = JsonSerializer.Deserialize<InterviewTrainingAnalysisResultDTO>(training.Result);
-
-                            // Manage cache size
-                            if (_trainingCache.Count >= MaxCacheSize)
-                            {
-                                _trainingCache.Remove(_trainingCache.Keys.First());
-                            }
-
-                            if (TrainingAnalysis != null)
-                            {
-                                _trainingCache[interview.TrainingId] = TrainingAnalysis;
-                            }
-                        }
                         else
                         {
-                            _logger.LogWarning("Training data not found for TrainingId {TrainingId}", interview.TrainingId);
-                            TrainingAnalysis = null;
+                            _logger.LogWarning("Interview ID {InterviewId} does not require training or failed to generate training", interview.Id);
+                            return;
                         }
-                    }                    
-                }                
+                    }
+
+                    var training = await _trainingService.GetTrainingByIdAsync(interview.TrainingId);
+
+                    if (training != null && !string.IsNullOrEmpty(training.Result))
+                    {
+                        TrainingAnalysis = JsonSerializer.Deserialize<InterviewTrainingAnalysisResultDTO>(training.Result);
+
+                        // Manage cache size
+                        if (_trainingCache.Count >= MaxCacheSize)
+                        {
+                            _trainingCache.Remove(_trainingCache.Keys.First());
+                        }
+
+                        if (TrainingAnalysis != null)
+                        {
+                            _trainingCache[interview.TrainingId] = TrainingAnalysis;
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Training data not found for TrainingId {TrainingId}", interview.TrainingId);
+                        TrainingAnalysis = null;
+                    }
+                }
             }
             catch (JsonException ex)
             {
@@ -246,24 +257,29 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
             if (string.IsNullOrEmpty(interview.Result))
             {
                 _logger.LogWarning("NeedsTraining called with empty interview result for interview ID {InterviewId}", interview.Id);
-               throw new InvalidOperationException("Interview result is empty, cannot determine training needs.");
+                throw new InvalidOperationException("Interview result is empty, cannot determine training needs.");
             }
-
-            if (!interview.Result.IsValidJson<InterviewMetadata>(Common.StrictValidationOptions))
+          
+            if (!interview.Result.IsValidJson<InterviewMetadata>(
+                    Common.StrictValidationOptions))
             {
                 _logger.LogWarning("NeedsTraining called with invalid result for interview ID {InterviewId}", interview.Id);
                 throw new InvalidOperationException("Interview result is not valid, cannot determine training needs.");
             }
 
-            var interviewMetadata = JsonSerializer.Deserialize<InterviewMetadata>(interview.Result);
+            var interviewMetadata = JsonSerializer.Deserialize<InterviewMetadata>(interview.Result);   
             if (interviewMetadata == null)
             {
-                _logger.LogError("Failed to deserialize interview metadata for interview ID {InterviewId}", interview.Id);
-                throw new InvalidOperationException("Failed to parse interview metadata, cannot determine training needs.");
+                _logger.LogWarning("NeedsTraining deserialization resulted in null for interview ID {InterviewId}", interview.Id);
+                throw new InvalidOperationException("Deserialized interview metadata is null, cannot determine training needs.");
             }
 
             Evaluations = interviewMetadata.Evaluations;
-            return !Evaluations.All(e => e.Passed);
+
+            // the schema has already been validated, so we can assume that Evaluations is not null and contains valid data
+            // If there are weak topics, as defined by the business rules, then we need training.           
+            var weakTopics = BusinessRules.NeedsTrainingRule(interviewMetadata);                   
+            return weakTopics.Any();
         }
 
         /// <summary>

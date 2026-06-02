@@ -9,17 +9,13 @@ namespace JobBank.Services
 {
     public class SkillsService : ISkillsService
     {
-        private readonly EmploymentBankContext _context;
+        private readonly IDbContextFactory<EmploymentBankContext> _factory;
+        private readonly ILogger<ISkillsService> _logger;
 
-        public SkillsService(IDbContextFactory<EmploymentBankContext> dbFactory)
+        public SkillsService(IDbContextFactory<EmploymentBankContext> dbFactory, ILogger<ISkillsService> logger)
         {
-            // NOTE ON VIRTUAL ENTITY NAVIGATION:  Context stays alive for the life of the Service to support virtual props
-            _context = dbFactory.CreateDbContext();
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            await _context.DisposeAsync();
+            _factory = dbFactory;
+            _logger = logger;
         }
 
         /// <summary>
@@ -33,10 +29,11 @@ namespace JobBank.Services
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
         public async Task<UserSkillsDTO?> GetUserSkillsAsync(string userId)
-        {            
+        {
             try
             {
-                var dto = await _context.UserSkills
+                await using var context = await _factory.CreateDbContextAsync();
+                var dto = await context.UserSkills
                     .AsNoTracking()
                     .Where(u => u.UserId == userId)
                     .Select(u => new UserSkillsDTO
@@ -52,7 +49,7 @@ namespace JobBank.Services
             }
             catch (InvalidOperationException ex)
             {
-                // NEED TO ADD LOGGING:  Log the technical details for your dev team
+                _logger.LogError(ex, "Data integrity issue: Multiple skill sets found for user {UserId}", userId);
 
                 // Rethrow a custom business exception that the Blazor UI can understand
                 throw new DataIntegrityException("A system error occurred. Please contact support.", ex);
@@ -66,10 +63,11 @@ namespace JobBank.Services
         /// <returns></returns>
         public async Task UpdateOrAddUserSkillsAsync(UserSkillsDTO userSkill)
         {
-            var skills = await _context.UserSkills.SingleOrDefaultAsync(s => s.UserId == userSkill.UserId);
+            await using var context = await _factory.CreateDbContextAsync();
+            var skills = await context.UserSkills.SingleOrDefaultAsync(s => s.UserId == userSkill.UserId);
+
             if (skills == null)
             {
-                // we are adding
                 skills = new UserSkills
                 {
                     UserId = userSkill.UserId,
@@ -77,7 +75,7 @@ namespace JobBank.Services
                     RawSkills = userSkill.RawSkills,
                     Version = userSkill.Version
                 };
-                _context.UserSkills.Add(skills);
+                context.UserSkills.Add(skills);
             }
             else
             {
@@ -87,7 +85,8 @@ namespace JobBank.Services
             skills.RawSkills = userSkill.RawSkills;
             skills.Version = userSkill.Version;
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
+            _logger.LogInformation("User skills for user {UserId} have been updated/added successfully.", userSkill.UserId);
         }
     }
 }

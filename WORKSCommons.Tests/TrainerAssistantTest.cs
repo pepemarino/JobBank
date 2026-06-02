@@ -25,6 +25,19 @@ public class TrainerAssistantTest : WCTestBase
     }
 
     [TestMethod]
+    public async Task RunLLMAnalysisArgumentExceptionOn_Null_UserId_Async()
+    {
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+        {
+            var trainerAssistantManager = new TrainerAssistantManager(
+                m_MockServiceScopeFactory.Object,
+                m_MockLogger.Object);
+
+            return trainerAssistantManager.AnalyzeInterviewAsync(null, InterviewId);
+        });
+    }
+
+    [TestMethod]
     public async Task RunLLMAnalysisInvalidOperationExceptionFor_User_With_No_Skills()
     {
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -116,12 +129,77 @@ public class TrainerAssistantTest : WCTestBase
     }
 
     [TestMethod]
+    public async Task RunLLMAnalysisInvalidOperationExceptionFor_No_JobPost_Found()
+    {
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        {
+            var trainerAssistantManager = new TrainerAssistantManager(
+                m_MockServiceScopeFactory.Object,
+                m_MockLogger.Object);
+
+            return trainerAssistantManager.AnalyzeInterviewAsync(UserId, 10);
+        });
+    }
+
+    [TestMethod]
+    public async Task RunLLMAnalysisInvalidOperationExceptionFor_Empty_JobDescription()
+    {
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        {
+            var trainerAssistantManager = new TrainerAssistantManager(
+                m_MockServiceScopeFactory.Object,
+                m_MockLogger.Object);
+
+            return trainerAssistantManager.AnalyzeInterviewAsync(UserId, 11);
+        });
+    }
+
+    [TestMethod]
+    public async Task RunLLMAnalysisInvalidOperationExceptionFor_Failed_JobDescription_Parse()
+    {
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        {
+            var trainerAssistantManager = new TrainerAssistantManager(
+                m_MockServiceScopeFactory.Object,
+                m_MockLogger.Object);
+
+            return trainerAssistantManager.AnalyzeInterviewAsync(UserId, 12);
+        });
+    }
+
+    [TestMethod]
+    public async Task RunLLMAnalysisInvalidOperationExceptionFor_LLM_Analysis_Error()
+    {
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        {
+            var trainerAssistantManager = new TrainerAssistantManager(
+                m_MockServiceScopeFactory.Object,
+                m_MockLogger.Object);
+
+            return trainerAssistantManager.AnalyzeInterviewAsync(UserId, 13);
+        });
+    }
+
+    [TestMethod]
     public async Task RunLLMAnalysisSuccess()
     {
         var trainerAssistantManager = new TrainerAssistantManager(
             m_MockServiceScopeFactory.Object,
             m_MockLogger.Object);
         int result = await trainerAssistantManager.AnalyzeInterviewAsync(UserId, InterviewId);
+        Assert.IsTrue(result > 0);
+    }
+
+    [TestMethod]
+    public async Task RunLLMAnalysisSuccessWithCustomPrompt()
+    {
+        var trainerAssistantManager = new TrainerAssistantManager(
+            m_MockServiceScopeFactory.Object,
+            m_MockLogger.Object);
+
+        string customPrompt = "Custom analysis prompt";
+        int result = await trainerAssistantManager.AnalyzeInterviewAsync(UserId, InterviewId, customPrompt);
+
         Assert.IsTrue(result > 0);
     }
 }

@@ -2,7 +2,7 @@
 
 namespace JobBank.Services.Abstraction
 {
-    public interface ISkillsService : IAsyncDisposable
+    public interface ISkillsService
     {
         Task<UserSkillsDTO> GetUserSkillsAsync(string userId);
         Task UpdateOrAddUserSkillsAsync(UserSkillsDTO emp);

@@ -12,28 +12,32 @@ namespace JobBank.Services
 {
     public class JobPostService : IJobPostService
     {
-        private readonly EmploymentBankContext _context;
+        private readonly IDbContextFactory<EmploymentBankContext> _factory;
         private readonly IMapper _mapper;
+        private readonly ILogger<IJobPostService> _logger;
 
-        public JobPostService(IDbContextFactory<EmploymentBankContext> dbFactory, IMapper mapper)
+        public JobPostService(IDbContextFactory<EmploymentBankContext> dbFactory, IMapper mapper, ILogger<IJobPostService> logger)
         {
             _mapper = mapper;
-            _context = dbFactory.CreateDbContext();
+            _factory = dbFactory;
+            _logger = logger;
         }
 
         public async Task<JobPostDTO> GetJobPostByIdAsync(int jobPostId)
         {
             try
             {
+                await using var context = await _factory.CreateDbContextAsync();
                 // ProjectTo handles JOINs and minimizes SQL traffic automatically
                 // Note:  No need for AsNoTRacking because the result is a dto :)
-                return await _context.JobPost                    
+                return await context.JobPost
                     .Where(jp => jp.Id == jobPostId)
                     .ProjectTo<JobPostDTO>(_mapper.ConfigurationProvider)
                     .FirstOrDefaultAsync();
             }
             catch (InvalidOperationException ex)
             {
+                _logger.LogError(ex, "Error retrieving JobPost with ID {JobPostId}", jobPostId);
                 throw new DataIntegrityException("A system error occurred. Please contact support.", ex);
             }
         }
@@ -43,8 +47,9 @@ namespace JobBank.Services
         {
             try
             {
-                var query = _context.JobPost.AsQueryable();
-                
+                await using var context = await _factory.CreateDbContextAsync();
+                var query = context.JobPost.AsQueryable();
+
                 if (predicate != null)
                 {
                     query = query.Where(predicate);
@@ -57,45 +62,55 @@ namespace JobBank.Services
             }
             catch (InvalidOperationException ex)
             {
+                _logger.LogError(ex, "Error retrieving JobPosts with provided query");
                 // Custom exception handling for data integrity or mapping issues
                 throw new DataIntegrityException("A system error occurred. Please contact support.", ex);
             }
         }
 
-        public Task<bool> JobPostExists(int jobPostId)
+        public async Task<bool> JobPostExistsAsync(int jobPostId)
         {
-            return _context.JobPost.AnyAsync(jp => jp.Id == jobPostId);
+            await using var context = await _factory.CreateDbContextAsync();
+            return await context.JobPost.AnyAsync(jp => jp.Id == jobPostId);
         }
 
         public async Task UpdateOrAddJobPostAsync(JobPostDTO jobPostDto)
         {
             var now = DateTime.UtcNow;
-
+            await using var context = await _factory.CreateDbContextAsync();
             if (jobPostDto.Id == 0)
             {
+                _logger.LogInformation("Adding new JobPost for user {UserId} with title '{Title}'.", jobPostDto.UserId, jobPostDto.Title);
                 var newJob = _mapper.Map<JobPost>(jobPostDto);
                 newJob.Timestamp = now;
 
                 if (newJob.UserSkillMatchReport != null)
                     newJob.UserSkillMatchReport.CreatedDate = now;
 
-                _context.JobPost.Add(newJob);
+                context.JobPost.Add(newJob);
             }
             else
             {
+                _logger.LogInformation("Updating existing JobPost with ID {JobPostId} for user {UserId}.", jobPostDto.Id, jobPostDto.UserId);
                 // Load the existing entity WITH its nested report
-                var existingJob = await _context.JobPost
+                var existingJob = await context.JobPost
                     .Include(j => j.UserSkillMatchReport)                   // include UserSkillMatchReport please
                     .Include(j => j.JobRejectionAnalysis)
                     .FirstOrDefaultAsync(j => j.Id == jobPostDto.Id);
 
                 if (existingJob == null)                                    // Oh, this is something strange. Should never happen
+                {
+                    _logger.LogError("Attempted to update JobPost with ID {JobPostId}, but it was not found.", jobPostDto.Id);
                     throw new DataIntegrityException("Job Application not found.");
+                }
 
                 // Guard against removing the report becauase business logic forbids it
                 // It can only be updated - there is also protection in the mapping
                 if (jobPostDto.UserSkillMatchReport == null && existingJob.UserSkillMatchReport != null)
+                {
+                    _logger.LogError("Attempted to remove existing User Skill Match Report for JobPost ID {JobPostId}.", jobPostDto.Id);
                     throw new InvalidOperationException("Attempting to remove existing User Skill Match Report.");
+                }
 
                 // Maps DTO properties directly onto the existing TRACKED entity
                 // UserSkillMatchReport is also mapped courtesy of AutoMapper
@@ -106,12 +121,8 @@ namespace JobBank.Services
                     existingJob.UserSkillMatchReport.Timestamp = now;
             }
 
-            await _context.SaveChangesAsync();
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            await _context.DisposeAsync();
+            await context.SaveChangesAsync();
+            _logger.LogInformation("JobPost with ID {JobPostId} has been successfully added/updated.", jobPostDto.Id);
         }
     }
 }

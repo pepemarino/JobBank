@@ -12,6 +12,7 @@ namespace JobBank.Services
     public class InterviewService : IInterviewService
     {
         private readonly IDbContextFactory<EmploymentBankContext> _dbFactory;
+        private readonly ILogger<IInterviewService> _logger;
         private readonly IMapper _mapper;
 
         public InterviewService(IDbContextFactory<EmploymentBankContext> dbFactory, IMapper mapper)
@@ -38,6 +39,7 @@ namespace JobBank.Services
             }
             catch (InvalidOperationException ex)
             {
+                _logger.LogError(ex, "Error retrieving interview with ID {InterviewId}", interviewId);
                 throw new DataIntegrityException("GetInterviewByIdAsync: A system error occurred. Please contact support.", ex);
             }
         }
@@ -55,6 +57,7 @@ namespace JobBank.Services
             }
             catch (InvalidOperationException ex)
             {
+                _logger.LogError(ex, "Error retrieving interviews for JobPostId {JobPostId}", jobPostId);
                 throw new DataIntegrityException("GetInterviewsByJobPostIdAsync: A system error occurred. Please contact support.", ex);
             }
         }
@@ -72,6 +75,7 @@ namespace JobBank.Services
             }
             catch (InvalidOperationException ex)
             {
+                _logger.LogError(ex, "Error retrieving interviews for UserId {UserId}", userId);
                 throw new DataIntegrityException("GetInterviewsByUserIdAsync: A system error occurred. Please contact support.", ex);
             }
         }
@@ -96,7 +100,7 @@ namespace JobBank.Services
                 }
 
                 var orderedQuery = query.OrderByDescending(i => i.CompletedAtUtc);
-                
+
                 var totalCount = await orderedQuery.CountAsync();
                 var interviews = await orderedQuery
                     .Skip(startIndex)
@@ -112,6 +116,7 @@ namespace JobBank.Services
             }
             catch (InvalidOperationException ex)
             {
+                _logger.LogError(ex, "Error retrieving paginated interviews for UserId {UserId} with CompanyName filter {CompanyName}", userId, companyName);
                 throw new DataIntegrityException("GetInterviewsByUserIdWithPaginationAsync: A system error occurred. Please contact support.", ex);
             }
         }
@@ -134,6 +139,7 @@ namespace JobBank.Services
             }
             catch (InvalidOperationException ex)
             {
+                _logger.LogError(ex, "Error adding new interview for UserId {UserId} and JobPostId {JobPostId}", interviewDto.UserId, interviewDto.JobPostId);
                 throw new DataIntegrityException("AddInterviewAsync: A system error occurred. Please contact support.", ex);
             }
         }

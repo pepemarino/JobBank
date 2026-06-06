@@ -39,5 +39,12 @@ namespace JobBank.Models.Identity
         /// even if they are available.
         /// </summary>
         public bool ForceMyKeyy { get; set; } = false;
+
+        public string? Version { get; set; }
+
+        public DateTime? UserCreated { get; set; }
+
+        public DateTime? UserUpdated { get; set; }
+
     }
 }

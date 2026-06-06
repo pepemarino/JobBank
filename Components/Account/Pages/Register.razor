@@ -56,6 +56,11 @@
                 <label for="Input.LLModel">AI Model</label>
                 <ValidationMessage For="@(() => Input.LLModel)" />
             </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.Version" id="Input.Version" class="form-control" aria-required="false" />
+                <label for="Input.Version">Version</label>
+                <ValidationMessage For="@(() => Input.Version)" />
+            </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </EditForm>
     </div>    
@@ -99,8 +104,12 @@
             user.Tag = encryptedResult.Tag;
 
             user.LLModel = Input.LLModel;
+            user.Version = Input.Version;
         }
-        
+        var now = DateTime.UtcNow;
+        user.UserCreated = now;
+        user.UserUpdated = now;
+
         var result = await UserManager.CreateAsync(user, Input.Password);
 
         if (!result.Succeeded)
@@ -173,14 +182,19 @@
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; } = "";
 
-        [RequiredIfOtherPropertyHasValue(dependentProperty: nameof(LLModel), ErrorMessage = "AI Key is required if AI Model is provided.")]
+        [RequiredIfOtherPropertyHasValue(dependentProperty: [nameof(LLModel), nameof(Version)], ErrorMessage = "AI Key is required if AI Model and/or Version are provided.")]
         [DataType(DataType.Text)]
         [Display(Name = "AI Key")]
         public string AIKey { get; set; } = "";
 
-        [RequiredIfOtherPropertyHasValue(dependentProperty: nameof(AIKey), ErrorMessage = "AI Model is required if AI Key is provided.")]
+        [RequiredIfOtherPropertyHasValue(dependentProperty: [nameof(AIKey), nameof(Version)], ErrorMessage = "AI Model is required if AI Key and/or Version are provided.")]
         [DataType(DataType.Text)]
         [Display(Name = "AI Model")]
         public string LLModel { get; set; } = "";
+
+        [RequiredIfOtherPropertyHasValue(dependentProperty: [nameof(LLModel), nameof(AIKey)], ErrorMessage = "Version is required if either AI Model and/or AI Key are provided.")]
+        [DataType(DataType.Text)]
+        [Display(Name = "Version")]
+        public string Version { get; set; } = "";
     }
 }

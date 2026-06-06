@@ -21,5 +21,7 @@
         Task<bool> UserHasValidPrivateKeyAsync(string userId);
 
         Task<string?> GetApiKeyAsync(string? userId = null);
+
+
     }
 }

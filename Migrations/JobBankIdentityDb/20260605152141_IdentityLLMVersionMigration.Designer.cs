@@ -4,6 +4,7 @@ using JobBank.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JobBank.Migrations.JobBankIdentityDb
 {
     [DbContext(typeof(JobBankIdentityDbContext))]
-    partial class JobBankIdentityDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260605152141_IdentityLLMVersionMigration")]
+    partial class IdentityLLMVersionMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,15 +89,9 @@ namespace JobBank.Migrations.JobBankIdentityDb
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime?>("UserCreated")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<DateTime?>("Timestamp")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Version")
                         .HasColumnType("nvarchar(max)");

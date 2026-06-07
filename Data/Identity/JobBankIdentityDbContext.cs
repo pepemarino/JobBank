@@ -1,4 +1,5 @@
 ﻿using JobBank.Models.Identity;
+using JobBank.ModelConfiguration;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -12,5 +13,11 @@ public class JobBankIdentityDbContext
         DbContextOptions<JobBankIdentityDbContext> options)
         : base(options)
     {
+    }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+        builder.ApplyConfiguration(new JobBankUserConfiguration());
     }
 }

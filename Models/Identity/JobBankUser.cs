@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using JobBank.ModelConfiguration;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace JobBank.Models.Identity
 {
+    [EntityTypeConfiguration(typeof(JobBankUserConfiguration))]
     public class JobBankUser : IdentityUser
     {
         /// <summary>

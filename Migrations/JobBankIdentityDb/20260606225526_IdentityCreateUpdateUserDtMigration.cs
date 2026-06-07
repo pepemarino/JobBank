@@ -18,7 +18,7 @@ namespace JobBank.Migrations.JobBankIdentityDb
                 nullable: true);
 
             migrationBuilder.AddColumn<DateTime>(
-                name: "Timestamp",
+                name: "UserUpdated",
                 table: "AspNetUsers",
                 type: "datetime2",
                 nullable: true);
@@ -32,7 +32,7 @@ namespace JobBank.Migrations.JobBankIdentityDb
                 table: "AspNetUsers");
 
             migrationBuilder.DropColumn(
-                name: "Timestamp",
+                name: "UserUpdated",
                 table: "AspNetUsers");
         }
     }

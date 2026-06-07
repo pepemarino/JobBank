@@ -106,9 +106,6 @@
             user.LLModel = Input.LLModel;
             user.Version = Input.Version;
         }
-        var now = DateTime.UtcNow;
-        user.UserCreated = now;
-        user.UserUpdated = now;
 
         var result = await UserManager.CreateAsync(user, Input.Password);
 

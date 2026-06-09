@@ -4,7 +4,7 @@ using JobBank.StartUpServices;
 
 namespace JobBank.Management
 {
-    public partial class LLMInterviewService : IInterviewLLMService
+    public partial class LLMInterviewService : Assistant, IInterviewLLMService
     {
         private readonly string _version = "v1";
         private readonly string _llmModel;
@@ -12,16 +12,14 @@ namespace JobBank.Management
         private string _apiKey;
         private readonly ILogger<LLMInterviewService> _logger;
 
-        private readonly ILLMManager _llmManager;
-
         public LLMInterviewService(
             PrompService prompService, 
             ILLMManager llmManager,
             ILogger<LLMInterviewService> logger)
+            :base(llmManager)
         {
             _timeout = prompService.TimeoutSeconds;
             _llmModel = prompService.LLMModel;
-            _llmManager = llmManager;
             _logger = logger;
         }
 

@@ -7,31 +7,27 @@ using System.Text.Json;
 
 namespace JobBank.Management
 {
-    public partial class TrainerAssistant : ITrainerAssistant
-    {
-        private readonly string _version = "v1";
-        private readonly string _llmModel;          // ILLMManager nees to manage this
+    public partial class TrainerAssistant : Assistant, ITrainerAssistant
+    {  
         private readonly long _timeout;             // ILLMManager nees to manage this
-        private string _apiKey; // Store
-
-        private readonly ILLMManager _llmManager;
 
         public TrainerAssistant(PrompService prompService, ILLMManager llmManager)
+            : base(llmManager)
         {
             _timeout = prompService.TimeoutSeconds;
-            _llmModel = prompService.LLMModel;
-            _llmManager = llmManager;
         }
 
         public async Task<InterviewTrainingAnalysisResultDTO> RunLLMAnalysis(TrainerAnalysisMetadataDTO interviewMetadata, string? prompt = null, string? userId = null)
         {
+            var targetModel = await GetTargetModelAsync(userId) ?? throw new InvalidOperationException("No suitable LLM model found for the user.");
+
             var canAnalyse = await _llmManager.IsAvailableAsync(userId);
             if (!canAnalyse)
                 return new InterviewTrainingAnalysisResultDTO
                 {
                     ErrorMessage = "LLM analysis is not enabled. API key is missing.", 
-                    Version = _version, 
-                    Model = _llmModel,
+                    Version = targetModel.Version, 
+                    Model = targetModel.LLModel,
                     Prompt = string.IsNullOrEmpty(prompt) ? TrainerPrompt : prompt
                 };
 
@@ -41,6 +37,7 @@ namespace JobBank.Management
             {
                 return await Analyze(
                     interviewMetadata, 
+                    targetModel,
                     string.IsNullOrEmpty(prompt) ? TrainerPrompt : prompt, 
                     userId, cts.Token);
             }
@@ -48,22 +45,22 @@ namespace JobBank.Management
             {
                 return new InterviewTrainingAnalysisResultDTO
                 {
-                    ErrorMessage = "Operation was cancelled by the system due to timeout.", 
-                    Version = _version, 
-                    Model = _llmModel,
+                    ErrorMessage = "Operation was cancelled by the system due to timeout.",
+                    Version = targetModel.Version,
+                    Model = targetModel.LLModel,
                     Prompt = string.IsNullOrEmpty(prompt) ? TrainerPrompt : prompt
                 };
             }
         }
 
-        private async Task<InterviewTrainingAnalysisResultDTO> Analyze(TrainerAnalysisMetadataDTO interviewMetadata, string prompt, string? userId, CancellationToken token)
+        private async Task<InterviewTrainingAnalysisResultDTO> Analyze(TrainerAnalysisMetadataDTO interviewMetadata, TargetModelDTO targetModel, string prompt, string? userId, CancellationToken token)
         {            
             string jsonInput = JsonSerializer.Serialize(interviewMetadata);
 
             var options = new ChatCompletionOptions
             {
                 ResponseFormat = ChatResponseFormat.CreateJsonObjectFormat(), // Ensure the model is instructed to return a JSON object
-                Temperature = 0.2f
+                Temperature = DefaultTemperature
             };
 
             var messages = new List<ChatMessage>
@@ -72,9 +69,7 @@ namespace JobBank.Management
                 new UserChatMessage(jsonInput)
             };
 
-            await EnsureAPIKeyLoadedAsync(userId);
-
-            var chatClient = new ChatClient(apiKey: _apiKey, model: _llmModel);
+            var chatClient = new ChatClient(apiKey: targetModel.ApiKey, model: targetModel.LLModel);
             ChatCompletion completion = await chatClient.CompleteChatAsync(messages, options, token);
 
             string rawText = string.Concat(completion.Content.Select(c => c.Text))
@@ -106,20 +101,11 @@ namespace JobBank.Management
                     "Model returned null after deserialization.");
             }
 
-            result.Model = _llmModel;
-            result.Version = _version;
+            result.Model = targetModel.LLModel;
+            result.Version = targetModel.Version;
             result.Prompt = prompt;
 
             return result;
-        }
-
-        private async Task EnsureAPIKeyLoadedAsync(string? userId = null)
-        {
-            if (string.IsNullOrEmpty(_apiKey))
-                _apiKey = await _llmManager.GetApiKeyAsync(userId);
-
-            if (string.IsNullOrEmpty(_apiKey))
-                throw new InvalidOperationException("API key is not available for LLM analysis.");
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using JobBank.ModelsDTO;
+﻿using JobBank.Management.Abstraction;
+using JobBank.ModelsDTO;
 using JobBank.Services.Abstraction;
 using JobBank.StartUpServices;
 
@@ -34,7 +35,7 @@ namespace JobBank.Management
                     await using var scope = _scopeFactory.CreateAsyncScope();
                     var jobPostService = scope.ServiceProvider.GetRequiredService<IJobPostService>();
                     var prompService = scope.ServiceProvider.GetRequiredService<PrompService>();
-                    var careerAssistant = scope.ServiceProvider.GetRequiredService<CareerAssistant>();
+                    var careerAssistant = scope.ServiceProvider.GetRequiredService<ICareerAssistant>();
                     var userSkillService = scope.ServiceProvider.GetRequiredService<ISkillsService>();
 
                     // Use the UserId from the request instead of trying to get it from AuthenticationStateProvider

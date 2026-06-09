@@ -1,4 +1,6 @@
-﻿namespace JobBank.Management.Abstraction
+﻿using JobBank.ModelsDTO;
+
+namespace JobBank.Management.Abstraction
 {
     public interface ILLMManager
     {
@@ -20,8 +22,6 @@
         /// <returns></returns>
         Task<bool> UserHasValidPrivateKeyAsync(string userId);
 
-        Task<string?> GetApiKeyAsync(string? userId = null);
-
-
+        Task<TargetModelDTO?> GetTargetModelAsync (string? userId = null);
     }
 }

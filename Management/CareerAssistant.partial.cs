@@ -1,31 +1,30 @@
 ﻿namespace JobBank.Management
 {
+    using JobBank.Management.Abstraction;
     using JobBank.ModelsDTO;
     using Microsoft.CodeAnalysis;
     using OpenAI.Chat;
     using System.Text.Json;
+    using System.Text.RegularExpressions;
 
     public partial class CareerAssistant
     {
-        private async Task<LLMAnalysisResult> Analyze(string subjectDescription, string prompt, string? userId, CancellationToken token)
+        private async Task<LLMAnalysisResult> Analyze(string subjectDescription, TargetModelDTO targetModel, string prompt, CancellationToken token)
         {
-            List<ChatMessage> messages = new()
+            var messages = new List<ChatMessage>
             {
                 new SystemChatMessage(prompt),
                 new UserChatMessage(subjectDescription)
             };
 
-            await EnsureAPIKeyLoadedAsync(userId);
-            var chatClient = new ChatClient(apiKey: _apiKey, model: _llmModel);
-            ChatCompletion completion = await chatClient.CompleteChatAsync(messages, new ChatCompletionOptions(), token);
-
-            return new(Analysis: ExtractJson(completion.Content[0].Text), Version: _version, Model: _llmModel);
+            var responseText = await ExecuteChatCompletionAsync(targetModel, messages, null, token);
+            return new(Analysis: ExtractJson(responseText), Version: targetModel.Version, Model: targetModel.LLModel);
         }
 
         private async Task<JobApplicationAnalysisDTO> Analyze(
             JobApplicationAnalysisDTO analysisDTO,
+            TargetModelDTO targetModel,
             string prompt,
-            string? userId,
             CancellationToken token)
         {
             var modelInput = new
@@ -39,7 +38,7 @@
             var options = new ChatCompletionOptions
             {
                 ResponseFormat = ChatResponseFormat.CreateJsonObjectFormat(),
-                Temperature = 0.2f
+                Temperature = DefaultTemperature
             };
 
             var messages = new List<ChatMessage>
@@ -48,11 +47,7 @@
                 new UserChatMessage(jsonInput)
             };
 
-            await EnsureAPIKeyLoadedAsync(userId);
-            var chatClient = new ChatClient(apiKey: _apiKey, model: _llmModel);
-            ChatCompletion completion = await chatClient.CompleteChatAsync(messages, options, token);
-
-            string rawText = string.Concat(completion.Content.Select(c => c.Text));
+            var rawText = await ExecuteChatCompletionAsync(targetModel, messages, options, token);
 
             AnalysisOnlyResponse? result;
 
@@ -74,8 +69,24 @@
             }
 
             analysisDTO.AnalysisResult = result.AnalysisResult;
-
             return analysisDTO;
+        }
+
+        private async Task<string> ExecuteChatCompletionAsync(
+            TargetModelDTO targetModel,
+            List<ChatMessage> messages,
+            ChatCompletionOptions? options,
+            CancellationToken token)
+        {
+            var chatClient = new ChatClient(apiKey: targetModel.ApiKey, model: targetModel.LLModel);
+            ChatCompletion completion = await chatClient.CompleteChatAsync(messages, options ?? new ChatCompletionOptions(), token);
+
+            if (completion.Content == null || completion.Content.Count == 0)
+            {
+                throw new InvalidOperationException("Chat completion returned no content.");
+            }
+
+            return string.Concat(completion.Content.Select(c => c.Text));
         }
 
         private string ExtractJson(string rawResponse)
@@ -83,30 +94,20 @@
             if (string.IsNullOrWhiteSpace(rawResponse))
                 return rawResponse;
 
-            // Remove leading ```json or ``` if present
             rawResponse = rawResponse.Trim();
 
-            if (rawResponse.StartsWith("```"))
-            {
-                int firstNewLine = rawResponse.IndexOf('\n');
-                int lastFence = rawResponse.LastIndexOf("```");
+            // Match markdown code fences with optional language identifier
+            var match = Regex.Match(
+                rawResponse,
+                @"```(?:json)?\s*\n([\s\S]*?)\n```",
+                RegexOptions.Multiline);
 
-                if (firstNewLine >= 0 && lastFence > firstNewLine)
-                {
-                    rawResponse = rawResponse.Substring(firstNewLine + 1, lastFence - firstNewLine - 1);
-                }
+            if (match.Success)
+            {
+                return match.Groups[1].Value.Trim();
             }
 
-            return rawResponse.Trim();
-        }
-
-        private async Task EnsureAPIKeyLoadedAsync(string? userId = null)
-        {
-            if (string.IsNullOrEmpty(_apiKey))
-                _apiKey = await _llmManager.GetApiKeyAsync(userId);
-
-            if (string.IsNullOrEmpty(_apiKey))
-                throw new InvalidOperationException("API key is not available for LLM analysis.");
+            return rawResponse;
         }
     }
 }

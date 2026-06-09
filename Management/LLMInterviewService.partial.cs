@@ -13,7 +13,7 @@ namespace JobBank.Management
             var options = new ChatCompletionOptions
             {
                 ResponseFormat = ChatResponseFormat.CreateJsonObjectFormat(),
-                Temperature = 0.2f                
+                Temperature = DefaultTemperature
             };
 
             var messages = new List<OpenAI.Chat.ChatMessage>
@@ -22,8 +22,9 @@ namespace JobBank.Management
                 new UserChatMessage(jsonUserDTO)
             };
 
-            await EnsureAPIKeyLoadedAsync(userDTO.UserId);
-            var chatClient = new ChatClient(apiKey: _apiKey, model: _llmModel);
+            var targetModel = await GetTargetModelAsync(userDTO.UserId) ?? throw new InvalidOperationException("No suitable LLM model found for the user.");
+
+            var chatClient = new ChatClient(apiKey: targetModel.ApiKey, model: targetModel.LLModel);
             ChatCompletion completion = await chatClient.CompleteChatAsync(messages, options, token);
 
             string rawText = string.Concat(completion.Content.Select(c => c.Text));
@@ -50,25 +51,6 @@ namespace JobBank.Management
                 userDTO.UserId, interviewerResponse.QuestionTopic);
 
             return interviewerResponse;
-        }
-
-        /// <summary>
-        /// #55 This needs to change because there is a lot of repetition between the services 
-        /// CarrierAssistant and LLMInterviewService.  Note that ILLMManager is only taking care of the API Key.
-        /// This could fail because the key is matched to the model and the user, and the model used now is a system model
-        /// This is a bug. Architecture - Fix before trainer is implemented.  
-        /// We need to move the API key management to a different service that can handle the model and user matching, 
-        /// and then inject that service into both CareerAssistant and LLMInterviewService.
-        /// <param name="userId"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
-        private async Task EnsureAPIKeyLoadedAsync(string? userId = null)
-        {
-            if (string.IsNullOrEmpty(_apiKey))
-                _apiKey = await _llmManager.GetApiKeyAsync(userId);
-
-            if (string.IsNullOrEmpty(_apiKey))
-                throw new InvalidOperationException("API key is not available for LLM analysis.");
         }
     }
 }

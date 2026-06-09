@@ -1,5 +1,6 @@
 ﻿using JobBank.Management.Abstraction;
 using JobBank.Models.Identity;
+using JobBank.ModelsDTO;
 using JobBank.Services;
 using JobBank.Services.Abstraction;
 using JobBank.StartUpServices;
@@ -11,38 +12,22 @@ namespace JobBank.Management
     public class LLMManager : ILLMManager
     {
         private readonly IServiceScopeFactory _scopeFactory;
+        private const string DefaultVersion = "v1";
 
         public LLMManager(IServiceScopeFactory scopeFactory)
         {
             _scopeFactory = scopeFactory;
         }
 
-        public async Task<string?> GetApiKeyAsync(string? userId = null)
-        {
+        public async Task<TargetModelDTO?> GetTargetModelAsync(string? userId = null)
+        {            
             await using var scope = _scopeFactory.CreateAsyncScope();
+            var prompService = scope.ServiceProvider.GetRequiredService<PrompService>();
 
-            JobBankUser? user = null;
+            var user = await GetUserAsync(userId);
 
-            // If userId provided (e.g., from background service), fetch user directly
-            if (!string.IsNullOrEmpty(userId))
+            if (user is not null && IsUserKey(user))
             {
-                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<JobBankUser>>();
-                user = await userManager.FindByIdAsync(userId);
-            }
-            else
-            {
-                // Fall back to getting current user from authentication (Razor component context)
-                var identityService = scope.ServiceProvider.GetRequiredService<IIdentityService>();
-                user = await identityService.GetCurrentUserDetailsAsync();
-            }
-
-            if (user is not null &&
-                !string.IsNullOrEmpty(user.CipherText) &&
-                !string.IsNullOrEmpty(user.Nonce) &&
-                !string.IsNullOrEmpty(user.Tag) &&
-                !string.IsNullOrEmpty(user.LLModel))
-            {
-                var prompService = scope.ServiceProvider.GetRequiredService<PrompService>();
                 var systemKey = prompService.APIKeyEncryptionKayName;
 
                 if (string.IsNullOrEmpty(systemKey))
@@ -54,7 +39,13 @@ namespace JobBank.Management
 
                 try
                 {
-                    return ApiKeyEncryptor.Decrypt(user.CipherText, user.Nonce, user.Tag, masterKey);
+                    return new TargetModelDTO
+                    {
+                        ApiKey = ApiKeyEncryptor.Decrypt(user.CipherText, user.Nonce, user.Tag, masterKey),
+                        LLModel = user.LLModel,
+                        UserId = user.Id,
+                        Version = user.Version
+                    };
                 }
                 catch (CryptographicException)
                 {
@@ -62,7 +53,15 @@ namespace JobBank.Management
                 }
             }
 
-            return scope.ServiceProvider.GetRequiredService<ILLMProvider>().GetApiKey();
+            var apiKey = scope.ServiceProvider.GetRequiredService<ILLMProvider>().GetApiKey();
+
+            return new TargetModelDTO
+            {
+                ApiKey = apiKey,
+                LLModel = prompService.LLMModel,
+                UserId = user?.Id ?? string.Empty,
+                Version = DefaultVersion
+            };
         }
 
         public async Task<bool> IsAvailableAsync(string? userId = null)
@@ -72,6 +71,7 @@ namespace JobBank.Management
             {
                 return true;
             }
+
             await using var scope = _scopeFactory.CreateAsyncScope();
             var llmProvider = scope.ServiceProvider.GetRequiredService<ILLMProvider>();
             return llmProvider.IsAvailable;
@@ -79,37 +79,41 @@ namespace JobBank.Management
 
         public async Task<bool> UserHasValidPrivateKeyAsync(string? userId)
         {
-            await using var scope = _scopeFactory.CreateAsyncScope();
-
-            JobBankUser? user = null;
-
-            // If userId provided (e.g., from background service), fetch user directly
-            if (!string.IsNullOrEmpty(userId))
-            {
-                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<JobBankUser>>();
-                user = await userManager.FindByIdAsync(userId);
-            }
-            else
-            {
-                // Fall back to getting current user from authentication (Razor component context)
-                var identityService = scope.ServiceProvider.GetRequiredService<IIdentityService>();
-                user = await identityService.GetCurrentUserDetailsAsync();
-            }
+            var user = await GetUserAsync(userId);
 
             if (user is null)
             {
                 return false;
             }
 
-            if (!string.IsNullOrEmpty(user.CipherText) &&
-                !string.IsNullOrEmpty(user.Nonce) &&
-                !string.IsNullOrEmpty(user.Tag) &&
-                !string.IsNullOrEmpty(user.LLModel))
+            return !string.IsNullOrEmpty(user.CipherText) &&
+                   !string.IsNullOrEmpty(user.Nonce) &&
+                   !string.IsNullOrEmpty(user.Tag) &&
+                   !string.IsNullOrEmpty(user.LLModel);
+        }
+
+        private async Task<JobBankUser?> GetUserAsync(string? userId)
+        {
+            await using var scope = _scopeFactory.CreateAsyncScope();
+
+            if (!string.IsNullOrEmpty(userId))
             {
-                return true;
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<JobBankUser>>();
+                return await userManager.FindByIdAsync(userId);
             }
 
-            return false;
+            var identityService = scope.ServiceProvider.GetRequiredService<IIdentityService>();
+            return await identityService.GetCurrentUserDetailsAsync();
+        }
+
+        private static bool IsUserKey(JobBankUser? user)
+        {
+            return user is not null &&
+                   !string.IsNullOrEmpty(user.CipherText) &&
+                   !string.IsNullOrEmpty(user.Nonce) &&
+                   !string.IsNullOrEmpty(user.Tag) &&
+                   !string.IsNullOrEmpty(user.LLModel) &&
+                   !string.IsNullOrEmpty(user.Version);
         }
     }
 }

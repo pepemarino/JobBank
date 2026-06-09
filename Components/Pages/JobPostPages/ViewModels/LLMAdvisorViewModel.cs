@@ -9,7 +9,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 {
     public partial class LLMAdvisorViewModel : ILLMAdvisorViewModel
     {        
-        private readonly CareerAssistant _careerAssistant;
+        private readonly ICareerAssistant _careerAssistant;
         private readonly IIdentityService _identityService;
         private readonly IJobPostService _jobPostService;
         private readonly IAnalysisCacheService _analysisCacheService;
@@ -17,7 +17,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         private readonly ILLMManager _llmManager;
 
         public LLMAdvisorViewModel(            
-            CareerAssistant careerAssistant,
+            ICareerAssistant careerAssistant,
             IIdentityService identityService,
             IJobPostService jobPostService,
             IAnalysisCacheService analysisCacheService,

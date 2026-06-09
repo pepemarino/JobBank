@@ -92,7 +92,8 @@ namespace JobBank.Management
                 throw new InvalidOperationException($"Interview with ID {interviewId} has invalid result format.");
             }
 
-            var interviewMetadata = JsonSerializer.Deserialize<InterviewMetadata>(interview.Result);
+            var interviewMetadata = JsonSerializer.Deserialize<InterviewMetadata>(interview.Result)
+                ?? throw new InvalidOperationException($"Failed to deserialize interview metadata for Interview ID {interviewId}.");
 
             var jobPost = await jobPostService.GetJobPostByIdAsync(interview.JobPostId);
             if (jobPost == null || string.IsNullOrEmpty(jobPost.Description))

@@ -7,6 +7,8 @@ namespace JobBank.Models.Identity
     [EntityTypeConfiguration(typeof(JobBankUserConfiguration))]
     public class JobBankUser : IdentityUser
     {
+        #region Key MOdel Pair
+
         /// <summary>
         /// This text is the encrypted version of the user's Model API key. 
         /// It is stored in the database as a Base64-encoded string.
@@ -37,17 +39,18 @@ namespace JobBank.Models.Identity
         /// </summary>
         public string? LLModel { get; set; }
 
+        public string? Version { get; set; }
+
+        #endregion Key MOdel Pair
+
         /// <summary>
         /// Gets or sets the flag indicating to never accept shared cache results for this user, 
         /// even if they are available.
         /// </summary>
         public bool ForceMyKeyy { get; set; } = false;
 
-        public string? Version { get; set; }
-
         public DateTime? UserCreated { get; set; }
 
         public DateTime? UserUpdated { get; set; }
-
     }
 }

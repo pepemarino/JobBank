@@ -1,4 +1,5 @@
 ﻿using JobBank.Models;
+using JobBank.Models.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobBank.Data
@@ -28,5 +29,7 @@ namespace JobBank.Data
         public DbSet<Interview> Interviews { get; set; } = default!;
 
         public DbSet<Training> Trainings { get; set; } = default!;
+
+        public DbSet<UserSettings> UserSettings { get; set; } = default!;
     }
 }

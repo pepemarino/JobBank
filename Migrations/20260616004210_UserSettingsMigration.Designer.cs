@@ -4,6 +4,7 @@ using JobBank.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JobBank.Migrations
 {
     [DbContext(typeof(EmploymentBankContext))]
-    partial class JobBankContextModelSnapshot : ModelSnapshot
+    [Migration("20260616004210_UserSettingsMigration")]
+    partial class UserSettingsMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -114,9 +117,6 @@ namespace JobBank.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<bool>("ForceMyKey")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("UpdatedDateTime")
                         .ValueGeneratedOnAdd()

@@ -6,6 +6,7 @@ using JobBank.Components.Pages.Interviewer.ViewModels;
 using JobBank.Components.Pages.InterviewLibrary.ViewModels;
 using JobBank.Components.Pages.JobPostPages.ViewModels;
 using JobBank.Components.Pages.SkillPages.ViewModels;
+using JobBank.Components.Pages.UserSettingPages.ViewModels;
 using JobBank.Data;
 using JobBank.Management;
 using JobBank.Management.Abstraction;
@@ -116,6 +117,8 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddScoped<FilteredStateService>()
     .AddScoped<IJobPostService, JobPostService>()
     .AddScoped<IInterviewLibraryViewModel, InterviewLibraryViewModel>()
+    .AddScoped<ISettingsViewModel, SettingsViewModel>()
+    .AddScoped<IUserSettingService, UserSettingService>()
     .AddScoped<ISkillsService, SkillsService>()
     .AddScoped<ITrainingService, TrainingServcie>()
     .AddScoped<IAnalysisCacheService, AnalysisCacheService>()

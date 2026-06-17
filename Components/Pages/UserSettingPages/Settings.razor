@@ -1,0 +1,54 @@
+﻿@page "/Settings"
+@using Microsoft.AspNetCore.Components.Web
+@rendermode InteractiveServer
+@inherits ViewModelBase<ISettingsViewModel>
+@attribute [Authorize]
+
+<PageTitle>@(ViewModel.Title)</PageTitle>
+
+<h1>@(ViewModel.Title)</h1>
+<div class="m-1">
+    <div class="card mb-3">
+        <div class="card shadow-sm border-0" style="max-width: 700px;">
+            <div class="card-body p-4">
+                @if (!string.IsNullOrEmpty(ViewModel.ErrorMessage))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @ViewModel.ErrorMessage
+                        <button type="button" class="btn-close" @onclick="@(() => ViewModel.ClearError())"></button>
+                    </div>
+                }
+
+                <div class="form-check form-switch mt-2">
+                    <InputCheckbox id="useTutor" @bind-Value="ViewModel.UserSettingsTracker.Current.UseTutorMode" class="form-check-input" />
+                    <label for="useTutor" class="form-check-label fw-bold">Use Tutor Mode</label>
+                </div>
+                <div class="form-check form-switch mt-2">
+                    <InputCheckbox id="forceMyKey" @bind-Value="ViewModel.UserSettingsTracker.Current.ForceMyKey" class="form-check-input" />
+                    <label for="forceMyKey" class="form-check-label fw-bold">Force My Key</label>
+                </div>
+
+                <div class="d-flex justify-content-end align-items-center gap-3">
+                    <button class="btn @(ViewModel.SaveCommand.CanExecute(null) ? "btn-primary" : "btn-outline-secondary") px-4 shadow-sm"
+                            @onclick="() => ViewModel.SaveCommand.Execute(null)"
+                            disabled="@(!ViewModel.SaveCommand.CanExecute(null))">
+
+                        @if (!ViewModel.SaveCommand.CanExecute(null))
+                        {
+                            <i class="bi bi-lock-fill me-2"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-save me-2"></i>
+                        }
+                        Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+}

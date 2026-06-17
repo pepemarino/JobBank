@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using JobBank.Components.Pages.Init;
-using JobBank.ModelsDTO;
 using System.ComponentModel;
 
 namespace JobBank.Components.Pages.SkillPages.ViewModels

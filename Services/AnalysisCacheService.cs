@@ -33,7 +33,7 @@ namespace JobBank.Services
             await ValueTask.CompletedTask;
         }
 
-        public async Task<JobAnalysisCacheDTO> GetJobAnalysisCacheAsync(string jobDescriptionHash, string userId)
+        public async Task<JobAnalysisCacheDTO?> GetJobAnalysisCacheAsync(string jobDescriptionHash, string userId)
         {
             if (string.IsNullOrWhiteSpace(jobDescriptionHash) || string.IsNullOrWhiteSpace(userId))
             {
@@ -79,7 +79,7 @@ namespace JobBank.Services
             return analysisCache;
         }
 
-        public async Task<JobAnalysisCacheDTO> GetPublicJobAnalysisCacheAsync(string jobDescriptionHash)
+        public async Task<JobAnalysisCacheDTO?> GetPublicJobAnalysisCacheAsync(string jobDescriptionHash)
         {
             if (string.IsNullOrWhiteSpace(jobDescriptionHash))
             {

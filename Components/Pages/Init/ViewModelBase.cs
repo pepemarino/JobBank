@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using System.ComponentModel;
 
 namespace JobBank.Components.Pages.Init
 {
@@ -9,9 +10,17 @@ namespace JobBank.Components.Pages.Init
         protected override async Task OnInitializedAsync()
         {
             ViewModel.OnRequestUIUpdate += NotifyStateChanged;
+            
+            // Subscribe to PropertyChanged for automatic UI updates
+            if (ViewModel is INotifyPropertyChanged notifyPropertyChanged)
+            {
+                notifyPropertyChanged.PropertyChanged += (s, e) => NotifyStateChanged();
+            }
+            
             await ViewModel.InitializeAsync();
             StateHasChanged();
         }
+
         private void NotifyStateChanged() => InvokeAsync(StateHasChanged);
 
         public async ValueTask DisposeAsync()
@@ -19,6 +28,11 @@ namespace JobBank.Components.Pages.Init
             if (ViewModel != null)
             {
                 ViewModel.OnRequestUIUpdate -= NotifyStateChanged;
+
+                if (ViewModel is INotifyPropertyChanged notifyPropertyChanged)
+                {
+                    notifyPropertyChanged.PropertyChanged -= (s, e) => NotifyStateChanged();
+                }
 
                 if (ViewModel is IAsyncDisposable asyncDisposable)
                     await asyncDisposable.DisposeAsync();

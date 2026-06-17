@@ -44,16 +44,22 @@
 
         <hr class="mx-3 text-secondary" />
 
-        <div class="nav-item px-3 mt-2">
-            <NavLink class="nav-link btn btn-primary text-white text-center justify-content-center fs-5" href="/jobposts/create">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link rounded-2 mb-1 fs-5" href="/jobposts/create">
                 <span class="bi bi-plus-circle me-2" aria-hidden="true"></span> Add New Application
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link rounded-2 mb-1 fs-5" href="/Settings">
+                <span class="bi bi-person-gear inf me-2" aria-hidden="true"></span> User Settings
             </NavLink>
         </div>
         <AuthorizeView>
             <Authorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
+                        <span class="bi-person-lines-fill inf me-2" aria-hidden="true"></span> @context.User.Identity?.Name
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
@@ -61,7 +67,7 @@
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                         <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                            <span class="bi bi-arrow-bar-left" aria-hidden="true"></span> Logout
                         </button>
                     </form>
                 </div>

@@ -28,5 +28,5 @@ jobs:
       
     - name: Write build metadata
       run: |
-        echo "{ \"build\": \"${{ github.run_number }}\", \"commit\": \"${{ github.sha }}\", \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\" }" > JobBank/wwwroot/build.json
+        echo "{ \"build\": \"${{ github.run_number }}\", \"commit\": \"${{ github.sha }}\", \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\" }" > wwwroot/build.json
 

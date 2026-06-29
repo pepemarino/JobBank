@@ -25,24 +25,28 @@
 	  <Compile Remove="JobBank.Management.DTO\**" />
 	  <Compile Remove="JobBank.Management\**" />
 	  <Compile Remove="JobBank.ModelDTO\**" />
+	  <Compile Remove="Logs\**" />
 	  <Compile Remove="WORKSCommons.Tests\**" />
 	  <Content Remove="JobBank.Data\**" />
 	  <Content Remove="JobBank.EtlConsole\**" />
 	  <Content Remove="JobBank.Management.DTO\**" />
 	  <Content Remove="JobBank.Management\**" />
 	  <Content Remove="JobBank.ModelDTO\**" />
+	  <Content Remove="Logs\**" />
 	  <Content Remove="WORKSCommons.Tests\**" />
 	  <EmbeddedResource Remove="JobBank.Data\**" />
 	  <EmbeddedResource Remove="JobBank.EtlConsole\**" />
 	  <EmbeddedResource Remove="JobBank.Management.DTO\**" />
 	  <EmbeddedResource Remove="JobBank.Management\**" />
 	  <EmbeddedResource Remove="JobBank.ModelDTO\**" />
+	  <EmbeddedResource Remove="Logs\**" />
 	  <EmbeddedResource Remove="WORKSCommons.Tests\**" />
 	  <None Remove="JobBank.Data\**" />
 	  <None Remove="JobBank.EtlConsole\**" />
 	  <None Remove="JobBank.Management.DTO\**" />
 	  <None Remove="JobBank.Management\**" />
 	  <None Remove="JobBank.ModelDTO\**" />
+	  <None Remove="Logs\**" />
 	  <None Remove="WORKSCommons.Tests\**" />
 	</ItemGroup>
 

@@ -31,5 +31,11 @@ namespace JobBank.Data
         public DbSet<Training> Trainings { get; set; } = default!;
 
         public DbSet<UserSettings> UserSettings { get; set; } = default!;
+
+        public DbSet<Evaluation> Evaluations { get; set; } = default!;
+
+        public DbSet<DataMigrationHistory> DataMigrationHistories { get; set; } = default!;
+
+
     }
 }

@@ -50,6 +50,11 @@ namespace JobBank.Management
             _logger.LogInformation("Interview analysis completed for user {UserId}, Topic: {Topic}", 
                 userDTO.UserId, interviewerResponse.QuestionTopic);
 
+            if (interviewerResponse.Evaluation != null)
+            {
+                interviewerResponse.Evaluation.UserId = userDTO.UserId;
+            }
+
             return interviewerResponse;
         }
     }

@@ -1,4 +1,6 @@
-﻿namespace JobBank.ModelsDTO
+﻿using JobBank.Management.Interview;
+
+namespace JobBank.ModelsDTO
 {
     public class InterviewDTO : IEquatable<InterviewDTO>
     {
@@ -11,7 +13,12 @@
         /// <summary>
         /// Gets or sets the result of the InterviewContent as a JSON string.
         /// </summary>
+        /// <remarks>
+        /// This field will be removed after #97 and all its children are resolved.
+        /// </remarks>
         public string Result { get; set; } = string.Empty;
+
+        public List<EvaluationResult> EvaluationResults { get; set; } = new List<EvaluationResult>();
 
         public DateTime CreatedDateUtc { get; set; }
 
@@ -29,6 +36,8 @@
         public bool IsCompleted { get; set; }
 
         public bool IsDeleted { get; set; }
+
+        public bool IsMigrated { get; set; } = false;
 
         public string JobTitle { get; set; } = string.Empty;
 

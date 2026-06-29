@@ -89,7 +89,7 @@ namespace JobBank.Management
             if (!interviewResultIsValid)
             {
                 _logger.LogWarning("TrainerAnalysisWorker: Interview with ID {InterviewId} has invalid result format. Skipping analysis.", interviewId);
-                throw new InvalidOperationException($"Interview with ID {interviewId} has invalid result format.");
+                throw new InvalidOperationException($"Interview with ID {interviewId} is invalid for training analysis.");
             }
 
             var interviewMetadata = JsonSerializer.Deserialize<InterviewMetadata>(interview.Result)

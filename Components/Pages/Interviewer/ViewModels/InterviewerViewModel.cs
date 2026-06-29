@@ -7,7 +7,6 @@ using JobBank.StartUpServices;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using System.Text.Json;
-using static JobBank.Management.Abstraction.IInterviewLLMService;
 
 namespace JobBank.Components.Pages.Interviewer.ViewModels
 {
@@ -192,7 +191,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                         NumberOfQuestions = maxQuestions,
                         IsCompleted = IsInterviewCompleted,
                         Passed = Evaluations.All(e => e.Passed),
-                        Result = JsonSerializer.Serialize(metadata)
+                        Result = JsonSerializer.Serialize(metadata),
+                        EvaluationResults = Evaluations
                     };
 
                     await _interviewService.AddInterviewAsync(interviewDto);

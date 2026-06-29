@@ -17,6 +17,7 @@ using JobBank.StartUpServices;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,7 +50,7 @@ builder.Services.AddSingleton(llmPrompts);
 #region DbContexts
 
 builder.Services.AddDbContextFactory<EmploymentBankContext>(options =>
-    options.UseSqlServer(connStr));
+    options.UseSqlServer(connStr, x => x.MigrationsAssembly("JobBank.Data")));
 
 builder.Services.AddDbContext<JobBankIdentityDbContext>(options =>
     options.UseSqlServer(connStr));
@@ -141,6 +142,14 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 #endregion
+
+// Minimal Serilog setup
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.File("Logs/app.log", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 var app = builder.Build();
 

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Routing.Matching;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace JobBank.Models
 {

@@ -35,6 +35,9 @@ namespace JobBank.Models
 
         public bool IsDeleted { get; set; }
 
+        public bool IsMigrated { get; set; } = false;
+
         public virtual Training? Training { get; set; }
+        public virtual ICollection<Evaluation> Evaluations { get; set; } = new List<Evaluation>();
     }
 }

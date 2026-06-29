@@ -20,9 +20,29 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="JobBank.Data\**" />
+	  <Compile Remove="JobBank.EtlConsole\**" />
+	  <Compile Remove="JobBank.Management.DTO\**" />
+	  <Compile Remove="JobBank.Management\**" />
+	  <Compile Remove="JobBank.ModelDTO\**" />
 	  <Compile Remove="WORKSCommons.Tests\**" />
+	  <Content Remove="JobBank.Data\**" />
+	  <Content Remove="JobBank.EtlConsole\**" />
+	  <Content Remove="JobBank.Management.DTO\**" />
+	  <Content Remove="JobBank.Management\**" />
+	  <Content Remove="JobBank.ModelDTO\**" />
 	  <Content Remove="WORKSCommons.Tests\**" />
+	  <EmbeddedResource Remove="JobBank.Data\**" />
+	  <EmbeddedResource Remove="JobBank.EtlConsole\**" />
+	  <EmbeddedResource Remove="JobBank.Management.DTO\**" />
+	  <EmbeddedResource Remove="JobBank.Management\**" />
+	  <EmbeddedResource Remove="JobBank.ModelDTO\**" />
 	  <EmbeddedResource Remove="WORKSCommons.Tests\**" />
+	  <None Remove="JobBank.Data\**" />
+	  <None Remove="JobBank.EtlConsole\**" />
+	  <None Remove="JobBank.Management.DTO\**" />
+	  <None Remove="JobBank.Management\**" />
+	  <None Remove="JobBank.ModelDTO\**" />
 	  <None Remove="WORKSCommons.Tests\**" />
 	</ItemGroup>
 
@@ -36,6 +56,7 @@
 
 
 	<ItemGroup>
+		<PackageReference Include="AutoMapper" Version="12.0.1" />
 		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
 		<PackageReference Include="Blazor.Extensions.Storage" Version="1.0.0" />
 		<PackageReference Include="ChartJs.Blazor" Version="1.1.0" />
@@ -67,6 +88,8 @@
 
 		<PackageReference Include="Newtonsoft.Json.Schema" Version="4.0.1" />
 		<PackageReference Include="OpenAI" Version="2.8.0" />
+		<PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+		<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -81,6 +104,11 @@
 
 	<ItemGroup>
 	  <None Include=".github\workflows\build.yml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="JobBank.Data\JobBank.Data.csproj" />
+	  <ProjectReference Include="JobBank.Management.DTO\JobBank.Management.DTO.csproj" />
 	</ItemGroup>
 
 </Project>

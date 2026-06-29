@@ -133,6 +133,8 @@ namespace JobBank.Services
             {
                 await using var context = _dbFactory.CreateDbContext();
                 var interview = _mapper.Map<Interview>(interviewDto);
+                interview.Evaluations = _mapper.Map<List<Evaluation>>(interviewDto.EvaluationResults);
+
                 context.Interviews.Add(interview);
                 await context.SaveChangesAsync();
                 interviewDto.Id = interview.Id;

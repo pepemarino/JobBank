@@ -29,58 +29,60 @@
                 <span class="bi bi-journal-text me-2" aria-hidden="true"></span> WORK Applications
             </NavLink>
         </div>        
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link rounded-2 mb-1 fs-5" href="/InterviewLibrary">
-                <span class="bi bi-chat-left-text" aria-hidden="true"></span> Interview Library
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link rounded-2 mb-1 fs-5" href="/Skills">
-                <span class="bi bi-stars me-2" aria-hidden="true"></span> My Skills
-            </NavLink>
-        </div>
-
-        <hr class="mx-3 text-secondary" />
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link rounded-2 mb-1 fs-5" href="/jobposts/create">
-                <span class="bi bi-plus-circle me-2" aria-hidden="true"></span> Add New Application
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link rounded-2 mb-1 fs-5" href="/Settings">
-                <span class="bi bi-person-gear inf me-2" aria-hidden="true"></span> User Settings
-            </NavLink>
-        </div>
         <AuthorizeView>
             <Authorized>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi-person-lines-fill inf me-2" aria-hidden="true"></span> @context.User.Identity?.Name
+                    <NavLink class="nav-link rounded-2 mb-1 fs-5" href="/InterviewLibrary">
+                        <span class="bi bi-chat-left-text me-2" aria-hidden="true"></span> Interview Library
                     </NavLink>
                 </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link rounded-2 mb-1 fs-5" href="/Skills">
+                        <span class="bi bi-stars me-2" aria-hidden="true"></span> My Skills
+                    </NavLink>
+                </div>
+
+                <hr class="mx-3 text-secondary" />
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link rounded-2 mb-1 fs-5" href="/jobposts/create">
+                        <span class="bi bi-plus-circle me-2" aria-hidden="true"></span> Add New Application
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link rounded-2 mb-1 fs-5" href="/Settings">
+                        <span class="bi bi-person-gear me-2" aria-hidden="true"></span> User Settings
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link rounded-2 mb-1 fs-5" href="Account/Manage">
+                        <span class="bi bi-person-lines-fill me-2" aria-hidden="true"></span> @context.User.Identity?.Name
+                    </NavLink>
+                </div>
+
                 <div class="nav-item px-3">
                     <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                        <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left" aria-hidden="true"></span> Logout
+                        <button type="submit" class="nav-link rounded-2 mb-1 fs-5">
+                            <span class="bi bi-arrow-bar-left me-2" aria-hidden="true"></span> Logout
                         </button>
                     </form>
                 </div>
             </Authorized>
             <NotAuthorized>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
+                    <NavLink class="nav-link rounded-2 mb-1 fs-5" href="Account/Register">
+                        <span class="bi bi-person-plus me-2" aria-hidden="true"></span> Register
                     </NavLink>
                 </div>
+
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
+                    <NavLink class="nav-link rounded-2 mb-1 fs-5" href="Account/Login">
+                        <span class="bi bi-arrow-bar-right me-2" aria-hidden="true"></span> Login
                     </NavLink>
                 </div>
             </NotAuthorized>

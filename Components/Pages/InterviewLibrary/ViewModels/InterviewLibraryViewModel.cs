@@ -217,6 +217,14 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
                     {
                         TrainingAnalysis = JsonSerializer.Deserialize<InterviewTrainingAnalysisResultDTO>(training.Result);
 
+                        if (TrainingAnalysis == null || TrainingAnalysis.Training == null || !TrainingAnalysis.Training.Any())
+                        {
+                            _logger.LogWarning("Training data is invalid or empty for TrainingId {TrainingId}. Loading Evaluations", interview.TrainingId);
+                            TrainingAnalysis = null;
+                            Evaluations = LoadInterviewMetadata(interview).Evaluations;
+                            return;
+                        }
+
                         // Manage cache size
                         if (_trainingCache.Count >= MaxCacheSize)
                         {
@@ -259,7 +267,7 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
                 _logger.LogWarning("NeedsTraining called with empty interview result for interview ID {InterviewId}", interview.Id);
                 throw new InvalidOperationException("Interview result is empty, cannot determine training needs.");
             }
-          
+
             if (!interview.Result.IsValidJson<InterviewMetadata>(
                     Common.StrictValidationOptions))
             {
@@ -267,19 +275,26 @@ namespace JobBank.Components.Pages.InterviewLibrary.ViewModels
                 throw new InvalidOperationException("Interview result is not valid, cannot determine training needs.");
             }
 
-            var interviewMetadata = JsonSerializer.Deserialize<InterviewMetadata>(interview.Result);   
+            InterviewMetadata? interviewMetadata = LoadInterviewMetadata(interview);
+
+            Evaluations = interviewMetadata.Evaluations;
+
+            // the schema has already been validated, so we can assume that Evaluations is not null and contains valid data
+            // If there are weak topics, as defined by the business rules, then we need training.           
+            var weakTopics = BusinessRules.NeedsTrainingRule(interviewMetadata);
+            return weakTopics.Any();
+        }
+
+        private InterviewMetadata LoadInterviewMetadata(InterviewDTO interview)
+        {
+            var interviewMetadata = JsonSerializer.Deserialize<InterviewMetadata>(interview.Result);
             if (interviewMetadata == null)
             {
                 _logger.LogWarning("NeedsTraining deserialization resulted in null for interview ID {InterviewId}", interview.Id);
                 throw new InvalidOperationException("Deserialized interview metadata is null, cannot determine training needs.");
             }
 
-            Evaluations = interviewMetadata.Evaluations;
-
-            // the schema has already been validated, so we can assume that Evaluations is not null and contains valid data
-            // If there are weak topics, as defined by the business rules, then we need training.           
-            var weakTopics = BusinessRules.NeedsTrainingRule(interviewMetadata);                   
-            return weakTopics.Any();
+            return interviewMetadata;
         }
 
         /// <summary>

@@ -21,7 +21,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         private readonly IIdentityService _identityService;
         private readonly ILogger<InterviewerViewModel> _logger;
         private readonly TrainerChannel Channel;
-
+        private readonly IUserSettingService _userSettings;
         private readonly PrompService _prompService;
 
         public InterviewerViewModel(
@@ -34,7 +34,8 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             IIdentityService identityService,
             IProtectedLocalStoreService<List<ChatMessage>> interviewMessagesStore,
             TrainerChannel channel,
-            ILogger<InterviewerViewModel> logger)
+            ILogger<InterviewerViewModel> logger,
+            IUserSettingService userSettings)
         {
             _jobPostService = jobPostService;
             _interviewStateStore = interviewStateStore;
@@ -48,12 +49,19 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             _interviewMessagesStore = interviewMessagesStore;
             Channel = channel;
             _logger = logger;
+            _userSettings = userSettings;
         }
 
         #region Interview State Tracking
+
         private List<string> CoveredTopics { get; set; } = new();
         private List<string> WeakAreas { get; set; } = new();
         private List<EvaluationResult> Evaluations { get; set; } = new();
+
+        // NEW FOR TUTOR EXPERIMENT
+        private bool IsGuidedTutorModeEnabled { get; set; }        
+        private bool IsCurrentlyTutoring { get; set; } = false;
+        private string RetestTopic { get; set; } = string.Empty;
 
         #endregion Interview State Tracking
 
@@ -130,6 +138,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
 
             RequestScrollToBottom = true;
             var userId = await _identityService.GetUserIdAsync();
+            var userSettings = await _userSettings.GetUserSettingAsync(userId);
 
             var userResponse = new UserJobApplicantDTO
             {

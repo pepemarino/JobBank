@@ -1,6 +1,5 @@
 ﻿using JobBank.Management.Abstraction;
 using JobBank.Management.Interview;
-using static JobBank.Management.Abstraction.IInterviewLLMService;
 
 namespace JobBank.Management
 {

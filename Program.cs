@@ -10,6 +10,7 @@ using JobBank.Components.Pages.UserSettingPages.ViewModels;
 using JobBank.Data;
 using JobBank.Management;
 using JobBank.Management.Abstraction;
+using JobBank.Management.Plugins;
 using JobBank.Models.Identity;
 using JobBank.Services;
 using JobBank.Services.Abstraction;
@@ -127,12 +128,14 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddScoped<ICareerAssistant, CareerAssistant>()
     .AddScoped<ITrainerAssistant, TrainerAssistant>()
     .AddScoped<IIdentityService, IdentityService>()  
+    .AddScoped< InterviewHistoryPlugin>()
     .AddScoped<ITrainerAssistantManager, TrainerAssistantManager>()
     .AddHostedService<RejectionAnalysisWorker>()
     .AddHostedService<TrainerAnalysisWorker>()
     .AddSingleton<ILLMProvider, LLMProvider>()
     .AddScoped<ILLMManager, LLMManager>()
     .AddScoped<IInterviewService, InterviewService>()
+    .AddScoped<IInterviewHistoryPlugin, InterviewHistoryPlugin>()
     .AddSingleton<JobDescriptionParser>()
     .AddSingleton<RankingEngine>()
     .AddSingleton<AnalysisChannel>()

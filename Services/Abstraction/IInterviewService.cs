@@ -12,6 +12,7 @@ namespace JobBank.Services.Abstraction
 
         Task<IEnumerable<InterviewDTO>> GetInterviewsByJobPostIdAsync(int id);
         Task AddInterviewAsync(InterviewDTO emp);
+        Task<List<string>> GetGapsForApplicantAsync(string userId);
     }
 
     public class PaginationResult<T> where T : class

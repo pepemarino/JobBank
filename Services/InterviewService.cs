@@ -145,5 +145,22 @@ namespace JobBank.Services
                 throw new DataIntegrityException("AddInterviewAsync: A system error occurred. Please contact support.", ex);
             }
         }
+
+        public async Task<List<string>> GetGapsForApplicantAsync(string userId)
+        {
+            try
+            {
+                await using var context = _dbFactory.CreateDbContext();
+                return await context.Evaluations
+                    .Where(e => e.UserId == userId)
+                    .Select(e => e.Gaps)
+                    .ToListAsync();                
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "Error retrieving gaps for UserId {UserId}", userId);
+                throw new DataIntegrityException("GetGapsForApplicantAsync: A system error occurred. Please contact support.", ex);
+            }
+        }
     }
 }

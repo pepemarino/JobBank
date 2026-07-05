@@ -107,7 +107,11 @@
 
         if (HttpMethods.IsGet(HttpContext.Request.Method) && Action == LinkLoginCallbackAction)
         {
-            await OnGetLinkLoginCallbackAsync();
+            var externalLoginInfo = await SignInManager.GetExternalLoginInfoAsync();
+            if (externalLoginInfo is not null)
+            {
+                await OnGetLinkLoginCallbackAsync();
+            }
         }
     }
 

@@ -17,7 +17,9 @@ namespace JobBank.Management.Plugins
         [KernelFunction("GetPastFailures"), Description("Retrieves specific knowledge gaps and failed topics from the user's past interviews for this job role.")]
         public async Task<string> GetPastFailuresAsync([Description("The unique identifier of the job applicant.")] string userId)
         {
-            var gaps = await _interviewService.GetGapsForApplicantAsync(userId);           
+            var gaps = await _interviewService.GetGapsForApplicantAsync(userId)
+                ?? Enumerable.Empty<string>();
+
             return string.Join(", ", gaps);
         }
     }

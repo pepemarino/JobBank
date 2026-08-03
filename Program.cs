@@ -124,13 +124,11 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddScoped<ISkillsService, SkillsService>()
     .AddScoped<ITrainingService, TrainingServcie>()
     .AddScoped<IAnalysisCacheService, AnalysisCacheService>()
-    .AddScoped(typeof(IProtectedLocalStoreService<>), typeof(BrowserProtectedLocalStoreService<>))    
+    .AddScoped(typeof(IProtectedLocalStoreService<>), typeof(BrowserProtectedLocalStoreService<>))
     .AddScoped<ICareerAssistant, CareerAssistant>()
     .AddScoped<ITrainerAssistant, TrainerAssistant>()
-    .AddScoped<IIdentityService, IdentityService>()  
+    .AddScoped<IIdentityService, IdentityService>()
     .AddScoped<ITrainerAssistantManager, TrainerAssistantManager>()
-    .AddHostedService<RejectionAnalysisWorker>()
-    .AddHostedService<TrainerAnalysisWorker>()
     .AddSingleton<ILLMProvider, LLMProvider>()
     .AddScoped<ILLMManager, LLMManager>()
     .AddScoped<IInterviewService, InterviewService>()
@@ -140,6 +138,15 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddSingleton<AnalysisChannel>()
     .AddSingleton<TrainerChannel>()
     .AddSingleton(builder.Configuration);
+
+#region Hosted Services - Background Services
+
+builder.Services
+    .AddHostedService<RejectionAnalysisWorker>()
+    .AddHostedService<TrainerAnalysisWorker>()
+    .AddHostedService<RejectionWorker>();
+
+#endregion Hosted Services - Background Services
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

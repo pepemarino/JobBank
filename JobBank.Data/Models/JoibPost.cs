@@ -39,6 +39,8 @@ namespace JobBank.Models
 
         public bool ApplicationDeclined { get; set; }
 
+        public bool AutomaticallyRejected { get; set; }
+
         public virtual UserSkillMatchReport? UserSkillMatchReport { get; set; }
         public virtual JobRejectionAnalysis? JobRejectionAnalysis { get; set; }
 

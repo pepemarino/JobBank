@@ -6,7 +6,7 @@ namespace JobBank.Data
 {
     public class EmploymentBankContext : DbContext
     {
-        public EmploymentBankContext (DbContextOptions<EmploymentBankContext> options)
+        public EmploymentBankContext(DbContextOptions<EmploymentBankContext> options)
             : base(options)
         {
         }
@@ -20,7 +20,7 @@ namespace JobBank.Data
 
         public DbSet<JobAnalysisCache> JobAnalysisCache { get; set; } = default!;
 
-        public DbSet<UserSkillMatchReport> UserSkillMatchReport { get; set;} = default!;
+        public DbSet<UserSkillMatchReport> UserSkillMatchReport { get; set; } = default!;
 
         public DbSet<UserSkills> UserSkills { get; set; } = default!;
 
@@ -36,6 +36,8 @@ namespace JobBank.Data
 
         public DbSet<DataMigrationHistory> DataMigrationHistories { get; set; } = default!;
 
+        public DbSet<BackgroundJobExecution> BackgroundJobExecutions { get; set; } = default!;
 
+        public DbSet<RejectionEvents> RejectionEvents { get; set; } = default!;
     }
 }

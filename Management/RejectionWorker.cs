@@ -7,7 +7,7 @@ namespace JobBank.Management
     public class RejectionWorker : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly int _targetHour = 19; // Set the target hour for execution (2 AM UTC)
+        private readonly int _targetHour = 2; // Set the target hour for execution (2 AM UTC)
         private readonly string _jobName = nameof(RejectionWorker);
         private readonly ILogger<RejectionWorker> _logger;
 
@@ -111,51 +111,11 @@ namespace JobBank.Management
 
             dbContext.Database.SetCommandTimeout(TimeSpan.FromMinutes(10));
 
-            // ✅ FIXED SQL: Uses a staging table approach to prevent duplicate RejectionEvents
-            string sql = @"
-                -- Create temporary table to track newly rejected records
-                DECLARE @RejectedRecords TABLE (
-                    JobId INT,
-                    UserId NVARCHAR(128),
-                    RejectionTimestamp DATETIME2
-                );
+            var result = await dbContext.Database
+                .SqlQueryRaw<int>("EXEC dbo.spRejectOldJobPosts")
+                .ToListAsync(cancellationToken: token);
 
-                WHILE 1 = 1
-                BEGIN
-                    -- Update JobPosts and capture which ones were updated
-                    UPDATE TOP (2000) JobPost
-                    SET ApplicationDeclined = 1,
-                        AutomaticallyRejected = 1,
-                        ResponseDate = GETUTCDATE(),
-                        Timestamp = GETUTCDATE(),
-                        Comments = 'Your application has been automatically rejected due to inactivity for over a month.'
-                    WHERE ApplicationDeclined = 0 
-                      AND AutomaticallyRejected = 0 
-                      AND ApplicationDate < DATEADD(month, -1, GETUTCDATE());
-
-                    -- Get the rows affected count
-                    IF @@ROWCOUNT = 0 BREAK;
-
-                    -- Insert RejectionEvents only for records just updated
-                    INSERT INTO RejectionEvents (JobId, UserId, TerminationReason, Timestamp, EventDate, IsProcessed)
-                    SELECT jp.Id, jp.UserId, 'Automatic', GETUTCDATE(), GETUTCDATE(), 0
-                    FROM JobPost jp
-                    WHERE jp.ApplicationDeclined = 1 
-                      AND jp.AutomaticallyRejected = 1
-                      AND jp.ResponseDate >= DATEADD(MINUTE, -1, GETUTCDATE())  -- Only records from this batch
-                      AND NOT EXISTS (
-                          SELECT 1 FROM RejectionEvents re 
-                          WHERE re.JobId = jp.Id 
-                          AND re.TerminationReason = 'Automatic'
-                          AND DATEDIFF(SECOND, re.Timestamp, GETUTCDATE()) < 60
-                      );
-
-                    WAITFOR DELAY '00:00:00.050';
-                END";
-
-            int rowsAffected = await dbContext.Database.ExecuteSqlRawAsync(sql, token);
-
-            return rowsAffected;
+            return result.FirstOrDefault();
         }
     }
 }

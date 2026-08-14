@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AssemblyName>JobBank.RejectionAnalysis</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="JobBank.RejectionAnalysis\**" />
+		<EmbeddedResource Remove="JobBank.RejectionAnalysis\**" />
+		<None Remove="JobBank.RejectionAnalysis\**" />
+	</ItemGroup>
+
+</Project>

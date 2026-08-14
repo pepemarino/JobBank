@@ -1,4 +1,6 @@
 ﻿@page "/jobposts/edit"
+@using JobBank.EventHandler.EventArgs
+@using JobBank.EventHandler.Handlers
 @using JobBank.Management
 @using JobBank.Services.Abstraction
 @using Microsoft.EntityFrameworkCore
@@ -208,6 +210,9 @@
     private bool IsShowingSkillSetAnalysis { get; set; } = false;
     private int JobPostId { get; set; }
 
+    [Inject]
+    public RejectionEventHandler? RejectionEventHandler { get; set; }
+
     [Inject] public AnalysisChannel Channel { get; set; }
     [Inject] public ILLMProvider LLMProvider { get; set; }
     [Inject] public IIdentityService IdentityService { get; set; }
@@ -222,6 +227,8 @@
     {
         using var context = DbFactory.CreateDbContext();
         JobPost ??= await context.JobPost.FirstOrDefaultAsync(m => m.Id == Id);
+        
+        OnRejectionEvent += RejectionEventHandler.HandleRejectionAsync;
 
         if (JobPost is null)
         {
@@ -253,8 +260,8 @@
         IsShowingSkillSetAnalysis = false;
     }
 
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    public event Func<RejectionEventArg, Task>? OnRejectionEvent;
+
     private async Task UpdateJobPost()
     {
         using var context = DbFactory.CreateDbContext();
@@ -267,15 +274,19 @@
 
         await context.SaveChangesAsync();
 
-        // A JobPost can be saved wihout a description, but if there is one and the application was 
-        // declined, we want to trigger the analysis to give the user insights on why it was declined 
-        // and what to improve for next applications, so the description is needed for the analysis.
         if (JobPost!.ApplicationDeclined && LLMProvider.IsAvailable && !string.IsNullOrEmpty(JobPost.Description))
         {
             var jobId = JobPost.Id;
-            var userId = await IdentityService.GetUserIdAsync() ?? string.Empty;
-            await Channel.Writer.WriteAsync(new AnalysisRequest(jobId, userId)); // this should be done on startup in case that there is a crash
-                                                                                 // look for declined and analysis null
+            var userId = await IdentityService.GetUserIdAsync() ?? string.Empty;            
+            
+            var rejectionArg = new RejectionEventArg
+            {
+                JobPostId = JobPost.Id,
+                UserId = await IdentityService.GetUserIdAsync() ?? string.Empty,
+                TerminationReason = "Application Declined",
+            };
+            
+            if(OnRejectionEvent != null) await OnRejectionEvent.Invoke(rejectionArg);
         }
 
         NavigationManager.NavigateTo("/jobposts");

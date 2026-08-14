@@ -20,32 +20,48 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="JobBank.Application\**" />
 	  <Compile Remove="JobBank.Data\**" />
 	  <Compile Remove="JobBank.EtlConsole\**" />
+	  <Compile Remove="JobBank.EventHandler\**" />
+	  <Compile Remove="JobBank.EventProcessor\**" />
 	  <Compile Remove="JobBank.Management.DTO\**" />
 	  <Compile Remove="JobBank.Management\**" />
 	  <Compile Remove="JobBank.ModelDTO\**" />
+	  <Compile Remove="JobBank.RejectionAnalysis\**" />
 	  <Compile Remove="Logs\**" />
 	  <Compile Remove="WORKSCommons.Tests\**" />
+	  <Content Remove="JobBank.Application\**" />
 	  <Content Remove="JobBank.Data\**" />
 	  <Content Remove="JobBank.EtlConsole\**" />
+	  <Content Remove="JobBank.EventHandler\**" />
+	  <Content Remove="JobBank.EventProcessor\**" />
 	  <Content Remove="JobBank.Management.DTO\**" />
 	  <Content Remove="JobBank.Management\**" />
 	  <Content Remove="JobBank.ModelDTO\**" />
+	  <Content Remove="JobBank.RejectionAnalysis\**" />
 	  <Content Remove="Logs\**" />
 	  <Content Remove="WORKSCommons.Tests\**" />
+	  <EmbeddedResource Remove="JobBank.Application\**" />
 	  <EmbeddedResource Remove="JobBank.Data\**" />
 	  <EmbeddedResource Remove="JobBank.EtlConsole\**" />
+	  <EmbeddedResource Remove="JobBank.EventHandler\**" />
+	  <EmbeddedResource Remove="JobBank.EventProcessor\**" />
 	  <EmbeddedResource Remove="JobBank.Management.DTO\**" />
 	  <EmbeddedResource Remove="JobBank.Management\**" />
 	  <EmbeddedResource Remove="JobBank.ModelDTO\**" />
+	  <EmbeddedResource Remove="JobBank.RejectionAnalysis\**" />
 	  <EmbeddedResource Remove="Logs\**" />
 	  <EmbeddedResource Remove="WORKSCommons.Tests\**" />
+	  <None Remove="JobBank.Application\**" />
 	  <None Remove="JobBank.Data\**" />
 	  <None Remove="JobBank.EtlConsole\**" />
+	  <None Remove="JobBank.EventHandler\**" />
+	  <None Remove="JobBank.EventProcessor\**" />
 	  <None Remove="JobBank.Management.DTO\**" />
 	  <None Remove="JobBank.Management\**" />
 	  <None Remove="JobBank.ModelDTO\**" />
+	  <None Remove="JobBank.RejectionAnalysis\**" />
 	  <None Remove="Logs\**" />
 	  <None Remove="WORKSCommons.Tests\**" />
 	</ItemGroup>
@@ -53,10 +69,6 @@
 	<ItemGroup>
 	  <None Remove="msbuild.binlog" />
 	</ItemGroup>
-
-	<!--ItemGroup>
-		<SupportedPlatform Include="browser" />
-	</ItemGroup-->
 
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -116,8 +128,10 @@
 	  <None Include=".github\workflows\build.yml" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <ProjectReference Include="JobBank.Data\JobBank.Data.csproj" />
+	<ItemGroup> 
+	  <ProjectReference Include="JobBank.Application\JobBank.AutomaticRejection.csproj" /> 
+	  <ProjectReference Include="JobBank.Data\JobBank.Data.csproj" /> 
+	  <ProjectReference Include="JobBank.EventHandler\JobBank.EventHandler.csproj" />
 	  <ProjectReference Include="JobBank.Management.DTO\JobBank.Management.DTO.csproj" />
 	</ItemGroup>
 

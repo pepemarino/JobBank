@@ -8,6 +8,8 @@ using JobBank.Components.Pages.JobPostPages.ViewModels;
 using JobBank.Components.Pages.SkillPages.ViewModels;
 using JobBank.Components.Pages.UserSettingPages.ViewModels;
 using JobBank.Data;
+using JobBank.EventHandler.Handlers;
+using JobBank.Extensions;
 using JobBank.Management;
 using JobBank.Management.Abstraction;
 using JobBank.Management.Plugins;
@@ -137,14 +139,16 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddSingleton<RankingEngine>()
     .AddSingleton<AnalysisChannel>()
     .AddSingleton<TrainerChannel>()
-    .AddSingleton(builder.Configuration);
+    .AddSingleton(builder.Configuration)
+    .AddScoped<RejectionEventHandler>();
 
 #region Hosted Services - Background Services
 
 builder.Services
     .AddHostedService<RejectionAnalysisWorker>()
-    .AddHostedService<TrainerAnalysisWorker>()
-    .AddHostedService<RejectionWorker>();
+    .AddHostedService<TrainerAnalysisWorker>();
+
+builder.Services.AddWorkCommonsBackgroundService();
 
 #endregion Hosted Services - Background Services
 

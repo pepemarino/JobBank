@@ -1,4 +1,5 @@
-﻿using JobBank.Management;
+﻿using JobBank.EventHandler.ProcessorService;
+using JobBank.Management;
 
 namespace JobBank.Extensions
 {
@@ -7,7 +8,10 @@ namespace JobBank.Extensions
         public static IServiceCollection AddWorkCommonsBackgroundService(this IServiceCollection services)
         {
             // Register the hosted service itself using .NET's native extension
-            services.AddHostedService<RejectionWorker>();
+            services.AddHostedService<RejectionWorker>()
+                    .AddHostedService<RejectionAnalysisWorker>()
+                    .AddHostedService<TrainerAnalysisWorker>()
+                    .AddHostedService<EventProcessorWorker>();
 
             return services;
         }

@@ -142,6 +142,7 @@
 	  <ProjectReference Include="JobBank.Data\JobBank.Data.csproj" /> 
 	  <ProjectReference Include="JobBank.EventHandler\JobBank.EventHandler.csproj" />
 	  <ProjectReference Include="JobBank.Management.DTO\JobBank.Management.DTO.csproj" />
+	  <ProjectReference Include="JobBank.RejectionAnalysis\JobBank.RejectionAnalysis.csproj" />
 	  <ProjectReference Include="JobBank.Services\JobBank.Services.csproj" />
 	</ItemGroup>
 

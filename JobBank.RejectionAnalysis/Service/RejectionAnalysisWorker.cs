@@ -4,87 +4,121 @@ using JobBank.Services.Abstraction;
 using JobBank.StartUpServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace JobBank.Management
 {
-    public class RejectionAnalysisWorker : BackgroundService
+    public sealed class RejectionAnalysisWorker : BackgroundService
     {
         private readonly AnalysisChannel _analysisChannel;
-        private readonly IServiceScopeFactory _scopeFactory;       
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ILogger<RejectionAnalysisWorker> _logger;
 
         public RejectionAnalysisWorker(
             AnalysisChannel channel,
-            IServiceScopeFactory scopeFactory)
+            IServiceScopeFactory scopeFactory,
+            ILogger<RejectionAnalysisWorker> logger)
         {
             _analysisChannel = channel;
             _scopeFactory = scopeFactory;
+            _logger = logger;
         }
 
-        /// <summary>
-        /// Note that this is not happening on startup but when there is data in the channel.
-        /// It needs to be changed to startup.  When this happens we need tp change this implementation.
-        /// </summary>
-        /// <param name="stoppingToken"></param>
-        /// <returns></returns>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // Wait until there is data to read in the channel
-            while (await _analysisChannel.Reader.WaitToReadAsync(stoppingToken))
+            _logger.LogInformation("RejectionAnalysisWorker started.");
+
+            await foreach (var request in _analysisChannel.Reader.ReadAllAsync(stoppingToken))
             {
-                // Try to pull all available items from the channel
-                while (_analysisChannel.Reader.TryRead(out var request))
+                try
                 {
-                    await using var scope = _scopeFactory.CreateAsyncScope();
-                    var jobPostService = scope.ServiceProvider.GetRequiredService<IJobPostService>();
-                    var prompService = scope.ServiceProvider.GetRequiredService<PrompService>();
-                    var careerAssistant = scope.ServiceProvider.GetRequiredService<ICareerAssistant>();
-                    var userSkillService = scope.ServiceProvider.GetRequiredService<ISkillsService>();
-
-                    // Use the UserId from the request instead of trying to get it from AuthenticationStateProvider
-                    var currentUserId = request.UserId;
-
-                    if (string.IsNullOrEmpty(currentUserId))
-                        continue;
-
-                    var userSkills = await userSkillService.GetUserSkillsAsync(currentUserId);
-                    if (userSkills == null)
-                        continue;
-
-                    var jobId = request.JobApplicationId;
-
-                    // the query is showing the Rejection Guard pattern
-                    var jobApplications = await jobPostService
-                        .GetJobPostsByQueryAsync<JobApplicationAnalysisDTO>(jp => jp.ApplicationDeclined &&
-                                                       jp.JobRejectionAnalysis == null &&
-                                                       jp.Id == jobId);
-
-                    var jobApplication = jobApplications.FirstOrDefault();
-                    if (jobApplication == null || string.IsNullOrEmpty(jobApplication.Description)) continue;
-
-                    jobApplication.UserSkillSet = userSkills.RawSkills;
-                    
-                    jobApplication = await careerAssistant.RunLLMAnalysis(jobApplication, prompService.SkillGap, currentUserId);
-
-                    var rejectedApplication = await jobPostService.GetJobPostByIdAsync(jobId);
-                    if (rejectedApplication == null) return;                     // this is exception, but 
-
-                    rejectedApplication.JobRejectionAnalysis = new JobRejectionAnalysisDTO
-                    {
-                        JobPostId = jobId,
-                        Version = 1,
-                        ApplicantSkills = jobApplication.UserSkillSet,
-                        Analisis = jobApplication.AnalysisResult,
-                        JobDescription = jobApplication.Description,
-                        IsProcessed = true,
-                        ModelUsed = prompService.LLMModel,
-                        PromptVersion = "v1",
-                        UserId = currentUserId  // Include the user ID when queuing work
-                    };
-
-                    await jobPostService.UpdateOrAddJobPostAsync(rejectedApplication);
+                    await ProcessRequestAsync(request, stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogInformation("RejectionAnalysisWorker stopping due to cancellation.");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Unexpected error while processing JobId {JobId} for UserId {UserId}.",
+                        request.JobApplicationId,
+                        request.UserId);
                 }
             }
         }
-    }
 
+        private async Task ProcessRequestAsync(AnalysisRequest request, CancellationToken token)
+        {
+            if (string.IsNullOrWhiteSpace(request.UserId))
+            {
+                _logger.LogWarning("Skipping request with missing UserId.");
+                return;
+            }
+
+            await using var scope = _scopeFactory.CreateAsyncScope();
+
+            var jobPostService = scope.ServiceProvider.GetRequiredService<IJobPostService>();
+            var promptService = scope.ServiceProvider.GetRequiredService<PrompService>();
+            var careerAssistant = scope.ServiceProvider.GetRequiredService<ICareerAssistant>();
+            var userSkillService = scope.ServiceProvider.GetRequiredService<ISkillsService>();
+
+            var jobId = request.JobApplicationId;
+            var userId = request.UserId;
+
+            var userSkills = await userSkillService.GetUserSkillsAsync(userId);
+            if (userSkills == null)
+            {
+                _logger.LogWarning("No skills found for UserId {UserId}. Skipping.", userId);
+                return;
+            }
+
+            var jobApplications = await jobPostService
+                .GetJobPostsByQueryAsync<JobApplicationAnalysisDTO>(jp =>
+                    jp.ApplicationDeclined &&
+                    jp.JobRejectionAnalysis == null &&
+                    jp.Id == jobId);
+
+            var jobApplication = jobApplications.FirstOrDefault();
+            if (jobApplication == null || string.IsNullOrWhiteSpace(jobApplication.Description))
+            {
+                _logger.LogWarning("JobId {JobId} has no valid application or description.", jobId);
+                return;
+            }
+
+            jobApplication.UserSkillSet = userSkills.RawSkills;
+
+            // Run LLM analysis
+            jobApplication = await careerAssistant.RunLLMAnalysis(
+                jobApplication,
+                promptService.SkillGap,
+                userId);
+
+            // Fetch the actual entity to update
+            var rejectedApplication = await jobPostService.GetJobPostByIdAsync(jobId);
+            if (rejectedApplication == null)
+            {
+                _logger.LogError("JobId {JobId} not found during update.", jobId);
+                return;
+            }
+
+            rejectedApplication.JobRejectionAnalysis = new JobRejectionAnalysisDTO
+            {
+                JobPostId = jobId,
+                Version = 1,
+                ApplicantSkills = jobApplication.UserSkillSet,
+                Analisis = jobApplication.AnalysisResult,
+                JobDescription = jobApplication.Description,
+                IsProcessed = true,
+                ModelUsed = promptService.LLMModel,
+                PromptVersion = "v1",
+                UserId = userId
+            };
+
+            await jobPostService.UpdateOrAddJobPostAsync(rejectedApplication);
+
+            _logger.LogInformation("Processed rejection analysis for JobId {JobId}.", jobId);
+        }
+    }
 }

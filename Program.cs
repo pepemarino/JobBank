@@ -145,15 +145,7 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddSingleton(builder.Configuration)    
     .AddScoped<RejectionEventHandler>();
 
-#region Hosted Services - Background Services
-
-builder.Services
-    .AddHostedService<RejectionAnalysisWorker>()
-    .AddHostedService<TrainerAnalysisWorker>();
-
 builder.Services.AddWorkCommonsBackgroundService();
-
-#endregion Hosted Services - Background Services
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

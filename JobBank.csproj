@@ -21,6 +21,7 @@
 
 	<ItemGroup>
 	  <Compile Remove="JobBank.Application\**" />
+	  <Compile Remove="JobBank.Common\**" />
 	  <Compile Remove="JobBank.Data\**" />
 	  <Compile Remove="JobBank.EtlConsole\**" />
 	  <Compile Remove="JobBank.EventHandler\**" />
@@ -29,9 +30,11 @@
 	  <Compile Remove="JobBank.Management\**" />
 	  <Compile Remove="JobBank.ModelDTO\**" />
 	  <Compile Remove="JobBank.RejectionAnalysis\**" />
+	  <Compile Remove="JobBank.Services\**" />
 	  <Compile Remove="Logs\**" />
 	  <Compile Remove="WORKSCommons.Tests\**" />
 	  <Content Remove="JobBank.Application\**" />
+	  <Content Remove="JobBank.Common\**" />
 	  <Content Remove="JobBank.Data\**" />
 	  <Content Remove="JobBank.EtlConsole\**" />
 	  <Content Remove="JobBank.EventHandler\**" />
@@ -40,9 +43,11 @@
 	  <Content Remove="JobBank.Management\**" />
 	  <Content Remove="JobBank.ModelDTO\**" />
 	  <Content Remove="JobBank.RejectionAnalysis\**" />
+	  <Content Remove="JobBank.Services\**" />
 	  <Content Remove="Logs\**" />
 	  <Content Remove="WORKSCommons.Tests\**" />
 	  <EmbeddedResource Remove="JobBank.Application\**" />
+	  <EmbeddedResource Remove="JobBank.Common\**" />
 	  <EmbeddedResource Remove="JobBank.Data\**" />
 	  <EmbeddedResource Remove="JobBank.EtlConsole\**" />
 	  <EmbeddedResource Remove="JobBank.EventHandler\**" />
@@ -51,9 +56,11 @@
 	  <EmbeddedResource Remove="JobBank.Management\**" />
 	  <EmbeddedResource Remove="JobBank.ModelDTO\**" />
 	  <EmbeddedResource Remove="JobBank.RejectionAnalysis\**" />
+	  <EmbeddedResource Remove="JobBank.Services\**" />
 	  <EmbeddedResource Remove="Logs\**" />
 	  <EmbeddedResource Remove="WORKSCommons.Tests\**" />
 	  <None Remove="JobBank.Application\**" />
+	  <None Remove="JobBank.Common\**" />
 	  <None Remove="JobBank.Data\**" />
 	  <None Remove="JobBank.EtlConsole\**" />
 	  <None Remove="JobBank.EventHandler\**" />
@@ -62,6 +69,7 @@
 	  <None Remove="JobBank.Management\**" />
 	  <None Remove="JobBank.ModelDTO\**" />
 	  <None Remove="JobBank.RejectionAnalysis\**" />
+	  <None Remove="JobBank.Services\**" />
 	  <None Remove="Logs\**" />
 	  <None Remove="WORKSCommons.Tests\**" />
 	</ItemGroup>
@@ -130,9 +138,11 @@
 
 	<ItemGroup> 
 	  <ProjectReference Include="JobBank.Application\JobBank.AutomaticRejection.csproj" /> 
+	  <ProjectReference Include="JobBank.Common\JobBank.Common.csproj" /> 
 	  <ProjectReference Include="JobBank.Data\JobBank.Data.csproj" /> 
 	  <ProjectReference Include="JobBank.EventHandler\JobBank.EventHandler.csproj" />
 	  <ProjectReference Include="JobBank.Management.DTO\JobBank.Management.DTO.csproj" />
+	  <ProjectReference Include="JobBank.Services\JobBank.Services.csproj" />
 	</ItemGroup>
 
 </Project>

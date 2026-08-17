@@ -1,6 +1,7 @@
 ﻿using JobBank.Management.Abstraction;
 using JobBank.Management.Interview;
 using JobBank.StartUpServices;
+using Microsoft.Extensions.Logging;
 
 namespace JobBank.Management
 {

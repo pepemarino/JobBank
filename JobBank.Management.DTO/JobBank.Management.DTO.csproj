@@ -7,4 +7,13 @@
 	<AssemblyName>JobBank.Management.DTO</AssemblyName>
   </PropertyGroup>
 
+	<ItemGroup>
+		<PackageReference Include="AutoMapper" Version="12.0.1" />
+		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+	</ItemGroup>
+	
+  <ItemGroup>
+    <ProjectReference Include="..\JobBank.Data\JobBank.Data.csproj" />
+  </ItemGroup>
+
 </Project>

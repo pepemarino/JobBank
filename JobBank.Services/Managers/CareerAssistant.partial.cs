@@ -1,6 +1,5 @@
 ﻿namespace JobBank.Management
 {
-    using JobBank.Management.Abstraction;
     using JobBank.ModelsDTO;
     using Microsoft.CodeAnalysis;
     using OpenAI.Chat;

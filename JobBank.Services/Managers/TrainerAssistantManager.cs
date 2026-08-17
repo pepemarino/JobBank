@@ -4,6 +4,8 @@ using JobBank.Management.Interview;
 using JobBank.ModelsDTO;
 using JobBank.Services.Abstraction;
 using JobBank.Util;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace JobBank.Management

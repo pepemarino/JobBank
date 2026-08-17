@@ -16,6 +16,8 @@ using JobBank.Management.Plugins;
 using JobBank.Models.Identity;
 using JobBank.Services;
 using JobBank.Services.Abstraction;
+using JobBank.Services.Services;
+using JobBank.Services.Services.Abstraction;
 using JobBank.StartUpServices;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -46,7 +48,7 @@ string jsonString = File.ReadAllText(filePath);
 var llmPrompts = JsonSerializer.Deserialize<PrompService>(jsonString)
     ?? throw new InvalidDataException("Startup Failed: StartUpServices/prompts.json is empty or malformed.");
 
-builder.Services.AddSingleton(llmPrompts);
+builder.Services.AddSingleton<PrompService>(llmPrompts);
 
 #endregion
 
@@ -113,7 +115,7 @@ else
 }
 
 builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
-    .AddTransient<ILLMAdvisorViewModel, LLMAdvisorViewModel>()
+    .AddScoped<ILLMAdvisorViewModel, LLMAdvisorViewModel>()
     .AddTransient<IHomeViewModel, HomeViewModel>()
     .AddScoped<ISkillViewModel, SkillViewModel>()
     .AddScoped<IInterviewerViewModel, InterviewerViewModel>()
@@ -130,6 +132,7 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddScoped<ICareerAssistant, CareerAssistant>()
     .AddScoped<ITrainerAssistant, TrainerAssistant>()
     .AddScoped<IIdentityService, IdentityService>()
+    .AddScoped<IUserRepository, UserRepository>()
     .AddScoped<ITrainerAssistantManager, TrainerAssistantManager>()
     .AddSingleton<ILLMProvider, LLMProvider>()
     .AddScoped<ILLMManager, LLMManager>()
@@ -139,7 +142,7 @@ builder.Services.AddScoped<IIndexViewModel, IndexViewModel>()
     .AddSingleton<RankingEngine>()
     .AddSingleton<AnalysisChannel>()
     .AddSingleton<TrainerChannel>()
-    .AddSingleton(builder.Configuration)
+    .AddSingleton(builder.Configuration)    
     .AddScoped<RejectionEventHandler>();
 
 #region Hosted Services - Background Services

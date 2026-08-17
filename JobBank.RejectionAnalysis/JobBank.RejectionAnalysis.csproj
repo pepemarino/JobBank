@@ -13,4 +13,20 @@
 		<None Remove="JobBank.RejectionAnalysis\**" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.2" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\JobBank.Data\JobBank.Data.csproj" />
+	  <ProjectReference Include="..\JobBank.Management.DTO\JobBank.Management.DTO.csproj" />
+	  <ProjectReference Include="..\JobBank.Services\JobBank.Services.csproj" />
+	</ItemGroup>
+
 </Project>

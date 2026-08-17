@@ -15,7 +15,6 @@
 
 	<ItemGroup>
 	  <Folder Include="Events\" />
-	  <Folder Include="ProcessorService\" />
 	</ItemGroup>
 
 
@@ -26,11 +25,13 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.2" />
 	</ItemGroup>
 
 
 	<ItemGroup>
 	  <ProjectReference Include="..\JobBank.Data\JobBank.Data.csproj" />
+	  <ProjectReference Include="..\JobBank.Management.DTO\JobBank.Management.DTO.csproj" />
 	</ItemGroup>
 
 </Project>

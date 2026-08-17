@@ -3,8 +3,10 @@ using JobBank.Models.Identity;
 using JobBank.ModelsDTO;
 using JobBank.Services;
 using JobBank.Services.Abstraction;
+using JobBank.Services.Services.Abstraction;
 using JobBank.StartUpServices;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using System.Security.Cryptography;
 
 namespace JobBank.Management
@@ -98,8 +100,8 @@ namespace JobBank.Management
 
             if (!string.IsNullOrEmpty(userId))
             {
-                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<JobBankUser>>();
-                return await userManager.FindByIdAsync(userId);
+                var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+                return await userRepository.GetUserByIdAsync(userId);
             }
 
             var identityService = scope.ServiceProvider.GetRequiredService<IIdentityService>();

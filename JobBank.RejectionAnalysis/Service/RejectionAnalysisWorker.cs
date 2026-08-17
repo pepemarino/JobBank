@@ -2,6 +2,8 @@
 using JobBank.ModelsDTO;
 using JobBank.Services.Abstraction;
 using JobBank.StartUpServices;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace JobBank.Management
 {

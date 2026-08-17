@@ -6,6 +6,7 @@ using JobBank.Management.Abstraction;
 using JobBank.ModelsDTO;
 using JobBank.Services.Abstraction;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace JobBank.Services
 {

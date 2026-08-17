@@ -1,4 +1,5 @@
 ﻿using JobBank.Management.Interview;
+using Microsoft.Extensions.Logging;
 using OpenAI.Chat;
 using System.Text.Json;
 

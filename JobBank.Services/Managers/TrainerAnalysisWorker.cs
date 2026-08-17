@@ -1,4 +1,7 @@
 ﻿using JobBank.Management.Abstraction;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace JobBank.Management
 {

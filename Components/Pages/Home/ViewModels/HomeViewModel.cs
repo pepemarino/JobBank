@@ -1,15 +1,20 @@
-﻿using ChartJs.Blazor;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using ChartJs.Blazor;
 using ChartJs.Blazor.BarChart;
 using ChartJs.Blazor.BarChart.Axes;
 using ChartJs.Blazor.Common;
 using ChartJs.Blazor.Common.Axes;
 using ChartJs.Blazor.Common.Axes.Ticks;
 using ChartJs.Blazor.Common.Enums;
+using ChartJs.Blazor.PieChart;
 using ChartJs.Blazor.Util;
 using JobBank.Data;
+using JobBank.ModelsDTO;
 using JobBank.Services;
 using JobBank.Services.Abstraction;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 using System.Drawing;
 
 namespace JobBank.Components.Pages.Home.ViewModels
@@ -17,6 +22,8 @@ namespace JobBank.Components.Pages.Home.ViewModels
     public class HomeViewModel : IHomeViewModel, IAsyncDisposable
     {
         private readonly IIdentityService _identityService;
+        private readonly IMapper _mapper;
+
         public FilteredStateService StateService { get; private set; }
 
         private readonly EmploymentBankContext Context;
@@ -28,12 +35,14 @@ namespace JobBank.Components.Pages.Home.ViewModels
         private DateTime? ToDate { get; set; }
 
         public HomeViewModel(
-            IDbContextFactory<EmploymentBankContext> DbFactory, 
+            IDbContextFactory<EmploymentBankContext> DbFactory,
             FilteredStateService stateService,
-            IIdentityService identityService)
+            IIdentityService identityService,
+            IMapper mapper)
         {
             StateService = stateService;
             _identityService = identityService;
+            _mapper = mapper;
 
             FromDate = StateService.FromDate;
             ToDate = StateService.ToDate;
@@ -41,65 +50,59 @@ namespace JobBank.Components.Pages.Home.ViewModels
             Context = DbFactory.CreateDbContext();
             this.Title = "WORKS Commons Active Applications";
 
-            // Initialize Config and ensure Data collections exist (ChartJs.Blazor exposes Data as a read-only property).
+            StateService.OnChange += HandleStateChange;
+        }
+
+        private void SetDonutChart()
+        {
+            this.PieConfig = new PieConfig
+            {
+                Options = new PieOptions
+                {
+                    Responsive = true,
+                    MaintainAspectRatio = false,
+
+                    // This instantly turns Pie chart into a true Donut ring! hungry?
+                    CutoutPercentage = 65,
+
+                    Legend = new Legend { Position = Position.Top },
+                    Title = new OptionsTitle { Display = true, Text = "Application Status Distribution" }
+                }
+            };
+        }
+
+        private void SetBarChart()
+        {
             this.Config = new BarConfig();
             this.Config.Data.Labels.Clear();
             this.Config.Data.Datasets.Clear();
 
-            // More visible defaults: disable aspect ratio so the chart fills its container,
-            // set a clearer title and keep legend on top.
             this.Config.Options = new BarOptions
             {
                 Responsive = true,
                 MaintainAspectRatio = false,
-                Legend = new Legend
-                {
-                    Position = Position.Top
-                },
-                Title = new OptionsTitle
-                {
-                    Display = true,
-                    Text = "Applications by Date"
-                },
-                // Ensure the Y axis begins at zero (prevents chart from starting at 1 when there's a single entry).
+                Legend = new Legend { Position = Position.Top },
+                Title = new OptionsTitle { Display = true, Text = "Applications by Date" },
                 Scales = new BarScales
                 {
                     YAxes = new List<CartesianAxis>
                     {
                         new BarLinearCartesianAxis
                         {
-                            Ticks = new LinearCartesianTicks
-                            {
-                                BeginAtZero = true,
-                                Min = 0 // explicit min helps with some Chart.js versions
-                            },
-                            GridLines = new GridLines
-                            {
-                                Color = ColorUtil.FromDrawingColor(Color.FromArgb(40, 0, 0, 0)) // subtle grid lines
-                            }
+                            Ticks = new LinearCartesianTicks { BeginAtZero = true, Min = 0 },
+                            GridLines = new GridLines { Color = ColorUtil.FromDrawingColor(Color.FromArgb(40, 0, 0, 0)) }
                         }
                     },
-                    XAxes = new List<CartesianAxis>
-                    {
-                        new BarCategoryAxis
-                        {
-                            Ticks = new CategoryTicks
-                            {
-                                // rotate or auto-skip can be configured here if many labels exist
-                            }
-                        }
-                    }
+                    XAxes = new List<CartesianAxis> { new BarCategoryAxis() }
                 }
             };
-
-            StateService.OnChange += HandleStateChange;
         }
 
         public Chart JobChart { get; set; }
+        public Chart DonutChart { get; set; } 
         public string Title { get; set; }
         public string Description { get; set; }
 
-        // back the IEnumerable so callers can inspect the stats if needed
         public IEnumerable<DailyStatsViewModel> DailyStatsViewModels => _dailyStats;
 
         private BarConfig Config { get; set; }
@@ -110,6 +113,15 @@ namespace JobBank.Components.Pages.Home.ViewModels
             set => Config = value;
         }
 
+        PieConfig IHomeViewModel.PieConfig
+        {
+            get => PieConfig;
+            set => PieConfig = value;
+        }
+
+        public PieConfig PieConfig { get; set; }
+        public Chart DonutCart { get; set; }
+
         public async ValueTask DisposeAsync()
         {
             await Context.DisposeAsync();
@@ -117,8 +129,11 @@ namespace JobBank.Components.Pages.Home.ViewModels
         }
 
         public async Task InitializeAsync()
-        {            
-            await LoadData();
+        {
+            SetBarChart();
+            SetDonutChart();
+            await LoadBarChartData();
+            await LoadDonutChartData();
         }
 
         private async void HandleStateChange()
@@ -126,21 +141,51 @@ namespace JobBank.Components.Pages.Home.ViewModels
             FromDate = StateService.FromDate;
             ToDate = StateService.ToDate;
 
-            await LoadData();
-            OnRequestUIUpdate?.Invoke();
+            // Instead of calling .Clear() instantly here, let the load methods update the 
+            // arrays and call .Update() on the JS wrapper instance. This prevents rendering flashes.
 
+            await LoadBarChartData();
+            await LoadDonutChartData();
+
+            // Ask the components to explicitly redraw their JS instances
+            if (JobChart != null) await JobChart.Update();
+            if (DonutChart != null) await DonutChart.Update();
+
+            OnRequestUIUpdate?.Invoke();
         }
 
-        private async Task LoadData()
+        private async Task LoadDonutChartData()
         {
-            // build labels and a single dataset with counts for each date
+            var valueCounts = await ApplicationStatusCounts();
+
+            var labels = valueCounts.Keys.Select(k => k.ToString()).ToList();
+            var values = valueCounts.Values.ToList();
+
+            // Instantiated a PieDataset instead of DoughnutDataset
+            PieDataset<int> dataset = new PieDataset<int>(values)
+            {
+                // Used a refined pastel/modern color palette instead of harsh raw colors
+                BackgroundColor = new[] { "#36A2EB", "#FF6384", "#FFCE56" },
+                BorderColor = new[] { "#FFFFFF", "#FFFFFF", "#FFFFFF" }, // White borders separate arcs elegantly
+                BorderWidth = 2,
+                HoverBorderWidth = 3
+            };
+
+            this.PieConfig.Data.Labels.Clear();
+            foreach (var label in labels)
+            {
+                this.PieConfig.Data.Labels.Add(label);
+            }
+            this.PieConfig.Data.Datasets.Clear();
+            this.PieConfig.Data.Datasets.Add(dataset);
+        }
+
+        private async Task LoadBarChartData()
+        {
             var labels = new List<string>();
             var values = new List<int>();
+            List<JobPostDTO> jobPosts = await DateFilteredJobPosts();
 
-            List<Models.JobPost> jobPosts = await DateFilteredJobPosts();
-
-            // group by application date and count
-            // project to DailyStatsViewModel for easier consumption
             var stats = jobPosts
                 .GroupBy(pg => pg.ApplicationDate)
                 .Select(g => new DailyStatsViewModel
@@ -159,7 +204,6 @@ namespace JobBank.Components.Pages.Home.ViewModels
                 values.Add(stat.Count);
             }
 
-            // replace labels & datasets (clear previous)
             this.Config.Data.Labels.Clear();
             foreach (var l in labels)
             {
@@ -170,7 +214,6 @@ namespace JobBank.Components.Pages.Home.ViewModels
 
             if (values.Count == 0)
             {
-                // show a subtle "no data" placeholder so the UI doesn't look broken
                 this.Config.Data.Labels.Add("No Data");
                 this.Config.Data.Datasets.Add(
                     new BarDataset<int>(new[] { 0 })
@@ -184,41 +227,64 @@ namespace JobBank.Components.Pages.Home.ViewModels
             }
             else
             {
-                // single dataset with visible styling
                 this.Config.Data.Datasets.Add(
                     new BarDataset<int>(values)
                     {
                         Label = "Applications",
-                        // semi-transparent blue for good contrast
-                        BackgroundColor = ColorUtil.FromDrawingColor(Color.FromArgb(200, 0, 123, 255)),
-                        BorderColor = ColorUtil.FromDrawingColor(Color.FromArgb(255, 0, 82, 204)),
+                        BackgroundColor = "#36A2EB", // Unified palette color matching the donut chart
+                        BorderColor = "#2482C3",
                         BorderWidth = 1
                     }
                 );
             }
         }
 
-        /// <summary>
-        /// Filtering and ordering job posts by application date is done at the database level for efficiency.
-        /// </summary>
-        /// <returns></returns>
-        private async Task<List<Models.JobPost>> DateFilteredJobPosts()
+        #region Private Data Access Methods
+        private async Task<List<JobPostDTO>> DateFilteredJobPosts()
         {
-            var userId = await _identityService.GetUserIdAsync();
-            var query = Context.JobPost.AsNoTracking().Where(jp => jp.UserId == userId && 
-                                                                   jp.Description != null && 
-                                                                   jp.Description != "");
-
-            if (FromDate.HasValue)
-                query = query.Where(jp => jp.ApplicationDate >= FromDate.Value); // push date filter to the database
-
-            if (ToDate.HasValue)
-                query = query.Where(jp => jp.ApplicationDate <= ToDate.Value);   // push date filter to the database
-
+            IQueryable<Models.JobPost> query = await UserJobApplicationsQuery();
             return await query
                 .Where(jp => jp.ApplicationDate.HasValue && !jp.ApplicationDeclined)
                 .OrderBy(jp => jp.ApplicationDate)
+                .ProjectTo<JobPostDTO>(_mapper.ConfigurationProvider)
                 .ToListAsync();
         }
+
+        private async Task<Dictionary<ApplicationStatus, int>> ApplicationStatusCounts()
+        {
+            IQueryable<Models.JobPost> query = await UserJobApplicationsQuery();
+            var counts = await query
+                .GroupBy(jp => new { jp.AutomaticallyRejected, jp.ApplicationDeclined })
+                .Select(g => new
+                {
+                    Status = g.Key.AutomaticallyRejected ? ApplicationStatus.AutomaticallyRejected
+                            : g.Key.ApplicationDeclined ? ApplicationStatus.Declined
+                            : ApplicationStatus.Active,
+                    Count = g.Count()
+                })
+                .ToListAsync();
+            return counts.ToDictionary(c => c.Status, c => c.Count);
+        }
+
+        private enum ApplicationStatus
+        {
+            Active,
+            Declined,
+            AutomaticallyRejected
+        }
+
+        private async Task<IQueryable<Models.JobPost>> UserJobApplicationsQuery()
+        {
+            var userId = await _identityService.GetUserIdAsync();
+            var query = Context.JobPost.AsNoTracking()
+                               .Where(jp => jp.UserId == userId && jp.Description != null && jp.Description != "");
+            if (FromDate.HasValue)
+                query = query.Where(jp => jp.ApplicationDate >= FromDate.Value);
+            if (ToDate.HasValue)
+                query = query.Where(jp => jp.ApplicationDate <= ToDate.Value);
+            return query;
+        }
+
+        #endregion Private Data Access Methods
     }
 }

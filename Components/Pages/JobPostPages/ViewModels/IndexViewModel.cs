@@ -159,7 +159,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                     JobType = jp.JobType,
                     ActionToTake = jp.ActionToTake,
                     ApplicationDate = jp.ApplicationDate,
-                    ApplicationDeclined = jp.ApplicationDeclined
+                    ApplicationDeclined = jp.ApplicationDeclined,
+                    AutomaticallyRejected = jp.AutomaticallyRejected
                 });
 
                 // Apply default ordering
@@ -217,9 +218,14 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         /// <returns></returns>
         public string GetRowCssClass(JobPostDataModel jobPost)
         {           
-            if (jobPost.ApplicationDeclined)
+            if (jobPost.ApplicationDeclined && !jobPost.AutomaticallyRejected)
             {
                 return "declined-row";
+            }
+
+            if (jobPost.ApplicationDeclined && jobPost.AutomaticallyRejected)
+            {
+                return "declined-row stale-automatically-rejected";
             }
 
             if (jobPost.InterviewDate.HasValue)

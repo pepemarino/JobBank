@@ -58,12 +58,15 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
         private List<string> WeakAreas { get; set; } = new();
         private List<EvaluationResult> Evaluations { get; set; } = new();
 
-        // NEW FOR TUTOR EXPERIMENT
-        private bool IsGuidedTutorModeEnabled { get; set; }        
+        #endregion Interview State Tracking
+
+        #region Interview State Tracking - Tutor Mode Properties
+
+        private bool IsGuidedTutorModeEnabled { get; set; }
         private bool IsCurrentlyTutoring { get; set; } = false;
         private string RetestTopic { get; set; } = string.Empty;
 
-        #endregion Interview State Tracking
+        #endregion Interview State Tracking - Tutor Mode Properties
 
         #region View Model Properties
 
@@ -324,7 +327,7 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
             }
 
             try
-            {
+            {                   
                 IsProcessing = true;
                 ResponseMessage = string.Empty;
                 var jobPost = await _jobPostService.GetJobPostByIdAsync(JobPostId);
@@ -334,6 +337,24 @@ namespace JobBank.Components.Pages.Interviewer.ViewModels
                     ResponseMessage = "Job post not found.";
                     return;
                 }
+
+                var userId = await _identityService.GetUserIdAsync();
+                if (userId == null)
+                {
+                    _logger.LogWarning("User not authenticated for JobPostId: {JobPostId}", JobPostId);
+                    ResponseMessage = "User not authenticated.";
+                    return;
+                }
+
+                var usrSettings = await _userSettings.GetUserSettingAsync(userId);
+                if (usrSettings == null)
+                {
+                    _logger.LogWarning("User settings not found for UserId: {UserId}", userId);
+                    ResponseMessage = "User settings not found.";
+                    return;
+                }
+
+                IsGuidedTutorModeEnabled = usrSettings.UseTutorMode;
 
                 CompanyName = jobPost.Company ?? string.Empty;
                 JobTitle = jobPost.Title ?? string.Empty;

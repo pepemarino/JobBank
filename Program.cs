@@ -89,6 +89,7 @@ builder.Services.AddAuthorizationBuilder();
 
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+builder.Services.AddHttpClient();
 
 #region DI registrations
 

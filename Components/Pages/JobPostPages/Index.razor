@@ -101,4 +101,78 @@
     <div class="mt-3">
         <Paginator State="@IndexViewModel.Pagination" />
     </div>
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body">
+            <h6 class="card-title fw-bold mb-3">
+                <i class="bi bi-info-circle me-2"></i>Status Legend
+            </h6>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="ps-0">
+                                        <span class="legend-box applied-row"></span>
+                                    </td>
+                                    <td class="ps-2">
+                                        <strong>Applied</strong> - Application submitted, awaiting response
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-0">
+                                        <span class="legend-box applied-row stale-warn"></span>
+                                    </td>
+                                    <td class="ps-2">
+                                        <strong>Stale Warning</strong> - Application older than 14 days
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-0">
+                                        <span class="legend-box applied-row stale-hey"></span>
+                                    </td>
+                                    <td class="ps-2">
+                                        <strong>Stale Alert</strong> - Application older than 21 days
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="ps-0">
+                                        <span class="legend-box applied-row stale-critical"></span>
+                                    </td>
+                                    <td class="ps-2">
+                                        <strong>Stale Critical</strong> - Application older than 30 days
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-0">
+                                        <span class="legend-box declined-row"></span>
+                                    </td>
+                                    <td class="ps-2">
+                                        <strong>Declined</strong> - Application manually rejected
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-0">
+                                        <span class="legend-box declined-row stale-automatically-rejected"></span>
+                                    </td>
+                                    <td class="ps-2">
+                                        <strong>Auto-Rejected</strong> - System rejected after 30 days
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>

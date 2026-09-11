@@ -22,6 +22,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             ActionToTake = post.ActionToTake;
             ApplicationDate = post.ApplicationDate;
             ApplicationDeclined = post.ApplicationDeclined;
+            AutomaticallyRejected = post.AutomaticallyRejected;
         }
 
         public int Id { get; set; }
@@ -48,6 +49,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
         public bool ApplicationDeclined { get; set; }
 
+        public bool AutomaticallyRejected { get; set; }
+
         /// <summary>
         /// 
         /// </summary>
@@ -65,7 +68,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 JobType = jobPost.JobType,  
                 ActionToTake = jobPost.ActionToTake,
                 ApplicationDate = jobPost.ApplicationDate,
-                ApplicationDeclined = jobPost.ApplicationDeclined
+                ApplicationDeclined = jobPost.ApplicationDeclined,
+                AutomaticallyRejected = jobPost.AutomaticallyRejected   
             };
         }
     }

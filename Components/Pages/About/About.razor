@@ -28,15 +28,29 @@
             </div>
         </div>
     }
+    else
+    {
+        <div class="alert alert-warning" role="alert">
+            Build information is not available.
+        </div>
+    }
 </div>
 
-@inject HttpClient Http
 @code {
     private BuildInfo? Info;
+    [Inject] private HttpClient Http { get; set; } = default!;
+    [Inject] private ILogger<About> Logger { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
-        Info = await Http.GetFromJsonAsync<BuildInfo>("build.json");
+        try
+        {
+            Info = await Http.GetFromJsonAsync<BuildInfo>("build.json");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load build info");
+        }    
     }
 
     public class BuildInfo

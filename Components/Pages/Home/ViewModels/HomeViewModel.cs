@@ -165,8 +165,8 @@ namespace JobBank.Components.Pages.Home.ViewModels
             PieDataset<int> dataset = new PieDataset<int>(values)
             {
                 // Used a refined pastel/modern color palette instead of harsh raw colors
-                BackgroundColor = new[] { "#36A2EB", "#FF6384", "#FFCE56" },
-                BorderColor = new[] { "#FFFFFF", "#FFFFFF", "#FFFFFF" }, // White borders separate arcs elegantly
+                BackgroundColor = new[] { "#36A2EB", "#FF6384", "#FFCE56", "#4BC0C0" },
+                BorderColor = new[] { "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF" }, // White borders separate arcs elegantly
                 BorderWidth = 2,
                 HoverBorderWidth = 3
             };
@@ -244,7 +244,7 @@ namespace JobBank.Components.Pages.Home.ViewModels
         {
             IQueryable<Models.JobPost> query = await UserJobApplicationsQuery();
             return await query
-                .Where(jp => jp.ApplicationDate.HasValue && !jp.ApplicationDeclined)
+                .Where(jp => jp.ApplicationDate.HasValue && !jp.ApplicationDeclined && !jp.IsSelfWitdrawn)
                 .OrderBy(jp => jp.ApplicationDate)
                 .ProjectTo<JobPostDTO>(_mapper.ConfigurationProvider)
                 .ToListAsync();
@@ -252,24 +252,38 @@ namespace JobBank.Components.Pages.Home.ViewModels
 
         private async Task<Dictionary<ApplicationStatus, int>> ApplicationStatusCounts()
         {
-            IQueryable<Models.JobPost> query = await UserJobApplicationsQuery();
-            var counts = await query
-                .GroupBy(jp => new { jp.AutomaticallyRejected, jp.ApplicationDeclined })
+            var query = await UserJobApplicationsQuery();
+
+            var stats = await query
+                .GroupBy(_ => 1)
                 .Select(g => new
                 {
-                    Status = g.Key.AutomaticallyRejected ? ApplicationStatus.AutomaticallyRejected
-                            : g.Key.ApplicationDeclined ? ApplicationStatus.Declined
-                            : ApplicationStatus.Active,
-                    Count = g.Count()
+                    AutomaticallyRejected = g.Count(jp => jp.AutomaticallyRejected),
+                    Declined = g.Count(jp => jp.ApplicationDeclined && !jp.AutomaticallyRejected),
+                    Withdrawn = g.Count(jp => jp.IsSelfWitdrawn),
+                    Active = g.Count(jp => !jp.AutomaticallyRejected && !jp.ApplicationDeclined && !jp.IsSelfWitdrawn)
                 })
-                .ToListAsync();
-            return counts.ToDictionary(c => c.Status, c => c.Count);
+                .FirstOrDefaultAsync();
+
+            if (stats == null)
+            {
+                return new Dictionary<ApplicationStatus, int>();
+            }
+
+            return new Dictionary<ApplicationStatus, int>
+            {
+                [ApplicationStatus.AutomaticallyRejected] = stats.AutomaticallyRejected,
+                [ApplicationStatus.Declined] = stats.Declined,
+                [ApplicationStatus.Withdrawn] = stats.Withdrawn,
+                [ApplicationStatus.Active] = stats.Active
+            };
         }
 
         private enum ApplicationStatus
         {
             Active,
             Declined,
+            Withdrawn,
             AutomaticallyRejected
         }
 

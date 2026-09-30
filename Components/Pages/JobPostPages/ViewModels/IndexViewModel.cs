@@ -221,9 +221,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         /// <param name="jobPost"></param>
         /// <returns></returns>
         public string GetRowCssClass(JobPostDataModel jobPost)
-        {   
-            _logger.LogError("GetRowCssClass called for JobPost Id: {JobPostId}, IsSelfWitdrawn: {IsSelfWitdrawn}, ApplicationDeclined: {ApplicationDeclined}", jobPost.Id, jobPost.IsSelfWitdrawn, jobPost.ApplicationDeclined);
-
+        {               
             if (jobPost.ApplicationDeclined && jobPost.IsSelfWitdrawn)
             {
                 return "declined-row withdrawn-row";

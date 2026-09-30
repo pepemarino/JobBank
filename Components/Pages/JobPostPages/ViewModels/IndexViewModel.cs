@@ -16,16 +16,19 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
     {
         private readonly IDbContextFactory<EmploymentBankContext> _dbFactory;
         private readonly IIdentityService _identityService;
+        private readonly ILogger<IndexViewModel> _logger;
         public IndexViewModel(
             IDbContextFactory<EmploymentBankContext> DbFactory, 
             FilteredStateService stateService,
-            IIdentityService identityService)
+            IIdentityService identityService,
+            ILogger<IndexViewModel> logger)
         {
             _identityService = identityService;
             StateService = stateService;
             _dbFactory = DbFactory;
             DeclinedVisible = true;
             PendingVisible = true;
+            _logger = logger;
         }
 
         public string JobTypeSearch { get; set; } = string.Empty;
@@ -160,7 +163,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                     ActionToTake = jp.ActionToTake,
                     ApplicationDate = jp.ApplicationDate,
                     ApplicationDeclined = jp.ApplicationDeclined,
-                    AutomaticallyRejected = jp.AutomaticallyRejected
+                    AutomaticallyRejected = jp.AutomaticallyRejected,
+                    IsSelfWitdrawn = jp.IsSelfWitdrawn
                 });
 
                 // Apply default ordering
@@ -217,7 +221,14 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         /// <param name="jobPost"></param>
         /// <returns></returns>
         public string GetRowCssClass(JobPostDataModel jobPost)
-        {           
+        {   
+            _logger.LogError("GetRowCssClass called for JobPost Id: {JobPostId}, IsSelfWitdrawn: {IsSelfWitdrawn}, ApplicationDeclined: {ApplicationDeclined}", jobPost.Id, jobPost.IsSelfWitdrawn, jobPost.ApplicationDeclined);
+
+            if (jobPost.ApplicationDeclined && jobPost.IsSelfWitdrawn)
+            {
+                return "declined-row withdrawn-row";
+            }
+
             if (jobPost.ApplicationDeclined && !jobPost.AutomaticallyRejected)
             {
                 return "declined-row";
@@ -238,9 +249,9 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             var age = DateTime.UtcNow - jobPost.ApplicationDate!.Value; // Adjust property name if needed
             var days = age.TotalDays;
 
-            if (days > 30)
+            if (days > 25)
             {
-                return "applied-row stale-critical"; // Over a month old: Intense warning
+                return "applied-row stale-critical"; // on 30 days it will be automatically rejected, so this is the critical warning
             }
             if (days > 21)
             {

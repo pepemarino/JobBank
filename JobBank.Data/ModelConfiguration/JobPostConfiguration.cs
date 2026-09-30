@@ -25,6 +25,8 @@ namespace JobBank.ModelConfiguration
             builder
                 .Property(b => b.Timestamp)
                 .HasDefaultValueSql("GETUTCDATE()");
+            builder.Property(b => b.IsSelfWitdrawn)
+                .HasDefaultValue(false);
             builder
                 .HasMany(b => b.Interviews)
                 .WithOne(i => i.JobPost)

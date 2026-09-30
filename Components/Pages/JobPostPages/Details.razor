@@ -40,7 +40,15 @@
                     <div class="card-body d-flex justify-content-around text-center">
                         <div>
                             <small class="text-uppercase text-muted d-block">Status</small>
-                            @if (jobpost.ApplicationDeclined)
+                            @if (jobpost.AutomaticallyRejected)
+                            {
+                                <span class="badge bg-danger fs-6" style="border-left: 5px solid #2b0a0e !important;">Automatically Declined</span>
+                            }
+                            else if(jobpost.IsSelfWitdrawn && jobpost.ApplicationDeclined)
+                            {
+                                <span class="badge bg-warning fs-6" style="border-left: 5px solid #df2f44 !important; color:black">Self Withdrawn</span>
+                            }    
+                            else if (jobpost.ApplicationDeclined)
                             {
                                 <span class="badge bg-danger fs-6">Declined</span>
                             }
@@ -108,7 +116,7 @@
                                     <strong>Rejection Analysis cannot be displayed  These are prerequisites.</strong>
                                 </p>
                                 <ul>
-                                    <li>Application must be marked as declined.</li>
+                                    <li>Application must be marked as declined or automatically rejected.</li>
                                     <li>The Job Application must contain a description.</li>
                                     <li>Make sure My Skills Section is not empty.</li>
                                     <li>Analisis must be enabled.</li>

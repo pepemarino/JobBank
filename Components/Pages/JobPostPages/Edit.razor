@@ -106,19 +106,25 @@
                     </div>
 
                     <div class="row bg-light p-3 rounded-3 mb-4 mx-0">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-check form-switch">
                                 <InputCheckbox id="isapplied" @bind-Value="JobPost.IsApplied" class="form-check-input" />
                                 <label for="isapplied" class="form-check-label fw-bold">Applied</label>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-check form-switch">
                                 <InputCheckbox id="applicationdeclined" @bind-Value="JobPost.ApplicationDeclined" class="form-check-input" />
                                 <label for="applicationdeclined" class="form-check-label fw-bold text-danger">Declined</label>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <div class="form-check form-switch">
+                                <InputCheckbox id="IsSelfWitdrawn" @bind-Value="JobPost.IsSelfWitdrawn" class="form-check-input" />
+                                <label for="IsSelfWitdrawn" class="form-check-label fw-bold text-danger">Withdrawn</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
                             <div class="form-check form-switch">
                                 <InputCheckbox id="ithaschallenge" @bind-Value="JobPost.ItHasChallenge" class="form-check-input" />
                                 <label for="ithaschallenge" class="form-check-label fw-bold text-warning">Technical Challenge</label>

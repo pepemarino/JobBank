@@ -65,9 +65,9 @@
                    Pagination="IndexViewModel.Pagination"
                    RowClass="@IndexViewModel.GetRowCssClass"
                    Virtualize="true">
-            <PropertyColumn Property="jobpost => jobpost.Title" Title="Job Title" Sortable="true" />
+            <PropertyColumn Property="jobpost => jobpost.TitleDisplay" Title="Job Title" Sortable="true" />
 
-            <PropertyColumn Property="jobpost => jobpost.Company" Sortable="true">
+            <PropertyColumn Property="jobpost => jobpost.CompanyDisplay" Title="Company" Sortable="true">
                 <ColumnOptions>
                     <div class="p-2">
                         <input type="search" class="form-control form-control-lg"
@@ -85,7 +85,7 @@
                             Sortable="true"
                             SortBy="@(GridSort<JobPostDataModel>.ByAscending(x => x.InterviewOutcome))">
                 <span class="badge @(context.InterviewOutcome?.Contains("Reject") == true ? "bg-danger" : "bg-success")">
-                    @context.InterviewOutcome
+                    @context.InterviewOutcomeDisplay
                 </span>
             </TemplateColumn>
 
@@ -107,7 +107,7 @@
                 <i class="bi bi-info-circle me-2"></i>Status Legend
             </h6>
             <div class="row g-4">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="table-responsive">
                         <table class="table table-sm table-borderless mb-0">
                             <tbody>
@@ -139,7 +139,7 @@
                         </table>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="table-responsive">
                         <table class="table table-sm table-borderless mb-0">
                             <tbody>
@@ -148,7 +148,7 @@
                                         <span class="legend-box applied-row stale-critical"></span>
                                     </td>
                                     <td class="ps-2">
-                                        <strong>Stale Critical</strong> - Application older than 30 days
+                                        <strong>Stale Critical</strong> - Application older than 25 days
                                     </td>
                                 </tr>
                                 <tr>
@@ -167,6 +167,22 @@
                                         <strong>Auto-Rejected</strong> - System rejected after 30 days
                                     </td>
                                 </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="ps-0">
+                                        <span class="legend-box  declined-row withdrawn-row"></span>
+                                    </td>
+                                    <td class="ps-2">
+                                        <strong>Self Withdrawn</strong> - Exited the application process
+                                    </td>
+                                </tr>                                
                             </tbody>
                         </table>
                     </div>

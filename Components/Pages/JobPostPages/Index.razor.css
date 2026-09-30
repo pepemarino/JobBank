@@ -53,6 +53,12 @@
     border-left: 5px solid #ffca2c !important;
 }
 
+::deep .withdrawn-row {
+    border-left: 5px solid #ffe5d0 !important;
+    background-color: #f5f0f0 !important;
+    font-weight: 500;
+}
+
 ::deep .stale-hey {
     border-left: 5px solid #df4759 !important;
     background-color: #fcf3f4 !important;

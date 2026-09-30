@@ -1,4 +1,5 @@
-﻿using JobBank.Models;
+﻿using JobBank.Extensions;
+using JobBank.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace JobBank.Components.Pages.JobPostPages.ViewModels
@@ -23,6 +24,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             ApplicationDate = post.ApplicationDate;
             ApplicationDeclined = post.ApplicationDeclined;
             AutomaticallyRejected = post.AutomaticallyRejected;
+            IsSelfWitdrawn = post.IsSelfWitdrawn;
         }
 
         public int Id { get; set; }
@@ -30,10 +32,17 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         [Required]
         public string? Title { get; set; }
 
+        public string? TitleDisplay => string.IsNullOrEmpty(Title) ? string.Empty : Title.TruncateByLength();
+
         public bool IsApplied { get; set; }
+
+        //#ffe5d0
+        public bool IsSelfWitdrawn { get; set; }
 
         [Required]
         public string? Company { get; set; }
+
+        public string? CompanyDisplay => string.IsNullOrEmpty(Company) ? string.Empty : Company.TruncateByLength(25);
 
         public string? ActionToTake { get; set; }
 
@@ -46,6 +55,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         public DateTime? InterviewDate { get; set; }
 
         public string? InterviewOutcome { get; set; }
+
+        public string? InterviewOutcomeDisplay => string.IsNullOrEmpty(InterviewOutcome) ? string.Empty : InterviewOutcome.TruncateByLength();
 
         public bool ApplicationDeclined { get; set; }
 
@@ -69,7 +80,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
                 ActionToTake = jobPost.ActionToTake,
                 ApplicationDate = jobPost.ApplicationDate,
                 ApplicationDeclined = jobPost.ApplicationDeclined,
-                AutomaticallyRejected = jobPost.AutomaticallyRejected   
+                AutomaticallyRejected = jobPost.AutomaticallyRejected,  
+                IsSelfWitdrawn = jobPost.IsSelfWitdrawn
             };
         }
     }

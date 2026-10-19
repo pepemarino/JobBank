@@ -65,9 +65,18 @@
                    Pagination="IndexViewModel.Pagination"
                    RowClass="@IndexViewModel.GetRowCssClass"
                    Virtualize="true">
-            <PropertyColumn Property="jobpost => jobpost.TitleDisplay" Title="Job Title" Sortable="true" />
+            <TemplateColumn Title="Job Title" Sortable="true"
+                            SortBy="@(GridSort<JobPostDataModel>.ByAscending(x => x.Title))">
+                @context.TitleDisplay
+            </TemplateColumn>
 
-            <PropertyColumn Property="jobpost => jobpost.CompanyDisplay" Title="Company" Sortable="true">
+            <TemplateColumn Title="Company" Sortable="true"
+                            SortBy="@(GridSort<JobPostDataModel>.ByAscending(x => x.Company))">
+                <ChildContent>
+                    <div class="p-2">
+                        @context.CompanyDisplay
+                    </div>
+                </ChildContent>
                 <ColumnOptions>
                     <div class="p-2">
                         <input type="search" class="form-control form-control-lg"
@@ -75,7 +84,7 @@
                                placeholder="Filter Employer..." autofocus />
                     </div>
                 </ColumnOptions>
-            </PropertyColumn>
+            </TemplateColumn>
 
             <PropertyColumn Property="jobpost => jobpost.JobType" Title="Type" />
 

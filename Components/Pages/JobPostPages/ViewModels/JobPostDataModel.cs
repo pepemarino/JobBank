@@ -1,5 +1,6 @@
 ﻿using JobBank.Extensions;
 using JobBank.Models;
+using Microsoft.AspNetCore.Components;
 using System.ComponentModel.DataAnnotations;
 
 namespace JobBank.Components.Pages.JobPostPages.ViewModels

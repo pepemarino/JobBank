@@ -231,7 +231,7 @@ namespace JobBank.Components.Pages.Home.ViewModels
                     new BarDataset<int>(values)
                     {
                         Label = "Applications",
-                        BackgroundColor = "#36A2EB", // Unified palette color matching the donut chart
+                        BackgroundColor = "#4BC0C0", // Unified palette color matching the donut chart
                         BorderColor = "#2482C3",
                         BorderWidth = 1
                     }

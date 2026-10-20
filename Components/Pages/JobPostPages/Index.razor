@@ -80,7 +80,8 @@
                 <ColumnOptions>
                     <div class="p-2">
                         <input type="search" class="form-control form-control-lg"
-                               @bind="IndexViewModel.CompanySearch" @bind:event="oninput"
+                               @bind="IndexViewModel.CompanySearch"
+                               @oninput="e => IndexViewModel.OnCompanySearchChanged(e.Value?.ToString())"
                                placeholder="Filter Employer..." autofocus />
                     </div>
                 </ColumnOptions>

@@ -55,10 +55,14 @@ builder.Services.AddSingleton<PrompService>(llmPrompts);
 #region DbContexts
 
 builder.Services.AddDbContextFactory<EmploymentBankContext>(options =>
-    options.UseSqlServer(connStr, x => x.MigrationsAssembly("JobBank.Data")));
+    options.UseSqlServer(connStr, x => 
+    {
+        x.MigrationsAssembly("JobBank.Data");
+        x.EnableRetryOnFailure();
+    }));
 
 builder.Services.AddDbContext<JobBankIdentityDbContext>(options =>
-    options.UseSqlServer(connStr));
+    options.UseSqlServer(connStr, x => x.EnableRetryOnFailure()));
 
 #endregion
 

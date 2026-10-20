@@ -38,5 +38,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         void LoadPendingApplication(ChangeEventArgs ev);
 
         string GetRowCssClass(JobPostDataModel jobPost);
+
+        Task OnCompanySearchChanged(string value);
     }
 }

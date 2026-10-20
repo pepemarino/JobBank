@@ -17,6 +17,8 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         private readonly IDbContextFactory<EmploymentBankContext> _dbFactory;
         private readonly IIdentityService _identityService;
         private readonly ILogger<IndexViewModel> _logger;
+        private CancellationTokenSource _debounceCts;
+
         public IndexViewModel(
             IDbContextFactory<EmploymentBankContext> DbFactory, 
             FilteredStateService stateService,
@@ -123,6 +125,27 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             return filter;
         }
 
+        private readonly SemaphoreSlim _queryLock = new(1, 1);  
+
+        /// <summary>
+        /// Wrapping the GetJobPostsRequest method with a semaphore to ensure that only one query is processed at a time.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public async ValueTask<GridItemsProviderResult<JobPostDataModel>> GetJobPosts(
+        GridItemsProviderRequest<JobPostDataModel> request)
+        {
+            await _queryLock.WaitAsync();
+            try
+            {
+                return await GetJobPostsRequest(request);
+            }
+            finally
+            {
+                _queryLock.Release();
+            }
+        }
+
         /// <summary>
         /// QuickGrid calls this method to get the data to display. 
         /// The filtering, sorting, and paging are all applied in the database query for efficiency.
@@ -131,8 +154,7 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async ValueTask<GridItemsProviderResult<JobPostDataModel>> GetJobPosts(
-        GridItemsProviderRequest<JobPostDataModel> request)
+        private async Task<GridItemsProviderResult<JobPostDataModel>> GetJobPostsRequest(GridItemsProviderRequest<JobPostDataModel> request)
         {
             try
             {
@@ -184,19 +206,18 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
             }
             catch (OperationCanceledException)
             {
-                // Cancellation is expected from Virtualization/QuickGrid ignore it
+                // Cancellation is expected from Virtualization/QuickGrid, ignore it
+                _logger.LogDebug("Query canceled - user navigated away or grid was refreshed");
                 return default;
             }
-            catch (SqlException ex) when (ex.Message.Contains("Operation cancelled"))
+            catch (SqlException ex) when (ex.Message.Contains("Operation cancelled") || ex.Number == -2)
             {
-                // ISSUE 12:  SQL Server throws SqlException when the connection is terminated during command execution
-                // This is effectively a cancellation and should be handled gracefully
-                // This is not the final solution
+                // SqlException with error code -2 indicates operation was canceled
+                // With EnableRetryOnFailure enabled, transient failures should already be retried
+                _logger.LogDebug("SQL operation canceled: {Message}", ex.Message);
                 return default;
             }
         }
-
-
 
         public PaginationState Pagination { get; } = new() { ItemsPerPage = 20 };  // default to 20, but user can change
 
@@ -262,6 +283,23 @@ namespace JobBank.Components.Pages.JobPostPages.ViewModels
 
             // Default: Fresh record within 2 weeks
             return "applied-row";
+        }
+
+        public async Task OnCompanySearchChanged(string value)
+        {
+            _debounceCts?.Cancel();
+            _debounceCts?.Dispose();
+            _debounceCts = new CancellationTokenSource();
+
+            try
+            {
+                await Task.Delay(300, _debounceCts.Token);
+                CompanySearch = value;
+            }
+            catch (TaskCanceledException)
+            {
+                _logger.LogDebug("Company search debounce canceled - user continued typing");
+            }
         }
     }
 }

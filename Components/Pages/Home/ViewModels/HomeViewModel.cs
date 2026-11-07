@@ -10,17 +10,21 @@ using ChartJs.Blazor.Common.Enums;
 using ChartJs.Blazor.PieChart;
 using ChartJs.Blazor.Util;
 using JobBank.Data;
+using JobBank.Models;
 using JobBank.ModelsDTO;
 using JobBank.Services;
 using JobBank.Services.Abstraction;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using System.Drawing;
+using System.Linq;
+using System.Linq.Expressions;
 
 namespace JobBank.Components.Pages.Home.ViewModels
 {
     public class HomeViewModel : IHomeViewModel, IAsyncDisposable
     {
+        private readonly bool IgnoreFilterByDayFlag = false;
         private readonly IIdentityService _identityService;
         private readonly IMapper _mapper;
 
@@ -28,6 +32,9 @@ namespace JobBank.Components.Pages.Home.ViewModels
 
         private readonly EmploymentBankContext Context;
         private readonly List<DailyStatsViewModel> _dailyStats = new();
+        private readonly List<DailyStatsViewModel> _automaticallyDeclinedStats = new();
+        private readonly List<DailyStatsViewModel> _declinedStats = new();
+        private readonly List<DailyStatsViewModel> _abortedStats = new();   
 
         public event Action? OnRequestUIUpdate;
 
@@ -48,7 +55,7 @@ namespace JobBank.Components.Pages.Home.ViewModels
             ToDate = StateService.ToDate;
 
             Context = DbFactory.CreateDbContext();
-            this.Title = "WORKS Commons Active Applications";
+            this.Title = "WORKS Commons Application Dashboard";
 
             StateService.OnChange += HandleStateChange;
         }
@@ -98,8 +105,12 @@ namespace JobBank.Components.Pages.Home.ViewModels
             };
         }
 
+        public BarConfig AutomaticallyDeclinedHorizontalConfig { get; set; }
+        public BarConfig DeclinedHorizontalConfig { get; set; }
+        public BarConfig AbortedHorizontalConfig { get; set; }
+
         public Chart JobChart { get; set; }
-        public Chart DonutChart { get; set; } 
+        public Chart DonutChart { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
 
@@ -121,6 +132,10 @@ namespace JobBank.Components.Pages.Home.ViewModels
 
         public PieConfig PieConfig { get; set; }
         public Chart DonutCart { get; set; }
+        public Chart AutomaticallyDeclinedHorizontalChart { get; set; }
+        public Chart DeclinedHorizontalChart { get; set; }
+
+        public Chart AbortedHorizontalChart { get; set; }
 
         public async ValueTask DisposeAsync()
         {
@@ -131,9 +146,208 @@ namespace JobBank.Components.Pages.Home.ViewModels
         public async Task InitializeAsync()
         {
             SetBarChart();
+            SetAutomaticallyDeclinedHorizontalChart();
+            SetDeclinedHorizontalChart();
+            SetAbortedHorizontalConfig();
             SetDonutChart();
             await LoadBarChartData();
+            await LoadAutomaticallyDeclinedHorizontalData();
+            await LoadDeclinedHorizontalData();
+            await LoadAbortedHorizontalData();
             await LoadDonutChartData();
+        }
+
+        private async Task LoadAbortedHorizontalData()
+        {
+            var stats = await (await UserJobApplicationsQuery(IgnoreFilterByDayFlag))
+                .Where(jobPost => jobPost.IsSelfWitdrawn)
+                .Where(jobPost => jobPost.Company != null && jobPost.Company != string.Empty)
+                .GroupBy(jobPost => jobPost.Company)
+                .Select(group => new DailyStatsViewModel
+                {
+                    Name = group.Key!,
+                    Count = group.Count()
+                })
+                .OrderByDescending(stat => stat.Count)
+                .ThenBy(stat => stat.Name)
+                .ToListAsync();
+
+            _abortedStats.Clear();
+            _abortedStats.AddRange(stats);
+
+            this.AbortedHorizontalConfig.Data.Labels.Clear();
+            this.AbortedHorizontalConfig.Data.Datasets.Clear();
+            if (stats.Count == 0)
+            {
+                this.AbortedHorizontalConfig.Data.Labels.Add("No Data");
+                this.AbortedHorizontalConfig.Data.Datasets.Add(
+                    new BarDataset<int>(data: new[] { 0 }, horizontal: true)
+                    {
+                        Label = "No data",
+                        BackgroundColor = ColorUtil.FromDrawingColor(Color.LightGray),
+                        BorderColor = ColorUtil.FromDrawingColor(Color.DarkGray),
+                        BorderWidth = 1
+                    }
+                );
+
+                return;
+            }
+
+            foreach (var stat in stats)
+            {
+                this.AbortedHorizontalConfig.Data.Labels.Add(stat.Name);
+            }
+
+            this.AbortedHorizontalConfig.Data.Datasets.Add(
+                new BarDataset<int>(
+                    data: stats.Select(stat => stat.Count).ToList(),
+                    horizontal: true)
+                {
+                    Label = "Applications",
+                    BackgroundColor = "#FFCE56",
+                    BorderColor = "#997b32",
+                    BorderWidth = 1
+                }
+            );
+        }
+
+        private void SetAbortedHorizontalConfig()
+        {
+            this.AbortedHorizontalConfig = new BarConfig(horizontal: true);
+
+            this.AbortedHorizontalConfig.Data.Labels.Clear();
+            this.AbortedHorizontalConfig.Data.Datasets.Clear();
+
+            this.AbortedHorizontalConfig.Options = new BarOptions
+            {
+                Responsive = true,
+                MaintainAspectRatio = false,
+                Legend = new Legend { Position = Position.Top },
+                Title = new OptionsTitle { Display = true, Text = "Top Aborted" },
+                Scales = new BarScales
+                {
+                    XAxes = new List<CartesianAxis>
+                    {
+                        new BarLinearCartesianAxis
+                        {
+                            Ticks = new LinearCartesianTicks { BeginAtZero = true, Min = 0 },
+                            GridLines = new GridLines { Color = ColorUtil.FromDrawingColor(Color.FromArgb(40, 0, 0, 0)) }
+                        }
+                    },
+                    YAxes = new List<CartesianAxis> { new BarCategoryAxis() }
+                }
+            };
+        }
+
+        private async Task LoadDeclinedHorizontalData()
+        {
+            var stats = await (await UserJobApplicationsQuery(IgnoreFilterByDayFlag))
+                .Where(jobPost => !jobPost.AutomaticallyRejected && jobPost.ApplicationDeclined && !jobPost.IsSelfWitdrawn)
+                .Where(jobPost => jobPost.Company != null && jobPost.Company != string.Empty)
+                .GroupBy(jobPost => jobPost.Company)
+                .Select(group => new DailyStatsViewModel
+                {
+                    Name = group.Key!,
+                    Count = group.Count()
+                })
+                .Where(stat => stat.Count >= 2)
+                .OrderByDescending(stat => stat.Count)
+                .ThenBy(stat => stat.Name)
+                .ToListAsync();
+
+                _declinedStats.Clear();
+                _declinedStats.AddRange(stats);
+
+            this.DeclinedHorizontalConfig.Data.Labels.Clear();
+            this.DeclinedHorizontalConfig.Data.Datasets.Clear();
+            if (stats.Count == 0)
+            {
+                this.DeclinedHorizontalConfig.Data.Labels.Add("No Data");
+                this.DeclinedHorizontalConfig.Data.Datasets.Add(
+                    new BarDataset<int>(data: new[] { 0 }, horizontal: true)
+                    {
+                        Label = "No data",
+                        BackgroundColor = ColorUtil.FromDrawingColor(Color.LightGray),
+                        BorderColor = ColorUtil.FromDrawingColor(Color.DarkGray),
+                        BorderWidth = 1
+                    }
+                );
+
+                return;
+            }
+
+            foreach (var stat in stats)
+            {
+                this.DeclinedHorizontalConfig.Data.Labels.Add(stat.Name);
+            }
+
+            this.DeclinedHorizontalConfig.Data.Datasets.Add(
+                new BarDataset<int>(
+                    data: stats.Select(stat => stat.Count).ToList(),
+                    horizontal: true)
+                {
+                    Label = "Applications",
+                    BackgroundColor = "#FF6384",
+                    BorderColor = "#96384c",
+                    BorderWidth = 1
+                }
+            );
+        }
+
+        private void SetDeclinedHorizontalChart()
+        {
+            this.DeclinedHorizontalConfig = new BarConfig(horizontal: true);
+
+            this.DeclinedHorizontalConfig.Data.Labels.Clear();
+            this.DeclinedHorizontalConfig.Data.Datasets.Clear();
+
+            this.DeclinedHorizontalConfig.Options = new BarOptions
+            {
+                Responsive = true,
+                MaintainAspectRatio = false,
+                Legend = new Legend { Position = Position.Top },
+                Title = new OptionsTitle { Display = true, Text = "Top Declined" },
+                Scales = new BarScales
+                {
+                    XAxes = new List<CartesianAxis>
+                    {
+                        new BarLinearCartesianAxis
+                        {
+                            Ticks = new LinearCartesianTicks { BeginAtZero = true, Min = 0 },
+                            GridLines = new GridLines { Color = ColorUtil.FromDrawingColor(Color.FromArgb(40, 0, 0, 0)) }
+                        }
+                    },
+                    YAxes = new List<CartesianAxis> { new BarCategoryAxis() }
+                }
+            };
+        }
+
+        private void SetAutomaticallyDeclinedHorizontalChart()
+        {
+            this.AutomaticallyDeclinedHorizontalConfig = new BarConfig(horizontal: true);
+
+            this.AutomaticallyDeclinedHorizontalConfig.Data.Labels.Clear();
+            this.AutomaticallyDeclinedHorizontalConfig.Data.Datasets.Clear();
+
+            this.AutomaticallyDeclinedHorizontalConfig.Options = new BarOptions
+            {
+                Responsive = true,
+                MaintainAspectRatio = false,
+                Legend = new Legend { Position = Position.Top },
+                Title = new OptionsTitle { Display = true, Text = "Top Automatically Declined" },
+                Scales = new BarScales
+                {
+                    XAxes = new List<CartesianAxis>
+                    {
+                        new BarLinearCartesianAxis
+                        {
+                            Ticks = new LinearCartesianTicks { BeginAtZero = true, Min = 0 },
+                            GridLines = new GridLines { Color = ColorUtil.FromDrawingColor(Color.FromArgb(40, 0, 0, 0)) }
+                        }
+                    },
+                    YAxes = new List<CartesianAxis> { new BarCategoryAxis() }
+                }
+            };
         }
 
         private async void HandleStateChange()
@@ -145,6 +359,7 @@ namespace JobBank.Components.Pages.Home.ViewModels
             // arrays and call .Update() on the JS wrapper instance. This prevents rendering flashes.
 
             await LoadBarChartData();
+            await LoadAutomaticallyDeclinedHorizontalData();
             await LoadDonutChartData();
 
             // Ask the components to explicitly redraw their JS instances
@@ -178,6 +393,62 @@ namespace JobBank.Components.Pages.Home.ViewModels
             }
             this.PieConfig.Data.Datasets.Clear();
             this.PieConfig.Data.Datasets.Add(dataset);
+        }
+
+        private async Task LoadAutomaticallyDeclinedHorizontalData()
+        {
+            var stats = await (await UserJobApplicationsQuery(IgnoreFilterByDayFlag))
+                .Where(jobPost => jobPost.AutomaticallyRejected)
+                .Where(jobPost => jobPost.Company != null && jobPost.Company != string.Empty)
+                .GroupBy(jobPost => jobPost.Company)
+                .Select(group => new DailyStatsViewModel
+                {
+                    Name = group.Key!,
+                    Count = group.Count()
+                })
+                .Where(stat => stat.Count >= 2)
+                .OrderByDescending(stat => stat.Count)
+                .ThenBy(stat => stat.Name)
+                .ToListAsync();
+
+            _automaticallyDeclinedStats.Clear();
+            _automaticallyDeclinedStats.AddRange(stats);
+
+            this.AutomaticallyDeclinedHorizontalConfig.Data.Labels.Clear();
+            this.AutomaticallyDeclinedHorizontalConfig.Data.Datasets.Clear();
+
+            if (stats.Count == 0)
+            {
+                this.AutomaticallyDeclinedHorizontalConfig.Data.Labels.Add("No Data");
+                this.AutomaticallyDeclinedHorizontalConfig.Data.Datasets.Add(
+                    new BarDataset<int>(data: new[] { 0 }, horizontal: true)
+                    {
+                        Label = "No data",
+                        BackgroundColor = ColorUtil.FromDrawingColor(Color.LightGray),
+                        BorderColor = ColorUtil.FromDrawingColor(Color.DarkGray),
+                        BorderWidth = 1
+                    }
+                );
+
+                return;
+            }
+
+            foreach (var stat in stats)
+            {
+                this.AutomaticallyDeclinedHorizontalConfig.Data.Labels.Add(stat.Name);
+            }
+
+            this.AutomaticallyDeclinedHorizontalConfig.Data.Datasets.Add(
+                new BarDataset<int>(
+                    data: stats.Select(stat => stat.Count).ToList(),
+                    horizontal: true)
+                {
+                    Label = "Applications",
+                    BackgroundColor = "#36A2EB",
+                    BorderColor = "#0e4163",
+                    BorderWidth = 1
+                }
+            );
         }
 
         private async Task LoadBarChartData()
@@ -287,15 +558,18 @@ namespace JobBank.Components.Pages.Home.ViewModels
             AutomaticallyRejected
         }
 
-        private async Task<IQueryable<Models.JobPost>> UserJobApplicationsQuery()
+        private async Task<IQueryable<Models.JobPost>> UserJobApplicationsQuery(bool includeDateRange = true)
         {
             var userId = await _identityService.GetUserIdAsync();
             var query = Context.JobPost.AsNoTracking()
                                .Where(jp => jp.UserId == userId && jp.Description != null && jp.Description != "");
-            if (FromDate.HasValue)
-                query = query.Where(jp => jp.ApplicationDate >= FromDate.Value);
-            if (ToDate.HasValue)
-                query = query.Where(jp => jp.ApplicationDate <= ToDate.Value);
+            if (includeDateRange)
+            {
+                if (FromDate.HasValue)
+                    query = query.Where(jp => jp.ApplicationDate >= FromDate.Value);
+                if (ToDate.HasValue)
+                    query = query.Where(jp => jp.ApplicationDate <= ToDate.Value);
+            }
             return query;
         }
 
